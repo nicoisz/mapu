@@ -6,14 +6,17 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../navigation/types';
 import { colors, typography, spacing } from '../theme';
 import { SearchBar, FilterModal } from '../components/common';
 import { useSearch } from '../hooks/useSearch';
 import { Property } from '../data/models/property';
 
 export const SearchDemoScreen: React.FC = () => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const {
     searchResults,
@@ -43,10 +46,15 @@ export const SearchDemoScreen: React.FC = () => {
     clearFilters();
   };
 
+  const handlePropertyPress = (property: Property) => {
+    console.log('🔍 Search result pressed:', property.id, property.title);
+    navigation.navigate('PropertyDetail', { propertyId: property.id });
+  };
+
   const renderProperty = ({ item }: { item: Property }) => (
     <TouchableOpacity
       style={styles.propertyCard}
-      onPress={() => Alert.alert('Property Selected', item.title)}
+      onPress={() => handlePropertyPress(item)}
       activeOpacity={0.7}
     >
       <View style={styles.propertyInfo}>

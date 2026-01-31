@@ -7,7 +7,7 @@ import { HomeScreen } from '../screens/home';
 import { SearchDemoScreen } from '../screens/SearchDemoScreen';
 import { MapDemoScreen } from '../screens/MapDemoScreen';
 import { DashboardScreen, AddPropertyScreen } from '../screens/dashboard';
-import { DemoScreen } from '../screens/DemoScreen';
+import { ProfileScreen } from '../screens/profile';
 import { PropertyDetailNavigationWrapper } from '../screens/property/PropertyDetailNavigationWrapper';
 import { OnboardingFlow } from '../screens/onboarding/OnboardingFlow';
 import { AuthScreen } from '../screens/auth';
@@ -78,7 +78,7 @@ const MainTabNavigator: React.FC = () => {
       />
       <Tab.Screen
         name={SCREEN_NAMES.PROFILE}
-        component={DemoScreen}
+        component={ProfileScreen}
         options={{
           title: 'Perfil',
           tabBarIcon: () => <Text>👤</Text>,
