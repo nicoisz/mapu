@@ -119,8 +119,9 @@ export const PropertyPin: React.FC<PropertyPinProps> = ({
     <TouchableOpacity
       onPress={onPress}
       style={[styles.container, style]}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
       testID={testID}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       {/* Normal state: Icon + Price */}
       <Animated.View style={[styles.pinContainer, animatedPinStyle]}>
@@ -158,6 +159,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     // Ensure the pin is properly positioned
     position: 'relative',
+    // Ensure touch events are properly handled
+    zIndex: 1,
   },
   pinContainer: {
     alignItems: 'center',

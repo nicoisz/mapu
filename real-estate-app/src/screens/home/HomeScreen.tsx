@@ -7,6 +7,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../../navigation/types';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { colors, spacing, typography } from '../../theme';
 import { SearchBar } from '../../components/common';
@@ -19,9 +22,12 @@ import { Property } from '../../data/models/property';
 const { width, height } = Dimensions.get('window');
 
 export const HomeScreen: React.FC = () => {
+  // Navigation
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
   // State
   const [properties, setProperties] = useState<Property[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
   const [mapRegion, setMapRegion] = useState({
     latitude: -33.4489,
     longitude: -70.6693,
@@ -41,7 +47,10 @@ export const HomeScreen: React.FC = () => {
     const loadInitialProperties = async () => {
       try {
         const { sampleDataService } = await import('../../data/mock/sampleDataService');
+        // Don't reinitialize, the service is already initialized
         const recentProperties = await sampleDataService.getRecentProperties(50);
+        console.log('🏠 Loaded properties:', recentProperties.length);
+        console.log('🔍 First few property IDs:', recentProperties.slice(0, 3).map(p => ({ id: p.id, title: p.title })));
         setProperties(recentProperties);
       } catch (error) {
         console.error('Error loading initial properties:', error);
@@ -60,6 +69,7 @@ export const HomeScreen: React.FC = () => {
       const loadInitialProperties = async () => {
         try {
           const { sampleDataService } = await import('../../data/mock/sampleDataService');
+          // Don't reinitialize, use existing data
           const recentProperties = await sampleDataService.getRecentProperties(50);
           setProperties(recentProperties);
         } catch (error) {
@@ -70,21 +80,23 @@ export const HomeScreen: React.FC = () => {
     }
   }, [searchResults]);
 
-  // Handle property pin press
+  // Handle property pin press - Navigate directly to property details
   const handlePropertyPress = useCallback((property: Property) => {
-    setSelectedProperty(property);
-    
-    // Center map on selected property
-    setMapRegion({
-      latitude: property.location.latitude,
-      longitude: property.location.longitude,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
+    console.log('🔥 Pin pressed for property:', {
+      id: property.id,
+      title: property.title,
+      type: typeof property.id,
+      length: property.id.length
     });
-
-    // Expand bottom sheet to show property details
-    bottomSheetRef.current?.snapToIndex(1);
-  }, []);
+    
+    try {
+      console.log('🚀 Navigating to PropertyDetail with ID:', property.id);
+      navigation.navigate('PropertyDetail', { propertyId: property.id });
+      console.log('✅ Navigation called successfully');
+    } catch (error) {
+      console.error('❌ Navigation error:', error);
+    }
+  }, [navigation]);
 
   // Handle search
   const handleSearch = useCallback((query: any) => {
@@ -94,7 +106,6 @@ export const HomeScreen: React.FC = () => {
   // Handle clear search
   const handleClearSearch = useCallback(() => {
     clearSearch();
-    setSelectedProperty(null);
     bottomSheetRef.current?.snapToIndex(0);
   }, [clearSearch]);
 
@@ -106,9 +117,16 @@ export const HomeScreen: React.FC = () => {
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     });
-    setSelectedProperty(null);
     bottomSheetRef.current?.snapToIndex(0);
   }, []);
+
+  // Handle bottom sheet changes
+  const handleBottomSheetChange = useCallback((index: number) => {
+    setBottomSheetIndex(index);
+  }, []);
+
+  // Determine if map interactions should be disabled
+  const mapInteractionsDisabled = bottomSheetIndex >= 2;
 
   // Render property pins on map
   const renderPropertyPins = () => {
@@ -125,7 +143,7 @@ export const HomeScreen: React.FC = () => {
       >
         <PropertyPin
           property={property}
-          isActive={selectedProperty?.id === property.id}
+          isActive={false}
           onPress={() => handlePropertyPress(property)}
         />
       </View>
@@ -134,35 +152,13 @@ export const HomeScreen: React.FC = () => {
 
   // Render bottom sheet content
   const renderBottomSheetContent = () => {
-    if (selectedProperty) {
-      return (
-        <BottomSheetScrollView contentContainerStyle={styles.bottomSheetContent}>
-          <PropertyCard
-            property={selectedProperty}
-            onPress={() => {}}
-            style={styles.selectedPropertyCard}
-          />
-          
-          <Text style={styles.nearbyTitle}>Propiedades cercanas</Text>
-          {properties
-            .filter(p => p.id !== selectedProperty.id)
-            .slice(0, 10)
-            .map((property) => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                onPress={() => handlePropertyPress(property)}
-                style={styles.nearbyPropertyCard}
-              />
-            ))}
-        </BottomSheetScrollView>
-      );
-    }
-
     return (
       <BottomSheetScrollView contentContainerStyle={styles.bottomSheetContent}>
         <Text style={styles.propertiesTitle}>
           {properties.length} propiedades disponibles
+        </Text>
+        <Text style={styles.bottomSheetDescription}>
+          Toca un pin para ver los detalles 📍
         </Text>
         {properties.slice(0, 20).map((property) => (
           <PropertyCard
@@ -185,9 +181,12 @@ export const HomeScreen: React.FC = () => {
           region={mapRegion}
           onRegionChangeComplete={setMapRegion}
           showsUserLocation={true}
-        >
-          {renderPropertyPins()}
-        </MockMapView>
+        />
+      </View>
+
+      {/* Property Pins - Rendered OUTSIDE of MapView for proper layering */}
+      <View style={styles.pinsContainer}>
+        {renderPropertyPins()}
       </View>
 
       {/* Floating Search Bar */}
@@ -223,8 +222,10 @@ export const HomeScreen: React.FC = () => {
         ref={bottomSheetRef}
         index={0}
         snapPoints={snapPoints}
+        onChange={handleBottomSheetChange}
         backgroundStyle={styles.bottomSheetBackground}
         handleIndicatorStyle={styles.bottomSheetIndicator}
+        enablePanDownToClose={false}
       >
         {renderBottomSheetContent()}
       </BottomSheet>
@@ -238,26 +239,35 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   mapContainer: {
-    flex: 1,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    zIndex: 1,
   },
   map: {
     flex: 1,
   },
+  pinsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 3,
+    pointerEvents: 'box-none', // Allow touches to pass through to children
+  },
   pinContainer: {
     position: 'absolute',
-    zIndex: 1,
+    zIndex: 4,
   },
   searchContainer: {
     position: 'absolute',
     top: 60,
     left: spacing.md,
     right: spacing.md,
-    zIndex: 2,
+    zIndex: 10,
   },
   searchBar: {
     backgroundColor: colors.background,
@@ -275,7 +285,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.md,
     bottom: 200,
-    zIndex: 2,
+    zIndex: 10,
   },
   actionButton: {
     width: 50,
@@ -301,10 +311,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    shadowColor: colors.text.primary,
+    shadowOffset: {
+      width: 0,
+      height: -5,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   bottomSheetIndicator: {
-    backgroundColor: colors.text.light,
+    backgroundColor: colors.primary,
     width: 40,
+    height: 4,
   },
   bottomSheetContent: {
     padding: spacing.md,
@@ -316,21 +337,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     textAlign: 'center',
   },
-  nearbyTitle: {
-    ...typography.h4,
-    color: colors.text.primary,
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  selectedPropertyCard: {
-    marginBottom: spacing.md,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  nearbyPropertyCard: {
-    marginBottom: spacing.sm,
-  },
   propertyCard: {
     marginBottom: spacing.sm,
+  },
+  bottomSheetDescription: {
+    ...typography.body2,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
   },
 });

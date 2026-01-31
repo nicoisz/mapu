@@ -20,8 +20,9 @@ export class SampleDataService {
   private mockData: MockDataSet;
   
   private constructor() {
-    // Initialize with development dataset
+    // Initialize with development dataset by default
     this.mockData = QuickMockData.development();
+    console.log(`🚀 SampleDataService singleton created with ${this.mockData.properties.length} properties`);
   }
   
   public static getInstance(): SampleDataService {
@@ -35,6 +36,12 @@ export class SampleDataService {
    * Initialize with specific dataset
    */
   public initialize(datasetType: 'development' | 'testing' | 'demo' | 'santiago' | 'coastal' = 'development'): void {
+    // Only initialize if we don't have data yet or if explicitly requested
+    if (this.mockData && this.mockData.properties.length > 0) {
+      console.log(`📊 SampleDataService already initialized with ${this.mockData.properties.length} properties, skipping...`);
+      return;
+    }
+    
     switch (datasetType) {
       case 'development':
         this.mockData = QuickMockData.development();
@@ -54,6 +61,35 @@ export class SampleDataService {
     }
     
     console.log(`📊 Initialized SampleDataService with ${datasetType} dataset:`, {
+      properties: this.mockData.properties.length,
+      users: this.mockData.users.length,
+      statistics: this.mockData.statistics
+    });
+  }
+  
+  /**
+   * Force reinitialize with specific dataset (useful for testing)
+   */
+  public forceInitialize(datasetType: 'development' | 'testing' | 'demo' | 'santiago' | 'coastal' = 'development'): void {
+    switch (datasetType) {
+      case 'development':
+        this.mockData = QuickMockData.development();
+        break;
+      case 'testing':
+        this.mockData = QuickMockData.testing();
+        break;
+      case 'demo':
+        this.mockData = QuickMockData.demo();
+        break;
+      case 'santiago':
+        this.mockData = QuickMockData.santiago();
+        break;
+      case 'coastal':
+        this.mockData = QuickMockData.coastal();
+        break;
+    }
+    
+    console.log(`🔄 Force initialized SampleDataService with ${datasetType} dataset:`, {
       properties: this.mockData.properties.length,
       users: this.mockData.users.length,
       statistics: this.mockData.statistics
