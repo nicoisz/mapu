@@ -134,8 +134,8 @@ export const PropertyPin: React.FC<PropertyPinProps> = ({
         <View style={styles.pinTail} />
       </Animated.View>
 
-      {/* Active state: Circular Photo */}
-      {mainImage && (
+      {/* Active state: Circular Photo + Info */}
+      {isActive && mainImage && (
         <Animated.View style={[styles.photoContainer, animatedPhotoStyle]}>
           <Image
             source={{ uri: mainImage.thumbnailUrl || mainImage.url }}
@@ -145,6 +145,19 @@ export const PropertyPin: React.FC<PropertyPinProps> = ({
           <View style={styles.photoOverlay}>
             <Text style={styles.photoPrice} numberOfLines={1}>
               {priceText}
+            </Text>
+          </View>
+          
+          {/* Property info popup */}
+          <View style={styles.infoPopup}>
+            <Text style={styles.infoTitle} numberOfLines={2}>
+              {property.title}
+            </Text>
+            <Text style={styles.infoDetails}>
+              {property.features.area}m² • {property.features.bedrooms || 0} dorm.
+            </Text>
+            <Text style={styles.infoLocation} numberOfLines={1}>
+              {property.location.address.city}
             </Text>
           </View>
         </Animated.View>
@@ -240,6 +253,41 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '700',
     fontSize: 10,
+  },
+  infoPopup: {
+    position: 'absolute',
+    top: 70,
+    left: -60,
+    width: 180,
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: spacing.sm,
+    shadowColor: colors.text.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  infoTitle: {
+    ...typography.body2,
+    color: colors.text.primary,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  infoDetails: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+  },
+  infoLocation: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '500',
   },
 });
 

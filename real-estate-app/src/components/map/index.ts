@@ -2,6 +2,8 @@
 // This file provides clean imports for all map-related components
 
 export { RealEstateMapView } from './MapView';
+export { RealMapView } from './RealMapView';
+export { MockMapView } from './MockMapView';
 export { MapControls } from './MapControls';
 export { PropertyPin } from './PropertyPin';
 export { MiniMap } from './MiniMap';
