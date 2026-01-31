@@ -18,6 +18,7 @@ interface SearchBarProps {
   showFilterButton?: boolean;
   onFilterPress?: () => void;
   initialValue?: string;
+  style?: any;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -28,6 +29,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   showFilterButton = true,
   onFilterPress,
   initialValue = '',
+  style,
 }) => {
   const [searchText, setSearchText] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
@@ -65,7 +67,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   }, [handleSearch]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={[
         styles.searchContainer,
         isFocused && styles.searchContainerFocused,
@@ -127,23 +129,31 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: colors.border,
     minHeight: 48,
+    shadowColor: colors.text.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchContainerFocused: {
     borderColor: colors.primary,
     borderWidth: 2,
+    shadowOpacity: 0.2,
   },
   searchIcon: {
     paddingLeft: spacing.md,
@@ -173,14 +183,22 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     marginLeft: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: colors.border,
     width: 48,
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: colors.text.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   filterButtonText: {
     fontSize: 18,
