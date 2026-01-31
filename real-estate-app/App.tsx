@@ -1,12 +1,3 @@
-import React from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
-import { AuthProvider, AppStateProvider, useAppState, useAuthContext } from './src/contexts';
-import { AppNavigator, navigationRef } from './src/navigation';
-import { colors, typography, spacing } from './src/theme';
-
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';

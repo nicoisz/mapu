@@ -1,11 +1,12 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme';
 import { HomeScreen } from '../screens/home';
 import { SearchDemoScreen } from '../screens/SearchDemoScreen';
 import { MapDemoScreen } from '../screens/MapDemoScreen';
-import { DashboardScreen } from '../screens/dashboard';
+import { DashboardScreen, AddPropertyScreen } from '../screens/dashboard';
 import { DemoScreen } from '../screens/DemoScreen';
 import { PropertyDetailNavigationWrapper } from '../screens/property/PropertyDetailNavigationWrapper';
 import { OnboardingFlow } from '../screens/onboarding/OnboardingFlow';
@@ -47,7 +48,7 @@ const MainTabNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           title: 'Inicio',
-          tabBarIcon: () => '🏠',
+          tabBarIcon: () => <Text>🏠</Text>,
           headerShown: false, // Hide header since HomeScreen has its own search bar
         }}
       />
@@ -56,7 +57,7 @@ const MainTabNavigator: React.FC = () => {
         component={SearchDemoScreen}
         options={{
           title: 'Buscar',
-          tabBarIcon: () => '🔍',
+          tabBarIcon: () => <Text>🔍</Text>,
         }}
       />
       <Tab.Screen
@@ -64,7 +65,7 @@ const MainTabNavigator: React.FC = () => {
         component={MapDemoScreen}
         options={{
           title: 'Mapa',
-          tabBarIcon: () => '🗺️',
+          tabBarIcon: () => <Text>🗺️</Text>,
         }}
       />
       <Tab.Screen
@@ -72,7 +73,7 @@ const MainTabNavigator: React.FC = () => {
         component={DashboardScreen}
         options={{
           title: 'Dashboard',
-          tabBarIcon: () => '📊',
+          tabBarIcon: () => <Text>📊</Text>,
         }}
       />
       <Tab.Screen
@@ -80,7 +81,7 @@ const MainTabNavigator: React.FC = () => {
         component={DemoScreen}
         options={{
           title: 'Perfil',
-          tabBarIcon: () => '👤',
+          tabBarIcon: () => <Text>👤</Text>,
         }}
       />
     </Tab.Navigator>
@@ -123,6 +124,22 @@ export const AppNavigator: React.FC<AppNavigatorProps> = ({ initialRouteName }) 
         options={{
           headerShown: true,
           title: 'Detalle de Propiedad',
+          headerStyle: {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
+          headerTintColor: colors.primary,
+          headerTitleStyle: {
+            fontWeight: '600',
+          },
+        }}
+      />
+      <RootStack.Screen
+        name={SCREEN_NAMES.ADD_PROPERTY}
+        component={AddPropertyScreen}
+        options={{
+          headerShown: true,
+          title: 'Agregar Propiedad',
           headerStyle: {
             backgroundColor: colors.background,
             borderBottomColor: colors.border,

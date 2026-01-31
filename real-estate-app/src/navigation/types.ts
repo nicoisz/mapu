@@ -6,6 +6,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   PropertyDetail: { propertyId: string };
+  AddProperty: undefined;
 };
 
 export type MainTabParamList = {
@@ -35,6 +36,7 @@ export const SCREEN_NAMES = {
   AUTH: 'Auth' as const,
   MAIN: 'Main' as const,
   PROPERTY_DETAIL: 'PropertyDetail' as const,
+  ADD_PROPERTY: 'AddProperty' as const,
   
   // Main Tab
   HOME: 'Home' as const,
