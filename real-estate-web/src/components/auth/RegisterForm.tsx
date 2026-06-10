@@ -22,11 +22,15 @@ export function RegisterForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [userType, setUserType] = useState<UserType>(UserType.INDIVIDUAL)
+  const [info, setInfo] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const result = await register({ name, email, password, userType })
-    if (result.success) router.push('/')
+    if (!result.success) return
+    // With email confirmation enabled there is no session yet: show the notice.
+    if (result.info && !result.user) setInfo(result.info)
+    else router.push('/')
   }
 
   return (
@@ -39,6 +43,9 @@ export function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-error/10 border border-error/40 rounded-lg p-3 text-error text-sm">{error}</div>
+        )}
+        {info && (
+          <div className="bg-primary/10 border border-primary/40 rounded-lg p-3 text-on-surface text-sm">{info}</div>
         )}
 
         <Input

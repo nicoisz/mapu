@@ -4,13 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { mockProperties } from '@/data'
+import { propertyService } from '@/services/propertyService'
 import { formatPriceShort } from '@/lib/utils'
 import { PropertyOperation } from '@/types/enums'
+import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
-
-const FEATURED = mockProperties.filter(p => p.listing.isFeatured || p.listing.isPremium).slice(0, 3)
 
 const HERO_IMAGES = [
   { src: '/1.jpg', alt: 'Propiedad de lujo en Chile' },
@@ -20,12 +19,9 @@ const HERO_IMAGES = [
 
 function HeroCarousel() {
   const [current, setCurrent] = useState(0)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Trigger Ken Burns on first slide after mount
-    setMounted(true)
-    const id = setInterval(() => setCurrent(c => (c + 1) % HERO_IMAGES.length), 5500)
+    const id = setInterval(() => setCurrent(c => (c + 1) % HERO_IMAGES.length), 6000)
     return () => clearInterval(id)
   }, [])
 
@@ -47,12 +43,7 @@ function HeroCarousel() {
               src={img.src}
               alt={img.alt}
               fill
-              style={{
-                objectFit: 'cover',
-                objectPosition: 'center 30%',
-                transform: active && mounted ? 'scale(1.06)' : 'scale(1)',
-                transition: active && mounted ? 'transform 8000ms linear' : 'none',
-              }}
+              style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
               priority={i === 0}
               sizes="100vw"
             />
@@ -60,16 +51,13 @@ function HeroCarousel() {
         )
       })}
 
-      {/* Single theme-independent scrim: dark through the middle (keeps the
-          centered headline readable over any photo) while the bottom fades to
-          the page background so the hero blends into the next section. */}
-      <div
-        className="absolute inset-0 bg-gradient-to-t from-background via-black/35 to-black/45"
-        style={{ zIndex: 2 }}
-      />
+      {/* Cinematic scrim: dark left-to-right for headline contrast, fading to
+          the page background at the bottom so the hero blends into the page. */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/20" style={{ zIndex: 2 }} />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30" style={{ zIndex: 2 }} />
 
-      {/* Dot indicators */}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3" style={{ zIndex: 20 }}>
+      {/* Vertical dot indicators on the right edge */}
+      <div className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 flex-col gap-3" style={{ zIndex: 20 }}>
         {HERO_IMAGES.map((_, i) => (
           <button
             key={i}
@@ -77,14 +65,36 @@ function HeroCarousel() {
             aria-label={`Imagen ${i + 1}`}
             className={cn(
               'rounded-full transition-all duration-500',
-              i === current
-                ? 'bg-primary w-8 h-2'
-                : 'bg-white/30 w-2 h-2 hover:bg-white/60'
+              i === current ? 'bg-[#FF4D1C] h-8 w-2' : 'bg-white/30 h-2 w-2 hover:bg-white/60'
             )}
           />
         ))}
       </div>
     </>
+  )
+}
+
+/** Rotating circular "Explorar" badge (signature element, bottom-right). */
+function RotatingBadge() {
+  return (
+    <Link
+      href="/buscar"
+      aria-label="Explorar propiedades"
+      className="hero-reveal hidden lg:flex absolute bottom-14 right-14 w-28 h-28 items-center justify-center group"
+      style={{ zIndex: 10 }}
+    >
+      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full animate-[spin_14s_linear_infinite] group-hover:[animation-play-state:paused]">
+        <defs>
+          <path id="badge-circle" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
+        </defs>
+        <text className="fill-white/80" style={{ fontSize: 8.2, letterSpacing: 2.2, fontWeight: 700 }}>
+          <textPath href="#badge-circle">EXPLORAR · PROPIEDADES · EXPLORAR ·</textPath>
+        </text>
+      </svg>
+      <span className="w-12 h-12 rounded-full border border-white/40 flex items-center justify-center text-white transition-all duration-300 group-hover:bg-[#FF4D1C] group-hover:border-[#FF4D1C] group-hover:scale-110">
+        <span className="material-symbols-outlined text-xl">arrow_outward</span>
+      </span>
+    </Link>
   )
 }
 
@@ -113,14 +123,13 @@ const STEPS = [
   },
 ]
 
-function FavBtn({ propertyId }: { propertyId: string }) {
+function FavBtn({ property }: { property: Property }) {
   const { isFavorite, toggle } = useFavoritesContext()
-  const fav = isFavorite(propertyId)
-  const property = mockProperties.find(p => p.id === propertyId)
+  const fav = isFavorite(property.id)
 
   return (
     <button
-      onClick={e => { e.preventDefault(); e.stopPropagation(); if (property) toggle(property) }}
+      onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(property) }}
       className={cn(
         'absolute top-4 right-4 p-2 bg-surface-container-lowest/50 backdrop-blur-md rounded-full transition-colors',
         fav ? 'text-error' : 'text-on-surface hover:text-error'
@@ -141,7 +150,16 @@ export default function LandingPage() {
   const router = useRouter()
   const [searchValue, setSearchValue] = useState('')
   const [propertyType, setPropertyType] = useState('')
+  const [featured, setFeatured] = useState<Property[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let active = true
+    propertyService.getFeatured(3)
+      .then(props => { if (active) setFeatured(props) })
+      .catch(() => {})
+    return () => { active = false }
+  }, [])
 
   function handleSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -166,9 +184,12 @@ export default function LandingPage() {
       // on unmount strips ALL the inline styles GSAP applied, so returning to
       // the landing never leaves text stuck at low opacity.
       ctx = gsap.context(() => {
-        gsap.from('.hero-reveal', {
-          y: 50, opacity: 0, duration: 1, stagger: 0.2, ease: 'power3.out',
-        })
+        // Hero entrance: lines/sub/search rise in sequence, the accent slash
+        // sweeps in once its line is visible.
+        const heroTl = gsap.timeline()
+        heroTl
+          .from('.hero-reveal', { y: 50, opacity: 0, duration: 1, stagger: 0.15, ease: 'power3.out' })
+          .from('.hero-bar', { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' }, 0.35)
 
         gsap.from('.stat-item', {
           scrollTrigger: { trigger: '.stats-trigger', start: 'top 80%' },
@@ -218,51 +239,65 @@ export default function LandingPage() {
     <div ref={scrollRef} className="overflow-y-auto h-full selection:bg-primary selection:text-on-primary">
 
       {/* ─── HERO ─────────────────────────────────────────── */}
-      <section className="relative h-[600px] md:h-[870px] flex items-center justify-center overflow-hidden -mt-16">
+      <section className="relative h-[92vh] min-h-[560px] flex items-center overflow-hidden -mt-16">
         <HeroCarousel />
+        <RotatingBadge />
 
-        <div className="relative w-full max-w-[1440px] px-6 lg:px-20 text-center space-y-8" style={{ zIndex: 10 }}>
-          <h1 className="hero-reveal font-headline text-4xl md:text-6xl lg:text-7xl font-bold text-[#FBF7F2] max-w-4xl mx-auto drop-shadow-2xl leading-[1.05]">
-            Encuentra tu propiedad ideal en Chile
+        <div className="relative w-full max-w-[1440px] mx-auto px-6 lg:px-20" style={{ zIndex: 10 }}>
+          {/* Headline: two offset lines, accent slash behind the first */}
+          <h1 className="font-headline font-extrabold uppercase text-white leading-[0.95] tracking-tight drop-shadow-2xl">
+            <span className="hero-reveal relative block text-5xl sm:text-7xl lg:text-8xl w-fit">
+              <span className="hero-bar absolute -left-6 lg:-left-20 right-[-0.5em] top-1/2 -translate-y-1/2 h-[0.32em] bg-[#FF4D1C]" aria-hidden />
+              <span className="relative">Encuentra</span>
+            </span>
+            <span className="hero-reveal block text-5xl sm:text-7xl lg:text-8xl pl-[0.8em]">tu lugar</span>
           </h1>
-          <p className="hero-reveal text-[#FBF7F2]/85 text-lg md:text-xl max-w-2xl mx-auto drop-shadow-lg -mt-2">
-            Hogares con alma, en las mejores zonas del país.
+
+          <p className="hero-reveal mt-6 text-white/85 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] max-w-md drop-shadow-lg">
+            Propiedades disponibles, personas verificadas
           </p>
 
-          {/* Glass search bar */}
-          <form className="hero-reveal max-w-4xl mx-auto glass-panel p-4 rounded-xl" onSubmit={handleSearch}>
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="flex-1 w-full relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline select-none">search</span>
-                <input
-                  type="text"
-                  value={searchValue}
-                  onChange={e => setSearchValue(e.target.value)}
-                  placeholder="Ciudad, barrio o región..."
-                  className="w-full pl-12 pr-4 py-4 bg-surface-container-low border border-outline-variant/30 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-on-surface placeholder:text-outline"
-                />
-              </div>
-              <div className="flex gap-4 w-full md:w-auto">
-                <select
-                  value={propertyType}
-                  onChange={e => setPropertyType(e.target.value)}
-                  className="flex-1 md:w-40 py-4 px-4 bg-surface-container-low border border-outline-variant/30 rounded-lg text-on-surface focus:outline-none"
-                >
-                  <option value="">Tipo</option>
-                  <option value="casa">Casa</option>
-                  <option value="departamento">Departamento</option>
-                  <option value="terreno">Terreno</option>
-                  <option value="oficina">Oficina</option>
-                </select>
-                <button
-                  type="submit"
-                  className="bg-primary text-on-primary font-bold px-8 md:px-10 py-4 rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 shrink-0"
-                >
-                  <span className="material-symbols-outlined">filter_list</span>
-                  Buscar
-                </button>
-              </div>
+          {/* Explore more */}
+          <Link href="/buscar" className="hero-reveal group mt-8 inline-flex items-center gap-4 text-white w-fit">
+            <span className="text-sm font-semibold tracking-wide">Explorar más</span>
+            <span className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center transition-all duration-300 group-hover:bg-[#FF4D1C] group-hover:border-[#FF4D1C] group-hover:translate-x-1.5">
+              <span className="material-symbols-outlined text-lg">arrow_forward</span>
+            </span>
+          </Link>
+
+          {/* Search pill — sits low, anchored left like the reference */}
+          <form
+            onSubmit={handleSearch}
+            className="hero-reveal mt-12 lg:mt-20 w-full max-w-2xl rounded-2xl sm:rounded-full bg-black/55 backdrop-blur-xl border border-white/10 p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shadow-elevated"
+          >
+            <div className="flex-1 flex items-center gap-3 pl-4 min-w-0">
+              <span className="material-symbols-outlined text-white/50 select-none">search</span>
+              <input
+                type="text"
+                value={searchValue}
+                onChange={e => setSearchValue(e.target.value)}
+                placeholder="Ciudad, barrio o región..."
+                className="w-full py-3 bg-transparent text-white placeholder:text-white/45 focus:outline-none text-sm"
+              />
             </div>
+            <div className="hidden sm:block w-px h-7 bg-white/15 shrink-0" />
+            <select
+              value={propertyType}
+              onChange={e => setPropertyType(e.target.value)}
+              className="sm:w-44 py-3 px-4 bg-transparent text-white/85 text-sm focus:outline-none cursor-pointer [&>option]:text-black"
+            >
+              <option value="">Tipo de propiedad</option>
+              <option value="casa">Casa</option>
+              <option value="departamento">Departamento</option>
+              <option value="terreno">Terreno</option>
+              <option value="oficina">Oficina</option>
+            </select>
+            <button
+              type="submit"
+              className="bg-[#FF4D1C] text-white font-bold px-8 py-3 rounded-xl sm:rounded-full hover:brightness-110 hover:scale-[0.98] transition-all text-sm shrink-0"
+            >
+              Buscar
+            </button>
           </form>
         </div>
       </section>
@@ -292,7 +327,7 @@ export default function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {FEATURED.map(property => {
+          {featured.map(property => {
             const mainImg = property.media.images.find(i => i.isMain) ?? property.media.images[0]
             const price = property.operation === PropertyOperation.RENT
               ? (property.pricing.monthlyRent ?? property.pricing.price)
@@ -313,7 +348,7 @@ export default function LandingPage() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     )}
-                    <FavBtn propertyId={property.id} />
+                    <FavBtn property={property} />
                   </div>
 
                   <div className="p-6 space-y-4">

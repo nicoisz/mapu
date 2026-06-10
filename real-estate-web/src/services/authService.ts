@@ -1,126 +1,199 @@
-import { mockUsers, MOCK_CREDENTIALS } from '@/data'
+import { User as SupabaseUser } from '@supabase/supabase-js'
 import { AuthResult } from '@/types/results'
 import { User } from '@/types/user'
 import { SubscriptionType, UserType, ContactMethod } from '@/types/enums'
-import { STORAGE_KEYS } from '@/constants'
+import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
+import { getSupabase } from '@/lib/supabase'
+import { propertyService } from '@/services/propertyService'
 
-function getStorage() {
-  if (typeof window === 'undefined') return null
-  return window.localStorage
+/** Row in public.profiles — schema shared with the mobile app. */
+interface ProfileRow {
+  id: string
+  email: string
+  name: string
+  avatar_url: string | null
+  user_type: string
+  phone: string | null
+  whatsapp: string | null
+  company_name: string | null
+  company_logo: string | null
+  license_number: string | null
+  subscription_type: string
+  subscription_started_at: string | null
+  subscription_expires_at: string | null
+  trial_started_at: string | null
+  trial_expires_at: string | null
+  total_listings: number | null
+  total_views: number | null
+  rating: number | null
+  review_count: number | null
+  preferred_language: string | null
+  preferred_currency: string | null
+  is_email_verified: boolean | null
+  is_phone_verified: boolean | null
+  is_identity_verified: boolean | null
+  created_at: string
+  updated_at: string
 }
 
-function generateToken(userId: string): string {
-  return btoa(JSON.stringify({ userId, exp: Date.now() + 86_400_000, iat: Date.now() }))
+/** Maps common Supabase auth errors to user-facing Spanish messages. */
+function translateError(message: string): string {
+  const m = message.toLowerCase()
+  if (m.includes('invalid login credentials')) return 'Credenciales incorrectas'
+  if (m.includes('email not confirmed')) return 'Debes confirmar tu correo antes de iniciar sesión'
+  if (m.includes('already registered')) return 'Ya existe una cuenta con ese email'
+  if (m.includes('password should be at least')) return 'Contraseña demasiado corta (mínimo 6 caracteres)'
+  if (m.includes('rate limit')) return 'Demasiados intentos, espera un momento'
+  if (m.includes('fetch')) return 'No se pudo conectar con el servidor'
+  return message
 }
 
-function validateEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+/** Loads the profile row, creating it if missing (no DB trigger guaranteed). */
+async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow | null> {
+  const supabase = getSupabase()
+  const { data: existing } = await supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle<ProfileRow>()
+  if (existing) return existing
+
+  const fallbackName = (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
+  const { data: created } = await supabase
+    .from('profiles')
+    .insert({
+      id: authUser.id,
+      email: authUser.email ?? '',
+      name: fallbackName,
+      user_type: (authUser.user_metadata?.user_type as string) ?? 'individual',
+    })
+    .select('*')
+    .maybeSingle<ProfileRow>()
+  return created
+}
+
+/** Builds the app User from the Supabase session user + profile + listing counts. */
+async function buildUser(authUser: SupabaseUser): Promise<User> {
+  const [profile, activeListings] = await Promise.all([
+    loadOrCreateProfile(authUser),
+    propertyService.countActiveListings(authUser.id),
+  ])
+
+  const name = profile?.name || (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
+  // The mobile schema grants a 10-day trial on signup; an active trial counts as premium.
+  const trialActive = !!profile?.trial_expires_at && new Date(profile.trial_expires_at) > new Date()
+  const isPremium = profile?.subscription_type === 'premium' || trialActive
+  const plan = isPremium ? SubscriptionType.PREMIUM : SubscriptionType.FREE
+
+  return {
+    id: authUser.id,
+    email: profile?.email || authUser.email || '',
+    name,
+    avatar: profile?.avatar_url ?? undefined,
+    userType: (profile?.user_type as UserType) ?? UserType.INDIVIDUAL,
+    companyName: profile?.company_name ?? undefined,
+    companyLogo: profile?.company_logo ?? undefined,
+    licenseNumber: profile?.license_number ?? undefined,
+    subscription: {
+      type: plan,
+      startDate: profile?.subscription_started_at ?? profile?.trial_started_at ?? authUser.created_at,
+      expiresAt: profile?.subscription_expires_at ?? (trialActive ? profile?.trial_expires_at ?? undefined : undefined),
+      isActive: true,
+      features: isPremium ? ['unlimited_listings'] : ['basic_listings'],
+      listingsLimit: isPremium ? undefined : FREE_PLAN_LISTINGS_LIMIT,
+      remainingListings: isPremium ? undefined : Math.max(0, FREE_PLAN_LISTINGS_LIMIT - activeListings),
+    },
+    preferences: {
+      language: (profile?.preferred_language as 'es' | 'en') ?? 'es',
+      currency: (profile?.preferred_currency as 'CLP' | 'USD') ?? 'CLP',
+      notifications: { email: true, push: false, sms: false, newProperties: false, priceChanges: false, messages: true },
+      searchRadius: 5,
+      mapType: 'standard',
+    },
+    stats: {
+      totalListings: profile?.total_listings ?? activeListings,
+      activeListings,
+      soldProperties: 0,
+      rentedProperties: 0,
+      totalViews: profile?.total_views ?? 0,
+      totalContacts: 0,
+      rating: profile?.rating ?? undefined,
+      reviewCount: profile?.review_count ?? undefined,
+    },
+    properties: [],
+    savedProperties: [],
+    recentlyViewed: [],
+    contactInfo: {
+      id: authUser.id,
+      name,
+      email: profile?.email || authUser.email,
+      phone: profile?.phone ?? undefined,
+      whatsapp: profile?.whatsapp ?? undefined,
+      preferredMethod: ContactMethod.EMAIL,
+      isVerified: profile?.is_email_verified ?? !!authUser.email_confirmed_at,
+    },
+    createdAt: profile?.created_at ?? authUser.created_at,
+    updatedAt: profile?.updated_at ?? authUser.created_at,
+    isEmailVerified: profile?.is_email_verified ?? !!authUser.email_confirmed_at,
+    isPhoneVerified: profile?.is_phone_verified ?? false,
+    isIdentityVerified: profile?.is_identity_verified ?? false,
+  }
 }
 
 export const authService = {
-  login(email: string, password: string): AuthResult {
-    if (!email || !validateEmail(email)) return { success: false, error: 'Email inválido' }
-    if (!password || password.length < 6) return { success: false, error: 'Contraseña inválida (mínimo 6 caracteres)' }
+  buildUser,
 
-    const cred = MOCK_CREDENTIALS[email.toLowerCase()]
-    if (!cred || cred.password !== password) return { success: false, error: 'Credenciales incorrectas' }
-
-    const user = mockUsers.find(u => u.id === cred.userId)
-    if (!user) return { success: false, error: 'Usuario no encontrado' }
-
-    const token = generateToken(user.id)
-    const storage = getStorage()
-    if (storage) {
-      storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
-      storage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
-    }
-
-    return { success: true, user, token }
+  async login(email: string, password: string): Promise<AuthResult> {
+    const { data, error } = await getSupabase().auth.signInWithPassword({ email, password })
+    if (error) return { success: false, error: translateError(error.message) }
+    const user = await buildUser(data.user)
+    return { success: true, user, token: data.session.access_token }
   },
 
-  register(data: { name: string; email: string; password: string; userType?: UserType }): AuthResult {
+  async register(data: { name: string; email: string; password: string; userType?: UserType }): Promise<AuthResult> {
     if (!data.name || data.name.length < 2) return { success: false, error: 'Nombre demasiado corto (mínimo 2 caracteres)' }
-    if (!data.email || !validateEmail(data.email)) return { success: false, error: 'Email inválido' }
-    if (!data.password || data.password.length < 6) return { success: false, error: 'Contraseña demasiado corta (mínimo 6 caracteres)' }
-    if (MOCK_CREDENTIALS[data.email.toLowerCase()]) return { success: false, error: 'Ya existe una cuenta con ese email' }
+    const { data: res, error } = await getSupabase().auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: { data: { name: data.name, user_type: data.userType ?? UserType.INDIVIDUAL } },
+    })
+    if (error) return { success: false, error: translateError(error.message) }
 
-    const now = new Date().toISOString()
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      email: data.email.toLowerCase(),
-      name: data.name,
-      userType: data.userType ?? UserType.INDIVIDUAL,
-      subscription: {
-        type: SubscriptionType.FREE,
-        startDate: now,
-        isActive: true,
-        features: ['basic_listings'],
-        listingsLimit: 3,
-        remainingListings: 3,
-      },
-      preferences: {
-        language: 'es',
-        currency: 'CLP',
-        notifications: { email: true, push: false, sms: false, newProperties: false, priceChanges: false, messages: true },
-        searchRadius: 5,
-        mapType: 'standard',
-      },
-      stats: { totalListings: 0, activeListings: 0, soldProperties: 0, rentedProperties: 0, totalViews: 0, totalContacts: 0 },
-      properties: [],
-      savedProperties: [],
-      recentlyViewed: [],
-      contactInfo: { id: `c-${Date.now()}`, name: data.name, email: data.email, preferredMethod: ContactMethod.EMAIL, isVerified: false },
-      createdAt: now,
-      updatedAt: now,
-      isEmailVerified: false,
-      isPhoneVerified: false,
-      isIdentityVerified: false,
+    // With email confirmation enabled there is no session yet.
+    if (!res.session || !res.user) {
+      return { success: true, info: 'Te enviamos un correo de confirmación. Revisa tu bandeja para activar la cuenta.' }
     }
-
-    const token = generateToken(newUser.id)
-    const storage = getStorage()
-    if (storage) {
-      storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
-      storage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(newUser))
-    }
-
-    return { success: true, user: newUser, token }
+    const user = await buildUser(res.user)
+    return { success: true, user, token: res.session.access_token }
   },
 
-  loginWithSocial(provider: 'google' | 'apple' | 'facebook'): AuthResult {
-    const email = `user_${provider}_${Date.now()}@${provider}.com`
-    const name = `Usuario ${provider.charAt(0).toUpperCase() + provider.slice(1)}`
-    return authService.register({ name, email, password: `social_${Date.now()}` })
+  async loginWithSocial(provider: 'google' | 'apple' | 'facebook'): Promise<AuthResult> {
+    const { error } = await getSupabase().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+    })
+    if (error) return { success: false, error: `No se pudo iniciar con ${provider}: ${translateError(error.message)}` }
+    // The browser redirects to the provider; the session arrives on return.
+    return { success: true, info: 'Redirigiendo…' }
   },
 
-  logout(): void {
-    const storage = getStorage()
-    if (storage) {
-      storage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
-      storage.removeItem(STORAGE_KEYS.CURRENT_USER)
-    }
+  async logout(): Promise<void> {
+    await getSupabase().auth.signOut()
   },
 
-  getCurrentUser(): User | null {
-    const storage = getStorage()
-    if (!storage) return null
-    const raw = storage.getItem(STORAGE_KEYS.CURRENT_USER)
-    if (!raw) return null
-    try { return JSON.parse(raw) as User } catch { return null }
+  async getCurrentUser(): Promise<User | null> {
+    const { data } = await getSupabase().auth.getSession()
+    if (!data.session?.user) return null
+    return buildUser(data.session.user)
   },
 
-  isAuthenticated(): boolean {
-    const storage = getStorage()
-    if (!storage) return false
-    return !!storage.getItem(STORAGE_KEYS.AUTH_TOKEN)
-  },
+  async updateProfile(userId: string, updates: Partial<User>): Promise<AuthResult> {
+    const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    if (updates.name !== undefined) row.name = updates.name
+    if (updates.avatar !== undefined) row.avatar_url = updates.avatar
+    if (updates.contactInfo?.phone !== undefined) row.phone = updates.contactInfo.phone
+    if (updates.contactInfo?.whatsapp !== undefined) row.whatsapp = updates.contactInfo.whatsapp
 
-  updateProfile(userId: string, updates: Partial<User>): AuthResult {
-    const current = authService.getCurrentUser()
-    if (!current || current.id !== userId) return { success: false, error: 'No autenticado' }
-    const updated = { ...current, ...updates, updatedAt: new Date().toISOString() }
-    const storage = getStorage()
-    if (storage) storage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updated))
-    return { success: true, user: updated }
+    const { error } = await getSupabase().from('profiles').update(row).eq('id', userId)
+    if (error) return { success: false, error: translateError(error.message) }
+
+    const user = await authService.getCurrentUser()
+    return user ? { success: true, user } : { success: false, error: 'No autenticado' }
   },
 }

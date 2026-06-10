@@ -1,9 +1,10 @@
 'use client'
 
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { gsap } from 'gsap'
 import { Building2, List, Map as MapIcon } from 'lucide-react'
 import DynamicMapView from '@/components/map/DynamicMapView'
-import { PropertyCard } from '@/components/property/PropertyCard'
+import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
 import { SearchBar } from '@/components/search/SearchBar'
 import { FilterPanel } from '@/components/search/FilterPanel'
 import { useSearch } from '@/hooks/useSearch'
@@ -21,11 +22,52 @@ function SearchContent() {
   const [selected, setSelected] = useState<Property | null>(null)
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
+  const listColRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  // Pop the floating detail card out, then deselect (which re-expands the list).
+  const closeDetail = useCallback(() => {
+    const el = cardRef.current
+    if (!el || prefersReducedMotion) { setSelected(null); return }
+    gsap.to(el, { x: 24, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => setSelected(null) })
+  }, [prefersReducedMotion])
+
+  // Collapse the list sidebar (giving the map room) while a property is open.
+  useLayoutEffect(() => {
+    const el = listColRef.current
+    if (!el) return
+    if (viewMode === 'list') { gsap.set(el, { clearProps: 'width,opacity' }); return }
+    const collapsed = !!selected
+    const vars = { width: collapsed ? 0 : 380, opacity: collapsed ? 0 : 1 }
+    if (prefersReducedMotion) gsap.set(el, vars)
+    else gsap.to(el, { ...vars, duration: 0.45, ease: 'power3.inOut' })
+  }, [selected, viewMode, prefersReducedMotion])
+
+  // Pop the floating detail card in when a property is picked.
+  useLayoutEffect(() => {
+    const el = cardRef.current
+    if (!selected || !el || prefersReducedMotion) return
+    gsap.fromTo(el, { x: 24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: 'power3.out' })
+  }, [selected?.id, prefersReducedMotion])
 
   const {
-    query, filters, results, suggestions, activeFilterCount,
+    query, filters, results, suggestions, activeFilterCount, sort, setSort, isSearching, searchError,
     handleQueryChange, handleSearch, updateFilters, clearFilters, setSuggestions,
   } = useSearch()
+
+  // Stagger the cards in when a new result set arrives (not on map pans).
+  useLayoutEffect(() => {
+    const col = listColRef.current
+    if (!col || prefersReducedMotion || results.length === 0) return
+    gsap.fromTo(
+      col.querySelectorAll('.prop-stagger'),
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.45, stagger: 0.05, ease: 'power3.out', clearProps: 'transform,opacity' }
+    )
+  }, [results, prefersReducedMotion])
 
   // List shows only the properties inside the area the map is currently showing.
   const visible = useMemo(
@@ -71,9 +113,25 @@ function SearchContent() {
           propiedad{visible.length !== 1 ? 'es' : ''} en esta zona
           {query && <span className="text-on-surface-variant"> · &quot;{query}&quot;</span>}
         </span>
-        {activeFilterCount > 0 && (
-          <button onClick={clearFilters} className="ml-auto text-accent hover:underline">Limpiar filtros</button>
-        )}
+        {searchError && <span className="text-error">· {searchError}</span>}
+        <div className="ml-auto flex items-center gap-3">
+          {activeFilterCount > 0 && (
+            <button onClick={clearFilters} className="text-accent hover:underline">Limpiar filtros</button>
+          )}
+          <label className="flex items-center gap-1.5">
+            <span className="hidden sm:inline">Ordenar:</span>
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value as typeof sort)}
+              className="bg-surface-container-highest border border-outline-variant/40 rounded-md px-1.5 py-1 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="recent">Más recientes</option>
+              <option value="price_asc">Menor precio</option>
+              <option value="price_desc">Mayor precio</option>
+              <option value="area_desc">Mayor superficie</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       {/* Map + list */}
@@ -83,14 +141,16 @@ function SearchContent() {
             properties={results}
             selectedId={selected?.id}
             onPropertySelect={setSelected}
+            onMapClick={closeDetail}
             onBoundsChange={setBounds}
           />
 
+          {/* Floating detail card over the map (the list collapses behind it). */}
           {selected && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-72 z-20">
-              <PropertyCard property={selected} isSelected compact />
+            <div ref={cardRef} className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] overflow-y-auto z-20">
+              <PropertyCard property={selected} isSelected />
               <button
-                onClick={() => setSelected(null)}
+                onClick={closeDetail}
                 className="absolute -top-2 -right-2 bg-surface-container-highest rounded-full w-5 h-5 flex items-center justify-center shadow-soft border border-outline-variant/40 text-on-surface-variant hover:text-on-surface text-sm leading-none"
               >
                 ×
@@ -99,25 +159,37 @@ function SearchContent() {
           )}
         </div>
 
-        <div className={cn('bg-surface-container-low border-l border-outline-variant/40 overflow-y-auto', viewMode === 'list' ? 'flex-1' : 'hidden md:block w-[380px]')}>
-          {visible.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center text-on-surface-variant">
-              <Building2 size={40} className="mb-3 opacity-50" />
-              <p className="font-medium text-on-surface">Sin propiedades en esta zona</p>
-              <p className="text-sm mt-1">Mueve el mapa o ajusta los filtros</p>
-            </div>
-          ) : (
-            <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid sm:grid-cols-2 lg:grid-cols-3' : 'flex flex-col')}>
-              {visible.map(property => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  isSelected={selected?.id === property.id}
-                  onClick={() => setSelected(property)}
-                />
-              ))}
-            </div>
-          )}
+        {/* Right column: the property list. Collapses (width → 0) while a
+            property is selected so the map gets the full width. */}
+        <div
+          ref={listColRef}
+          className={cn('relative bg-surface-container-low border-l border-outline-variant/40 overflow-hidden shrink-0', viewMode === 'list' ? 'flex-1' : 'hidden md:block w-[380px]')}
+        >
+          <div className={cn('h-full overflow-y-auto', viewMode === 'list' ? 'w-full' : 'w-[380px]')}>
+            {isSearching && visible.length === 0 ? (
+              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid sm:grid-cols-2 lg:grid-cols-3' : 'flex flex-col')}>
+                {Array.from({ length: 4 }, (_, i) => <PropertyCardSkeleton key={i} />)}
+              </div>
+            ) : visible.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center text-on-surface-variant">
+                <Building2 size={40} className="mb-3 opacity-50" />
+                <p className="font-medium text-on-surface">Sin propiedades en esta zona</p>
+                <p className="text-sm mt-1">Mueve el mapa o ajusta los filtros</p>
+              </div>
+            ) : (
+              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid sm:grid-cols-2 lg:grid-cols-3' : 'flex flex-col')}>
+                {visible.map(property => (
+                  <div key={property.id} className="prop-stagger">
+                    <PropertyCard
+                      property={property}
+                      isSelected={selected?.id === property.id}
+                      onClick={() => setSelected(property)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -100,14 +100,6 @@ export function LoginForm() {
         ¿No tienes cuenta?{' '}
         <Link href="/register" className="text-primary font-medium hover:underline">Regístrate gratis</Link>
       </p>
-
-      <div className="mt-4 p-3 bg-surface-container rounded-lg border border-outline-variant/40">
-        <p className="text-xs text-on-surface-variant font-medium mb-1">Cuentas de prueba:</p>
-        <div className="text-xs text-on-surface-variant space-y-0.5">
-          <p>test@mapu.cl / test123</p>
-          <p>carlos@inmobiliaria.cl / carlos123</p>
-        </div>
-      </div>
     </div>
   )
 }

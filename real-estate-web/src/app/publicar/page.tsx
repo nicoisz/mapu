@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, ImagePlus, Lock } from 'lucide-react'
+import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
+import { z } from 'zod'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
+import { uploadPropertyImages, validateImageFile } from '@/services/storageService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
@@ -16,6 +18,27 @@ import type { Property } from '@/types/property'
 
 const TYPES = [PropertyType.HOUSE, PropertyType.APARTMENT, PropertyType.LAND, PropertyType.OFFICE, PropertyType.COMMERCIAL, PropertyType.WAREHOUSE]
 const REGIONS = Object.values(ChileanRegion)
+const MAX_IMAGES = 10
+
+const publishSchema = z.object({
+  title: z.string().trim().min(8, 'El título debe tener al menos 8 caracteres'),
+  description: z.string().trim().max(2000, 'Máximo 2000 caracteres'),
+  price: z.coerce.number().positive('Ingresa un precio mayor a 0'),
+  area: z.coerce.number().positive('Ingresa la superficie en m²'),
+  street: z.string().trim(),
+  commune: z.string().trim().min(2, 'Ingresa la comuna'),
+  city: z.string().trim(),
+  bedrooms: z.coerce.number().int().min(0).optional(),
+  bathrooms: z.coerce.number().int().min(0).optional(),
+  parkingSpots: z.coerce.number().int().min(0).optional(),
+})
+
+type FieldErrors = Partial<Record<keyof z.infer<typeof publishSchema> | 'images', string>>
+
+interface PendingImage {
+  file: File
+  previewUrl: string
+}
 
 function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
@@ -30,20 +53,28 @@ function Section({ title, desc, children }: { title: string; desc?: string; chil
 
 const labelCls = 'block text-sm font-medium text-on-surface-variant mb-1.5'
 const selectCls = 'w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary'
+const errorCls = 'text-error text-xs mt-1'
 
 export default function PublicarPage() {
   const router = useRouter()
-  const { user, isAuthenticated, hasRemainingListings } = useAuthContext()
+  const { user, isAuthenticated, hasRemainingListings, refreshUser } = useAuthContext()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [operation, setOperation] = useState<PropertyOperation>(PropertyOperation.SALE)
   const [type, setType] = useState<PropertyType>(PropertyType.HOUSE)
   const [form, setForm] = useState({
     title: '', description: '', price: '', street: '', commune: '', city: '',
     region: ChileanRegion.METROPOLITANA, area: '', bedrooms: '', bathrooms: '',
-    parkingSpots: '', images: '', negotiable: false,
+    parkingSpots: '', negotiable: false,
   })
+  const [images, setImages] = useState<PendingImage[]>([])
+  const [errors, setErrors] = useState<FieldErrors>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const set = (k: keyof typeof form, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
+
+  // Object URLs leak unless revoked.
+  useEffect(() => () => { images.forEach(img => URL.revokeObjectURL(img.previewUrl)) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isAuthenticated || !user) {
     return (
@@ -58,62 +89,102 @@ export default function PublicarPage() {
 
   const canPublish = hasRemainingListings()
 
-  function handleSubmit(e: React.FormEvent) {
+  function addFiles(list: FileList | null) {
+    if (!list) return
+    const errorsFound: string[] = []
+    const accepted: PendingImage[] = []
+    Array.from(list).forEach(file => {
+      const problem = validateImageFile(file)
+      if (problem) errorsFound.push(problem)
+      else accepted.push({ file, previewUrl: URL.createObjectURL(file) })
+    })
+    setImages(prev => [...prev, ...accepted].slice(0, MAX_IMAGES))
+    setErrors(e => ({ ...e, images: errorsFound.length ? errorsFound.join(' · ') : undefined }))
+  }
+
+  function removeImage(index: number) {
+    setImages(prev => {
+      URL.revokeObjectURL(prev[index].previewUrl)
+      return prev.filter((_, i) => i !== index)
+    })
+  }
+
+  function makeMain(index: number) {
+    setImages(prev => [prev[index], ...prev.filter((_, i) => i !== index)])
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!user || !canPublish) return
-    setSubmitting(true)
+    if (!user || !canPublish || submitting) return
+    setSubmitError(null)
 
-    const priceNum = parseInt(form.price) || 0
-    const isRent = operation === PropertyOperation.RENT
-    const imageUrls = form.images.split(',').map(s => s.trim()).filter(Boolean)
-    const images = (imageUrls.length ? imageUrls : ['/1.jpg']).map((url, i) => ({
-      id: `img-${i}`, url, order: i, isMain: i === 0,
-    }))
-
-    const data: Partial<Property> = {
-      title: form.title.trim(),
-      description: form.description.trim(),
-      type,
-      operation,
-      location: {
-        latitude: DEFAULT_MAP_CENTER.latitude,
-        longitude: DEFAULT_MAP_CENTER.longitude,
-        address: {
-          street: form.street.trim(),
-          city: form.city.trim() || form.commune.trim(),
-          commune: form.commune.trim() || undefined,
-          region: form.region,
-          country: 'Chile',
-        },
-        displayAddress: [form.street.trim(), form.commune.trim(), form.city.trim()].filter(Boolean).join(', '),
-      },
-      pricing: {
-        price: priceNum,
-        currency: Currency.CLP,
-        monthlyRent: isRent ? priceNum : undefined,
-        isNegotiable: form.negotiable,
-      },
-      features: {
-        area: parseInt(form.area) || 0,
-        bedrooms: form.bedrooms ? parseInt(form.bedrooms) : undefined,
-        bathrooms: form.bathrooms ? parseInt(form.bathrooms) : undefined,
-        parkingSpots: form.parkingSpots ? parseInt(form.parkingSpots) : undefined,
-      },
-      media: { images },
-      contact: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.contactInfo?.phone,
-        preferredMethod: ContactMethod.EMAIL,
-        avatar: user.avatar,
-        isVerified: user.isEmailVerified ?? false,
-      },
-      tags: [],
+    const parsed = publishSchema.safeParse(form)
+    const newErrors: FieldErrors = {}
+    if (!parsed.success) {
+      parsed.error.issues.forEach(issue => {
+        const key = issue.path[0] as keyof FieldErrors
+        if (!newErrors[key]) newErrors[key] = issue.message
+      })
     }
+    if (images.length === 0) newErrors.images = 'Agrega al menos una foto'
+    setErrors(newErrors)
+    if (!parsed.success || images.length === 0) return
 
-    propertyService.createProperty(user.id, data)
-    router.push('/dashboard')
+    setSubmitting(true)
+    try {
+      const uploaded = await uploadPropertyImages(user.id, images.map(i => i.file))
+
+      const v = parsed.data
+      const isRent = operation === PropertyOperation.RENT
+      const data: Partial<Property> = {
+        title: v.title,
+        description: v.description,
+        type,
+        operation,
+        location: {
+          latitude: DEFAULT_MAP_CENTER.latitude,
+          longitude: DEFAULT_MAP_CENTER.longitude,
+          address: {
+            street: v.street,
+            city: v.city || v.commune,
+            commune: v.commune || undefined,
+            region: form.region,
+            country: 'Chile',
+          },
+          displayAddress: [v.street, v.commune, v.city].filter(Boolean).join(', '),
+        },
+        pricing: {
+          price: v.price,
+          currency: Currency.CLP,
+          monthlyRent: isRent ? v.price : undefined,
+          isNegotiable: form.negotiable,
+        },
+        features: {
+          area: v.area,
+          bedrooms: v.bedrooms,
+          bathrooms: v.bathrooms,
+          parkingSpots: v.parkingSpots,
+        },
+        media: { images: uploaded },
+        contact: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.contactInfo?.phone,
+          preferredMethod: ContactMethod.EMAIL,
+          avatar: user.avatar,
+          isVerified: user.isEmailVerified ?? false,
+        },
+        tags: [],
+      }
+
+      await propertyService.createProperty(user.id, data)
+      void refreshUser()
+      router.push('/dashboard')
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'No se pudo publicar la propiedad')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -161,7 +232,10 @@ export default function PublicarPage() {
                 {TYPES.map(t => <option key={t} value={t}>{PROPERTY_TYPE_LABELS[t]}</option>)}
               </select>
             </div>
-            <Input label="Título" placeholder="Ej: Casa luminosa con jardín en Ñuñoa" value={form.title} onChange={e => set('title', e.target.value)} required />
+            <div>
+              <Input label="Título" placeholder="Ej: Casa luminosa con jardín en Ñuñoa" value={form.title} onChange={e => set('title', e.target.value)} required />
+              {errors.title && <p className={errorCls}>{errors.title}</p>}
+            </div>
             <div>
               <label className={labelCls} htmlFor="desc">Descripción</label>
               <textarea
@@ -169,13 +243,17 @@ export default function PublicarPage() {
                 rows={4} placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
                 className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
               />
+              {errors.description && <p className={errorCls}>{errors.description}</p>}
             </div>
           </Section>
 
           <Section title="Ubicación">
             <Input label="Calle y número" placeholder="Av. Irarrázaval 1234" value={form.street} onChange={e => set('street', e.target.value)} />
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Comuna" placeholder="Ñuñoa" value={form.commune} onChange={e => set('commune', e.target.value)} />
+              <div>
+                <Input label="Comuna" placeholder="Ñuñoa" value={form.commune} onChange={e => set('commune', e.target.value)} />
+                {errors.commune && <p className={errorCls}>{errors.commune}</p>}
+              </div>
               <Input label="Ciudad" placeholder="Santiago" value={form.city} onChange={e => set('city', e.target.value)} />
             </div>
             <div>
@@ -188,7 +266,10 @@ export default function PublicarPage() {
 
           <Section title="Características">
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Superficie (m²)" type="number" min="0" placeholder="120" value={form.area} onChange={e => set('area', e.target.value)} required />
+              <div>
+                <Input label="Superficie (m²)" type="number" min="0" placeholder="120" value={form.area} onChange={e => set('area', e.target.value)} required />
+                {errors.area && <p className={errorCls}>{errors.area}</p>}
+              </div>
               <Input label="Estacionamientos" type="number" min="0" placeholder="2" value={form.parkingSpots} onChange={e => set('parkingSpots', e.target.value)} />
               <Input label="Dormitorios" type="number" min="0" placeholder="3" value={form.bedrooms} onChange={e => set('bedrooms', e.target.value)} />
               <Input label="Baños" type="number" min="0" placeholder="2" value={form.bathrooms} onChange={e => set('bathrooms', e.target.value)} />
@@ -196,33 +277,85 @@ export default function PublicarPage() {
           </Section>
 
           <Section title="Precio">
-            <Input
-              label={operation === PropertyOperation.RENT ? 'Arriendo mensual (CLP)' : 'Precio (CLP)'}
-              type="number" min="0" placeholder="0" value={form.price} onChange={e => set('price', e.target.value)} required
-            />
+            <div>
+              <Input
+                label={operation === PropertyOperation.RENT ? 'Arriendo mensual (CLP)' : 'Precio (CLP)'}
+                type="number" min="0" placeholder="0" value={form.price} onChange={e => set('price', e.target.value)} required
+              />
+              {errors.price && <p className={errorCls}>{errors.price}</p>}
+            </div>
             <label className="flex items-center gap-2 text-sm text-on-surface cursor-pointer">
               <input type="checkbox" checked={form.negotiable} onChange={e => set('negotiable', e.target.checked)} className="w-4 h-4 accent-[rgb(var(--primary))]" />
               Precio negociable
             </label>
           </Section>
 
-          <Section title="Fotos" desc="Pega las URLs de las imágenes separadas por comas. La primera será la principal.">
-            <div className="relative">
-              <ImagePlus size={16} className="absolute left-3 top-3 text-on-surface-variant" />
-              <textarea
-                value={form.images} onChange={e => set('images', e.target.value)}
-                rows={2} placeholder="https://…/foto1.jpg, https://…/foto2.jpg"
-                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+          <Section title="Fotos" desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              multiple
+              className="hidden"
+              onChange={e => { addFiles(e.target.files); e.target.value = '' }}
+            />
+
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {images.map((img, i) => (
+                  <div key={img.previewUrl} className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.previewUrl} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    {i === 0 ? (
+                      <span className="absolute bottom-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        <Star size={9} /> Principal
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => makeMain(i)}
+                        className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        Hacer principal
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      aria-label={`Quitar foto ${i + 1}`}
+                      className="absolute top-1 right-1 bg-black/55 text-white rounded-full p-1 hover:bg-error transition-colors"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {images.length < MAX_IMAGES && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
+              >
+                <ImagePlus size={22} />
+                <span className="text-sm font-medium">{images.length ? 'Agregar más fotos' : 'Seleccionar fotos'}</span>
+                <span className="text-xs">{images.length}/{MAX_IMAGES}</span>
+              </button>
+            )}
+            {errors.images && <p className={errorCls}>{errors.images}</p>}
           </Section>
+
+          {submitError && (
+            <div className="bg-error/10 border border-error/40 rounded-xl p-3 text-error text-sm">{submitError}</div>
+          )}
 
           <div className="flex gap-3 pt-1">
             <Button type="button" variant="outline" onClick={() => router.push('/dashboard')} className="flex-1">
               Cancelar
             </Button>
             <Button type="submit" loading={submitting} disabled={!canPublish} className="flex-1">
-              <Check size={16} /> Publicar propiedad
+              <Check size={16} /> {submitting ? 'Subiendo fotos…' : 'Publicar propiedad'}
             </Button>
           </div>
         </form>

@@ -10,12 +10,17 @@ import { useTheme } from '@/hooks/useTheme'
 import { APP_CONFIG } from '@/constants'
 import { cn } from '@/lib/utils'
 
-function ThemeToggle() {
+function ThemeToggle({ light }: { light?: boolean }) {
   const { theme, toggle, mounted } = useTheme()
   return (
     <button
       onClick={toggle}
-      className="p-2 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-primary"
+      className={cn(
+        'p-2 rounded-full transition-colors',
+        light
+          ? 'text-white/70 hover:text-white hover:bg-white/10'
+          : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+      )}
       title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
       aria-label="Cambiar tema"
     >
@@ -47,7 +52,9 @@ export function Navbar() {
   }, [])
 
   const isHome = pathname === '/'
-  const transparent = isHome && !scrolled
+  // On the landing hero the nav floats as a centered dark pill (doesn't span
+  // the full width); after scrolling it becomes the regular full-width bar.
+  const pill = isHome && !scrolled
 
   function handleLogout() {
     logout()
@@ -55,74 +62,92 @@ export function Navbar() {
   }
 
   return (
-    <nav className={cn(
-      'fixed top-0 left-0 right-0 h-16 text-on-surface flex items-center px-4 gap-4 z-50 transition-all duration-500',
-      transparent
-        ? 'bg-transparent border-b border-transparent shadow-none'
-        : 'bg-surface-container-lowest/90 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm'
-    )}>
-      <Link href="/" className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90" title="Inicio">
-        <span className="material-symbols-outlined text-primary text-2xl">map</span>
-        <span className="hidden sm:inline text-on-surface">{APP_CONFIG.name}</span>
-        <span className="sm:hidden text-on-surface">MapU</span>
-      </Link>
+    <nav className={cn('fixed left-0 right-0 z-50 flex transition-all duration-500', pill ? 'top-4 px-4 justify-center' : 'top-0')}>
+      <div
+        className={cn(
+          'flex items-center transition-all duration-500',
+          pill
+            ? 'h-14 w-auto max-w-full gap-5 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 pl-5 pr-2 text-white shadow-elevated'
+            : 'h-16 w-full gap-4 px-4 bg-surface-container-lowest/90 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm text-on-surface'
+        )}
+      >
+        <Link href="/" className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90" title="Inicio">
+          <span className={cn('material-symbols-outlined text-2xl', pill ? 'text-[#FF4D1C]' : 'text-primary')}>map</span>
+          <span className={cn('hidden sm:inline', pill ? 'text-white' : 'text-on-surface')}>{APP_CONFIG.name}</span>
+          <span className={cn('sm:hidden', pill ? 'text-white' : 'text-on-surface')}>MapU</span>
+        </Link>
 
-      <div className="flex-1" />
+        <div className={pill ? 'w-2' : 'flex-1'} />
 
-      <div className="hidden md:flex items-center gap-1">
-        {navLinks.map(({ href, label, icon: Icon, authRequired }) => {
-          if (authRequired && !isAuthenticated) return null
-          const isActive = pathname === href
-          return (
+        <div className="hidden md:flex items-center gap-1">
+          {navLinks.map(({ href, label, icon: Icon, authRequired }) => {
+            if (authRequired && !isAuthenticated) return null
+            const isActive = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
+                  pill
+                    ? isActive
+                      ? 'text-[#FF4D1C] font-bold'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                    : isActive
+                      ? 'text-primary font-bold'
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                )}
+              >
+                <Icon size={16} />
+                {label === 'Favoritos' && favCount > 0 ? (
+                  <span className="flex items-center gap-1">
+                    {label}
+                    <span className={cn('text-xs rounded-full px-1.5 py-px text-white', pill ? 'bg-[#FF4D1C]' : 'bg-accent')}>{favCount}</span>
+                  </span>
+                ) : label}
+              </Link>
+            )
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle light={pill} />
+          {isAuthenticated ? (
+            <>
+              <Link href="/perfil" className="flex items-center gap-2 hover:opacity-90">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.name} className={cn('w-8 h-8 rounded-full object-cover border-2', pill ? 'border-white/30' : 'border-outline-variant')} />
+                ) : (
+                  <div className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
+                    pill ? 'bg-white/15 border border-white/20 text-white' : 'bg-primary/20 border border-primary/30 text-primary'
+                  )}>
+                    {user?.name.charAt(0)}
+                  </div>
+                )}
+                <span className={cn('hidden md:inline text-sm font-medium', pill ? 'text-white' : 'text-on-surface')}>{user?.name.split(' ')[0]}</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className={cn('p-2 rounded-full transition-colors', pill ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container')}
+                title="Cerrar sesión"
+              >
+                <LogOut size={16} />
+              </button>
+            </>
+          ) : (
             <Link
-              key={href}
-              href={href}
+              href="/login"
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors',
-                isActive
-                  ? 'text-primary font-bold border-b-2 border-primary pb-1'
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                'flex items-center gap-1.5 px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-95',
+                pill ? 'bg-[#FF4D1C] text-white rounded-full' : 'bg-primary text-on-primary rounded-lg'
               )}
             >
-              <Icon size={16} />
-              {label === 'Favoritos' && favCount > 0 ? (
-                <span className="flex items-center gap-1">
-                  {label}
-                  <span className="bg-accent text-white text-xs rounded-full px-1.5 py-px">{favCount}</span>
-                </span>
-              ) : label}
+              <LogIn size={16} />
+              Ingresar
             </Link>
-          )
-        })}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
-        {isAuthenticated ? (
-          <>
-            <Link href="/perfil" className="flex items-center gap-2 hover:opacity-90">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover border-2 border-outline-variant" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-sm font-bold text-primary">
-                  {user?.name.charAt(0)}
-                </div>
-              )}
-              <span className="hidden md:inline text-sm font-medium text-on-surface">{user?.name.split(' ')[0]}</span>
-            </Link>
-            <button onClick={handleLogout} className="p-2 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="Cerrar sesión">
-              <LogOut size={16} />
-            </button>
-          </>
-        ) : (
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 bg-primary text-on-primary hover:scale-95 duration-200 px-4 py-2 rounded-lg text-sm font-bold transition-all"
-          >
-            <LogIn size={16} />
-            Ingresar
-          </Link>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Mobile bottom nav */}

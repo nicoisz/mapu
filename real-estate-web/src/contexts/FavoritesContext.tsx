@@ -23,26 +23,39 @@ interface FavoritesContextValue {
 const FavoritesContext = createContext<FavoritesContextValue | null>(null)
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuthContext()
-  // Start empty so the server-rendered HTML matches the first client render,
-  // then hydrate from localStorage after mount (avoids hydration mismatch).
+  const { user, isAuthenticated } = useAuthContext()
+  const userId = user?.id ?? null
+  // Start empty so the server-rendered HTML matches the first client render.
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [promptOpen, setPromptOpen] = useState(false)
 
-  useEffect(() => { setFavoriteIds(favoritesService.getFavoriteIds()) }, [])
+  // Load (and on login, first merge anonymous favorites into the account).
+  useEffect(() => {
+    let active = true
+    async function load() {
+      if (userId) await favoritesService.mergeLocalToAccount(userId)
+      const ids = await favoritesService.getFavoriteIds(userId)
+      if (active) setFavoriteIds(ids)
+    }
+    void load()
+    return () => { active = false }
+  }, [userId])
 
   const isFavorite = useCallback((id: string) => favoriteIds.includes(id), [favoriteIds])
 
   const toggle = useCallback((property: Property) => {
-    const alreadyFav = favoritesService.isFavorite(property.id)
+    const alreadyFav = favoriteIds.includes(property.id)
     // Block only when an anonymous visitor tries to ADD beyond the limit.
-    if (!alreadyFav && !isAuthenticated && favoritesService.getFavoriteCount() >= ANON_FAVORITES_LIMIT) {
+    if (!alreadyFav && !isAuthenticated && favoriteIds.length >= ANON_FAVORITES_LIMIT) {
       setPromptOpen(true)
       return
     }
-    favoritesService.toggleFavorite(property)
-    setFavoriteIds(favoritesService.getFavoriteIds())
-  }, [isAuthenticated])
+    // Optimistic update; reconcile with the service result in the background.
+    setFavoriteIds(ids => (alreadyFav ? ids.filter(id => id !== property.id) : [...ids, property.id]))
+    favoritesService.toggleFavorite(userId, property).catch(() => {
+      setFavoriteIds(ids => (alreadyFav ? [...ids, property.id] : ids.filter(id => id !== property.id)))
+    })
+  }, [favoriteIds, isAuthenticated, userId])
 
   return (
     <FavoritesContext.Provider

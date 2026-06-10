@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, Eye, Heart, Lock, MessageSquare, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
@@ -9,12 +9,51 @@ import { propertyService } from '@/services/propertyService'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
+import { Property } from '@/types/property'
 import { SubscriptionType } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT, PROPERTY_TYPE_LABELS, STATUS_LABELS } from '@/constants'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, isAuthenticated, hasSubscription, getRemainingListings } = useAuthContext()
+  const { user, isAuthenticated, isLoading, hasSubscription, refreshUser } = useAuthContext()
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loadingProps, setLoadingProps] = useState(true)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const loadProperties = useCallback(async () => {
+    if (!user) return
+    setLoadingProps(true)
+    try {
+      setProperties(await propertyService.getUserProperties(user.id))
+    } catch {
+      setProperties([])
+    } finally {
+      setLoadingProps(false)
+    }
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { void loadProperties() }, [loadProperties])
+
+  // Listings whose expiry date passed are shown (and renewable) as expired.
+  const { activeProps, expiredProps, totals } = useMemo(() => {
+    const now = Date.now()
+    const isExpired = (p: Property) =>
+      p.status === 'expired' || (p.listing.expiresAt ? new Date(p.listing.expiresAt).getTime() < now : false)
+    const active = properties.filter(p => p.status === 'active' && !isExpired(p))
+    const expired = properties.filter(isExpired)
+    return {
+      activeProps: active,
+      expiredProps: expired,
+      totals: {
+        views: properties.reduce((sum, p) => sum + p.listing.views, 0),
+        contacts: properties.reduce((sum, p) => sum + p.listing.inquiries, 0),
+      },
+    }
+  }, [properties])
+
+  if (isLoading) {
+    return <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">Cargando…</div>
+  }
 
   if (!isAuthenticated || !user) {
     return (
@@ -27,11 +66,29 @@ export default function DashboardPage() {
     )
   }
 
-  const userProperties = useMemo(() => propertyService.getUserProperties(user.id), [user.id])
-  const activeProps = userProperties.filter(p => p.status === 'active')
-  const expiredProps = userProperties.filter(p => p.status === 'expired')
   const isPremium = hasSubscription(SubscriptionType.PREMIUM)
-  const remaining = getRemainingListings()
+  const remaining = Math.max(0, FREE_PLAN_LISTINGS_LIMIT - activeProps.length)
+
+  async function handleRenew(id: string) {
+    setBusyId(id)
+    const renewed = await propertyService.renewProperty(id)
+    setBusyId(null)
+    if (renewed) {
+      await loadProperties()
+      void refreshUser()
+    }
+  }
+
+  async function handleDelete(id: string, title: string) {
+    if (!window.confirm(`¿Eliminar definitivamente "${title}"? Esta acción no se puede deshacer.`)) return
+    setBusyId(id)
+    const ok = await propertyService.deleteProperty(id)
+    setBusyId(null)
+    if (ok) {
+      await loadProperties()
+      void refreshUser()
+    }
+  }
 
   return (
     <div className="h-full overflow-y-auto bg-background pb-20">
@@ -59,15 +116,15 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="relative grid grid-cols-3 gap-3 mt-4">
           <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">{user.stats.activeListings}</div>
+            <div className="font-headline font-bold text-xl text-primary">{activeProps.length}</div>
             <div className="text-xs text-on-surface-variant mt-0.5">Activos</div>
           </div>
           <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">{user.stats.totalViews.toLocaleString()}</div>
+            <div className="font-headline font-bold text-xl text-primary">{totals.views.toLocaleString()}</div>
             <div className="text-xs text-on-surface-variant mt-0.5">Vistas</div>
           </div>
           <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">{user.stats.totalContacts}</div>
+            <div className="font-headline font-bold text-xl text-primary">{totals.contacts}</div>
             <div className="text-xs text-on-surface-variant mt-0.5">Contactos</div>
           </div>
         </div>
@@ -118,6 +175,10 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {loadingProps && (
+          <div className="text-center py-8 text-on-surface-variant text-sm">Cargando propiedades…</div>
+        )}
+
         {/* Active properties */}
         {activeProps.length > 0 && (
           <section>
@@ -151,6 +212,14 @@ export default function DashboardPage() {
                           Expira en {daysLeft}d
                         </span>
                       )}
+                      <button
+                        onClick={() => handleDelete(property.id, property.title)}
+                        disabled={busyId === property.id}
+                        className="ml-auto flex items-center gap-1 text-error/80 hover:text-error transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 size={11} />
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                 )
@@ -178,15 +247,17 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => alert(`Renovar propiedad ${property.id}`)}
-                      className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-tertiary transition-colors"
+                      onClick={() => handleRenew(property.id)}
+                      disabled={busyId === property.id || (!isPremium && remaining === 0)}
+                      className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-tertiary transition-colors disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      <RefreshCw size={11} />
-                      Renovar
+                      <RefreshCw size={11} className={busyId === property.id ? 'animate-spin' : ''} />
+                      Renovar 30 días
                     </button>
                     <button
-                      onClick={() => alert(`Eliminar propiedad ${property.id}`)}
-                      className="flex items-center gap-1 text-xs text-error border border-error/40 rounded-lg px-2.5 py-1.5 hover:bg-error hover:text-on-error transition-colors"
+                      onClick={() => handleDelete(property.id, property.title)}
+                      disabled={busyId === property.id}
+                      className="flex items-center gap-1 text-xs text-error border border-error/40 rounded-lg px-2.5 py-1.5 hover:bg-error hover:text-on-error transition-colors disabled:opacity-50"
                     >
                       <Trash2 size={11} />
                       Eliminar
@@ -198,7 +269,7 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {userProperties.length === 0 && (
+        {!loadingProps && properties.length === 0 && (
           <div className="text-center py-12 text-on-surface-variant">
             <p className="text-4xl mb-3">🏠</p>
             <p className="font-medium text-on-surface">Aún no has publicado propiedades</p>

@@ -1,22 +1,45 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { searchService } from '@/services/searchService'
 import { Property } from '@/types/property'
-import { PropertySearchFilters, SearchSuggestion } from '@/types/search'
-import { mockProperties } from '@/data'
+import { PropertySearchFilters, PropertySearchQuery, SearchSuggestion } from '@/types/search'
+
+export type SortOption = 'recent' | 'price_asc' | 'price_desc' | 'area_desc'
+
+const SORT_MAP: Record<SortOption, Pick<PropertySearchQuery, 'sortBy' | 'sortOrder'>> = {
+  recent: { sortBy: 'date', sortOrder: 'desc' },
+  price_asc: { sortBy: 'price', sortOrder: 'asc' },
+  price_desc: { sortBy: 'price', sortOrder: 'desc' },
+  area_desc: { sortBy: 'area', sortOrder: 'desc' },
+}
 
 export function useSearch() {
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<PropertySearchFilters>({})
+  const [sort, setSort] = useState<SortOption>('recent')
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
-  const [isSearching, setIsSearching] = useState(false)
+  const [results, setResults] = useState<Property[]>([])
+  const [isSearching, setIsSearching] = useState(true)
+  const [searchError, setSearchError] = useState<string | null>(null)
 
-  const results: Property[] = useMemo(() => {
-    if (!query && Object.keys(filters).length === 0) return mockProperties
-    const searchQuery = searchService.buildSearchQuery(query, filters)
-    return searchService.searchProperties(searchQuery)
-  }, [query, filters])
+  // Fetch from Supabase whenever the query/filters/sort change (debounced).
+  useEffect(() => {
+    let cancelled = false
+    setIsSearching(true)
+    const t = setTimeout(async () => {
+      try {
+        const searchQuery = { ...searchService.buildSearchQuery(query, filters), ...SORT_MAP[sort] }
+        const data = await searchService.searchProperties(searchQuery)
+        if (!cancelled) { setResults(data); setSearchError(null) }
+      } catch (err) {
+        if (!cancelled) setSearchError(err instanceof Error ? err.message : 'Error al buscar propiedades')
+      } finally {
+        if (!cancelled) setIsSearching(false)
+      }
+    }, query ? 300 : 0)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [query, filters, sort])
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value)
@@ -28,11 +51,9 @@ export function useSearch() {
   }, [])
 
   const handleSearch = useCallback((value: string) => {
-    setIsSearching(true)
     setQuery(value)
     setSuggestions([])
     if (value.trim()) searchService.saveRecentSearch(value.trim())
-    setIsSearching(false)
   }, [])
 
   const updateFilters = useCallback((newFilters: Partial<PropertySearchFilters>) => {
@@ -54,9 +75,12 @@ export function useSearch() {
   return {
     query,
     filters,
+    sort,
+    setSort,
     results,
     suggestions,
     isSearching,
+    searchError,
     activeFilterCount,
     handleQueryChange,
     handleSearch,

@@ -1,19 +1,30 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Heart, TrendingDown } from 'lucide-react'
-import { PropertyCard } from '@/components/property/PropertyCard'
+import { Heart } from 'lucide-react'
+import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { favoritesService } from '@/services/favoritesService'
 import { formatPrice } from '@/lib/utils'
-import { Currency, PropertyOperation } from '@/types/enums'
+import { Currency } from '@/types/enums'
+import { Property } from '@/types/property'
 import { PROPERTY_TYPE_LABELS } from '@/constants'
 
 export default function FavoritosPage() {
   const { favoriteIds, count } = useFavoritesContext()
-  const properties = useMemo(() => favoritesService.getFavoriteProperties(), [favoriteIds])
-  const stats = useMemo(() => favoritesService.getFavoritesStats(), [favoriteIds])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    favoritesService.getFavoriteProperties(favoriteIds)
+      .then(props => { if (active) { setProperties(props); setLoading(false) } })
+      .catch(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [favoriteIds])
+
+  const stats = useMemo(() => favoritesService.computeStats(properties), [properties])
 
   if (count === 0) {
     return (
@@ -60,11 +71,17 @@ export default function FavoritosPage() {
         </div>
       </div>
 
-      <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {properties.map(property => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 3 }, (_, i) => <PropertyCardSkeleton key={i} />)}
+        </div>
+      ) : (
+        <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {properties.map(property => (
+            <PropertyCard key={property.id} property={property} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

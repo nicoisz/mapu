@@ -27,13 +27,16 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
   return (
     <div
       className={cn(
-        'bg-surface-container rounded-2xl overflow-hidden border transition-all duration-300 group warm-glow',
-        isSelected ? 'border-primary ring-1 ring-primary' : 'border-outline-variant/40',
-        compact ? 'flex gap-3' : ''
+        'bg-surface-container-low rounded-2xl overflow-hidden group transition-all duration-300',
+        isSelected
+          ? 'ring-2 ring-primary'
+          : 'border border-outline-variant/25 hover:-translate-y-1.5 hover:shadow-elevated',
+        compact ? 'flex gap-3' : '',
+        onClick ? 'cursor-pointer' : ''
       )}
       onClick={onClick}
     >
-      <div className={cn('relative overflow-hidden shrink-0', compact ? 'w-28 h-24' : 'h-52')}>
+      <div className={cn('relative overflow-hidden shrink-0', compact ? 'w-28 h-24' : 'h-60')}>
         {mainImage ? (
           <Image
             src={mainImage.url}
@@ -47,6 +50,9 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
             Sin imagen
           </div>
         )}
+        {!compact && (
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent pointer-events-none" />
+        )}
         <div className="absolute top-2.5 left-2.5 flex gap-1">
           <Badge variant={isRent ? 'rent' : 'sale'} size="sm">
             {OPERATION_LABELS[property.operation]}
@@ -57,25 +63,32 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
           onClick={e => { e.stopPropagation(); toggle(property) }}
           className={cn(
             'absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition-all',
-            fav ? 'bg-primary text-on-primary' : 'bg-surface-container-lowest/60 text-on-surface hover:text-primary'
+            fav ? 'bg-primary text-on-primary' : 'bg-black/35 text-white hover:bg-black/55'
           )}
           aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
         >
-          <Heart size={15} fill={fav ? 'currentColor' : 'none'} />
+          <Heart
+            size={15}
+            fill={fav ? 'currentColor' : 'none'}
+            className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''}
+          />
         </button>
       </div>
 
-      <div className={cn(compact ? 'p-3 flex-1 min-w-0' : 'p-4')}>
-        <p className="text-xs uppercase tracking-wider text-on-surface-variant font-medium">
-          {PROPERTY_TYPE_LABELS[property.type]}
-        </p>
-
-        <div className="mt-1">
-          <span className="font-headline font-bold text-primary text-lg">{amount}</span>
-          {suffix && <span className="text-on-surface-variant text-sm">{suffix}</span>}
+      <div className={cn(compact ? 'p-3 flex-1 min-w-0' : 'p-5')}>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="min-w-0">
+            <span className={cn('font-headline font-bold text-on-surface tracking-tight', compact ? 'text-lg' : 'text-2xl')}>{amount}</span>
+            {suffix && <span className="text-on-surface-variant text-sm">{suffix}</span>}
+          </div>
+          {!compact && (
+            <span className="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant font-semibold shrink-0">
+              {PROPERTY_TYPE_LABELS[property.type]}
+            </span>
+          )}
         </div>
 
-        <h3 className={cn('font-medium text-on-surface leading-tight mt-1', compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2')}>
+        <h3 className={cn('font-medium text-on-surface leading-tight mt-1.5', compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2')}>
           {property.title}
         </h3>
 
@@ -87,7 +100,7 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
         </div>
 
         {!compact && (
-          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-outline-variant/40 text-xs text-on-surface-variant">
+          <div className="flex items-center gap-5 mt-4 pt-3.5 border-t border-outline-variant/30 text-xs text-on-surface-variant">
             {property.features.bedrooms !== undefined && (
               <span className="flex items-center gap-1.5"><Bed size={13} />{property.features.bedrooms}</span>
             )}
@@ -95,18 +108,29 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
               <span className="flex items-center gap-1.5"><Bath size={13} />{property.features.bathrooms}</span>
             )}
             <span className="flex items-center gap-1.5"><Move size={13} />{formatArea(property.features.area)}</span>
+            <Link
+              href={`/propiedad/${property.id}`}
+              onClick={e => e.stopPropagation()}
+              className="ml-auto font-semibold text-on-surface hover:text-primary transition-colors"
+            >
+              Ver detalle →
+            </Link>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
 
-        {!compact && (
-          <Link
-            href={`/propiedad/${property.id}`}
-            onClick={e => e.stopPropagation()}
-            className="mt-3 block text-center text-sm font-semibold text-primary border border-primary/60 rounded-lg py-2 hover:bg-primary hover:text-on-primary transition-colors"
-          >
-            Ver detalle
-          </Link>
-        )}
+/** Loading placeholder matching PropertyCard's layout. */
+export function PropertyCardSkeleton({ compact }: { compact?: boolean }) {
+  return (
+    <div className={cn('bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/25', compact ? 'flex gap-3' : '')}>
+      <div className={cn('skeleton shrink-0', compact ? 'w-28 h-24' : 'h-60')} />
+      <div className={cn(compact ? 'p-3 flex-1' : 'p-5', 'space-y-3')}>
+        <div className="skeleton h-6 w-28 rounded-md" />
+        <div className="skeleton h-4 w-3/4 rounded-md" />
+        <div className="skeleton h-3 w-1/2 rounded-md" />
       </div>
     </div>
   )

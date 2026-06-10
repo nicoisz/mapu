@@ -8,6 +8,8 @@ export interface AuthResult {
   token?: string
   refreshToken?: string
   error?: string
+  /** Informational message (e.g. "confirm your email") when success has no session yet. */
+  info?: string
 }
 
 export interface ContactResult {

@@ -1,0 +1,28 @@
+-- ============================================================
+-- ⚠️  NO EJECUTAR — SOLO REFERENCIA
+--
+-- Este proyecto Supabase (zzzuiworclyxjhealjdz) YA tiene su esquema,
+-- compartido con la app móvil de MapU. La web se adaptó a ese esquema
+-- (ver src/lib/propertyMapper.ts y src/services/*).
+--
+-- Tablas existentes relevantes para la web:
+--   profiles    — perfil 1:1 con auth.users (suscripción, trial 10 días,
+--                 totales, verificaciones). user_type: individual|agent|company.
+--                 subscription_type: free|premium.
+--   properties  — columnas planas: latitude/longitude, address_* (street,
+--                 number, commune, city, region), price bigint, monthly_rent,
+--                 bedrooms/bathrooms/area/built_area/lot_size/parking_spots,
+--                 has_* booleans, images jsonb, contact_* y preferred_contact,
+--                 published_at/expires_at, is_premium/is_featured,
+--                 views/favorites_count/contacts_count, search_vector, tags[].
+--   favorites   — id uuid PK + (user_id, property_id), sin constraint único
+--                 sobre el par (los services lo manejan con check previo).
+--   property_views — log de vistas (property_id, viewer_id?, ip?).
+--   payments    — integración Mercado Pago (mp_preference_id, mp_payment_id).
+--   notifications, conversations, messages, price_alerts — features de la
+--                 app móvil aún no usadas por la web.
+--
+-- Storage: bucket público 'property-images' (ya existe).
+--
+-- Para datos de demostración usa supabase/seed.sql (requiere ≥1 perfil).
+-- ============================================================

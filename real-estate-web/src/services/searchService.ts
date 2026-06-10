@@ -92,7 +92,7 @@ export const searchService = {
     }
   },
 
-  searchProperties(query: PropertySearchQuery): Property[] {
+  searchProperties(query: PropertySearchQuery): Promise<Property[]> {
     return propertyService.searchProperties(query)
   },
 

@@ -72,7 +72,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],
-        headline: ['Fraunces', 'Georgia', 'serif'],
+        headline: ['Space Grotesk', 'Manrope', 'system-ui', 'sans-serif'],
       },
       spacing: {
         'section-gap': '64px',

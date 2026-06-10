@@ -71,7 +71,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             onClick={() => toggle(property)}
             className={cn('p-2 rounded-lg border transition-all', fav ? 'border-accent text-accent bg-error/10' : 'border-outline-variant/60 text-on-surface-variant hover:border-accent hover:text-accent')}
           >
-            <Heart size={18} fill={fav ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={fav ? 'currentColor' : 'none'} className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''} />
           </button>
           <button onClick={handleShare} className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary transition-all">
             <Share2 size={18} />
@@ -80,7 +80,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       </div>
 
       {/* Image carousel */}
-      <div className="relative h-72 md:h-96 bg-surface-container-high overflow-hidden">
+      <div className="relative h-80 md:h-[480px] bg-surface-container-high overflow-hidden md:rounded-2xl md:mx-4">
         {images.length > 0 ? (
           <>
             <Image
@@ -134,9 +134,9 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             </div>
             <h1 className="text-2xl font-bold text-on-surface">{property.title}</h1>
             <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-primary">{amount}</span>
+              <span className="font-headline text-4xl font-bold text-on-surface tracking-tight">{amount}</span>
               {suffix && <span className="text-on-surface-variant">{suffix}</span>}
-              {property.pricing.isNegotiable && <span className="ml-2 text-sm text-secondary font-medium">• Precio negociable</span>}
+              {property.pricing.isNegotiable && <span className="ml-2 text-sm text-on-surface-variant font-medium">• Negociable</span>}
             </div>
           </div>
 
@@ -307,10 +307,14 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       </div>
 
       {/* Mobile sticky CTA */}
-      <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low border-t border-outline-variant/60 shadow-xl">
-        <Button fullWidth size="lg" onClick={handleContact}>
+      <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
+        <div className="min-w-0">
+          <p className="font-headline font-bold text-on-surface text-lg leading-tight truncate">{amount}{suffix && <span className="text-on-surface-variant text-xs font-normal">{suffix}</span>}</p>
+          <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">{OPERATION_LABELS[property.operation]}</p>
+        </div>
+        <Button size="lg" onClick={handleContact} className="flex-1">
           <Phone size={18} />
-          Contactar al vendedor
+          Contactar
         </Button>
       </div>
     </div>

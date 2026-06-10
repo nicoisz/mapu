@@ -5,7 +5,8 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useTheme } from '@/hooks/useTheme'
 
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron'
+const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron'
+const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark'
 
 interface Props {
   latitude: number
@@ -16,14 +17,17 @@ interface Props {
 export default function MiniMapInner({ latitude, longitude }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
-  const { theme } = useTheme()
+  const styleRef = useRef('')
+  const { theme, mounted } = useTheme()
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
+    const initialStyle = document.documentElement.classList.contains('dark') ? STYLE_DARK : STYLE_LIGHT
+    styleRef.current = initialStyle
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STYLE_URL,
+      style: initialStyle,
       center: [longitude, latitude],
       zoom: 14,
       interactive: false,
@@ -32,7 +36,7 @@ export default function MiniMapInner({ latitude, longitude }: Props) {
 
     const pin = document.createElement('div')
     pin.innerHTML = `<div style="
-      width:16px;height:16px;background:rgb(var(--primary));
+      width:16px;height:16px;background:#FF4D1C;
       border:3px solid white;border-radius:50%;
       box-shadow:0 2px 8px rgba(0,0,0,0.35);
     "></div>`
@@ -44,5 +48,14 @@ export default function MiniMapInner({ latitude, longitude }: Props) {
     return () => { map.remove(); mapRef.current = null }
   }, [latitude, longitude])
 
-  return <div ref={containerRef} className={`w-full h-full ${theme === 'dark' ? 'map-dark' : ''}`} />
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mounted) return
+    const next = theme === 'dark' ? STYLE_DARK : STYLE_LIGHT
+    if (styleRef.current === next) return
+    styleRef.current = next
+    map.setStyle(next)
+  }, [theme, mounted])
+
+  return <div ref={containerRef} className="w-full h-full" />
 }
