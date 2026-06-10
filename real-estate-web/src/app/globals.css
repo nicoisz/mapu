@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ──────────────────────────────────────────────────────────────
+   Calidez Boutique — warm neutrals · terracotta · teal accent
+   Tokens are stored as space-separated RGB channels so Tailwind's
+   `rgb(var(--x) / <alpha-value>)` keeps opacity utilities working
+   (e.g. bg-primary/10, border-outline-variant/30).
+   ────────────────────────────────────────────────────────────── */
+
+:root {
+  /* LIGHT THEME (default) */
+  --background: 250 246 241;
+  --on-background: 31 26 22;
+  --surface: 250 246 241;
+  --surface-dim: 226 215 202;
+  --surface-bright: 250 246 241;
+  --surface-container-lowest: 255 255 255;
+  --surface-container-low: 245 238 230;
+  --surface-container: 240 232 222;
+  --surface-container-high: 234 225 213;
+  --surface-container-highest: 228 217 203;
+  --surface-variant: 237 224 212;
+  --surface-tint: 180 90 48;
+  --on-surface: 31 26 22;
+  --on-surface-variant: 90 79 70;
+
+  --primary: 180 90 48;
+  --on-primary: 255 255 255;
+  --primary-container: 255 219 201;
+  --on-primary-container: 58 21 0;
+
+  --secondary: 122 90 66;
+  --on-secondary: 255 255 255;
+  --secondary-container: 253 220 194;
+  --on-secondary-container: 44 24 8;
+
+  --tertiary: 30 122 110;
+  --on-tertiary: 255 255 255;
+  --tertiary-container: 180 240 230;
+  --on-tertiary-container: 0 32 28;
+
+  --accent: 30 122 110;
+  --accent-light: 70 179 162;
+  --accent-dark: 21 92 82;
+
+  --outline: 140 124 110;
+  --outline-variant: 216 201 187;
+  --border: 216 201 187;
+
+  --error: 186 26 26;
+  --on-error: 255 255 255;
+  --error-container: 255 218 214;
+  --on-error-container: 65 0 2;
+
+  --inverse-surface: 53 47 42;
+  --inverse-on-surface: 251 239 229;
+  --inverse-primary: 255 182 143;
+
+  --shadow-color: 60 40 25;
+
+  color-scheme: light;
+}
+
+.dark {
+  /* DARK THEME */
+  --background: 26 21 18;
+  --on-background: 240 233 226;
+  --surface: 26 21 18;
+  --surface-dim: 26 21 18;
+  --surface-bright: 66 56 49;
+  --surface-container-lowest: 18 14 11;
+  --surface-container-low: 34 28 24;
+  --surface-container: 39 31 26;
+  --surface-container-high: 50 42 35;
+  --surface-container-highest: 61 52 44;
+  --surface-variant: 74 63 55;
+  --surface-tint: 232 155 107;
+  --on-surface: 240 233 226;
+  --on-surface-variant: 214 199 186;
+
+  --primary: 232 155 107;
+  --on-primary: 74 30 8;
+  --primary-container: 110 58 31;
+  --on-primary-container: 255 219 201;
+
+  --secondary: 224 194 168;
+  --on-secondary: 65 44 27;
+  --secondary-container: 90 66 48;
+  --on-secondary-container: 253 220 194;
+
+  --tertiary: 91 194 177;
+  --on-tertiary: 0 55 49;
+  --tertiary-container: 21 92 82;
+  --on-tertiary-container: 180 240 230;
+
+  --accent: 70 179 162;
+  --accent-light: 122 211 197;
+  --accent-dark: 30 122 110;
+
+  --outline: 161 141 126;
+  --outline-variant: 74 63 55;
+  --border: 74 63 55;
+
+  --error: 255 180 171;
+  --on-error: 105 0 5;
+  --error-container: 147 0 10;
+  --on-error-container: 255 218 214;
+
+  --inverse-surface: 240 233 226;
+  --inverse-on-surface: 56 47 40;
+  --inverse-primary: 180 90 48;
+
+  --shadow-color: 0 0 0;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    font-family: 'Manrope', system-ui, sans-serif;
+  }
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--on-surface));
+    overflow-x: hidden;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  /* Smooth theme switch — colors only, never layout */
+  body,
+  body * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 300ms;
+    transition-timing-function: ease;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: rgb(var(--surface-container) / 0.72);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgb(var(--outline-variant) / 0.5);
+  }
+  .hero-gradient {
+    background: linear-gradient(180deg, rgb(var(--background) / 0.2) 0%, rgb(var(--background) / 0.92) 100%);
+  }
+  .warm-glow {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  }
+  .warm-glow:hover {
+    box-shadow: 0 18px 40px -12px rgb(var(--primary) / 0.35);
+    border-color: rgb(var(--primary) / 0.6);
+  }
+  .tonal-layer-1 {
+    background-color: rgb(var(--surface-container));
+    border: 1px solid rgb(var(--outline-variant) / 0.6);
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .map-pattern {
+    background-image: radial-gradient(circle at 1px 1px, rgb(var(--outline-variant)) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  /* Hide pre-animation content until GSAP takes over (no flash) */
+  .gsap-init {
+    visibility: hidden;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* MapLibre — keep map chrome below the fixed navbar */
+.maplibregl-ctrl-top-right,
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  z-index: 10 !important;
+}
+
+/* Dark mode: OpenFreeMap ships only light styles, so tint the tile canvas.
+   Only the WebGL canvas is filtered — HTML markers and controls stay normal. */
+.map-dark .maplibregl-canvas {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9);
+}
