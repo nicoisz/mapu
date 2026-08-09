@@ -36,15 +36,23 @@ function SearchContent() {
     gsap.to(el, { x: 24, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => setSelected(null) })
   }, [prefersReducedMotion])
 
-  // Collapse the list sidebar (giving the map room) while a property is open.
+  // Desktop list width drives the proportion: 'map' = sidebar (380px, map ~2/3),
+  // 'list' = list dominant (~2/3, map shrinks to ~1/3). In map mode, selecting a
+  // property collapses the list to 0 so the floating detail card owns the map.
+  // Mobile shows one view at a time, so we just clear inline width there.
   useLayoutEffect(() => {
     const el = listColRef.current
     if (!el) return
-    if (viewMode === 'list') { gsap.set(el, { clearProps: 'width,opacity' }); return }
-    const collapsed = !!selected
-    const vars = { width: collapsed ? 0 : 380, opacity: collapsed ? 0 : 1 }
-    if (prefersReducedMotion) gsap.set(el, vars)
-    else gsap.to(el, { ...vars, duration: 0.45, ease: 'power3.inOut' })
+    const isDesktop = window.matchMedia('(min-width: 768px)').matches
+    if (!isDesktop) { gsap.set(el, { clearProps: 'width,opacity' }); return }
+
+    let width: number | string = 380
+    let opacity = 1
+    if (viewMode === 'list') width = '66.6667%'
+    else if (selected) { width = 0; opacity = 0 }
+
+    if (prefersReducedMotion) gsap.set(el, { width, opacity })
+    else gsap.to(el, { width, opacity, duration: 0.45, ease: 'power3.inOut' })
   }, [selected, viewMode, prefersReducedMotion])
 
   // Pop the floating detail card in when a property is picked.
@@ -107,7 +115,7 @@ function SearchContent() {
             onClick={() => setViewMode('list')}
             className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all', viewMode === 'list' ? 'bg-surface-container-highest shadow-soft text-primary font-medium' : 'text-on-surface-variant hover:text-on-surface')}
           >
-            <List size={14} /> Solo lista
+            <List size={14} /> Lista
           </button>
         </div>
       </div>
@@ -180,11 +188,11 @@ function SearchContent() {
             property is selected so the map gets the full width. */}
         <div
           ref={listColRef}
-          className={cn('relative bg-surface-container-low border-l border-outline-variant/40 overflow-hidden shrink-0', viewMode === 'list' ? 'flex-1' : 'hidden md:block w-[380px]')}
+          className={cn('relative bg-surface-container-low border-l border-outline-variant/40 overflow-hidden shrink-0', viewMode === 'list' ? 'flex-1 md:flex-none' : 'hidden md:block md:w-[380px]')}
         >
           <div className={cn('h-full overflow-y-auto', viewMode === 'list' ? 'w-full' : 'w-[380px]')}>
             {isSearching && visible.length === 0 ? (
-              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid sm:grid-cols-2 lg:grid-cols-3' : 'flex flex-col')}>
+              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col')}>
                 {Array.from({ length: 4 }, (_, i) => <PropertyCardSkeleton key={i} />)}
               </div>
             ) : visible.length === 0 ? (
@@ -194,7 +202,7 @@ function SearchContent() {
                 <p className="text-sm mt-1">Mueve el mapa o ajusta los filtros</p>
               </div>
             ) : (
-              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid sm:grid-cols-2 lg:grid-cols-3' : 'flex flex-col')}>
+              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col')}>
                 {visible.map(property => (
                   <div key={property.id} className="prop-stagger">
                     <PropertyCard
