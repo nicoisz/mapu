@@ -75,7 +75,7 @@ export const favoritesService = {
     const { data: existing } = await supabase.from('favorites').select('property_id').eq('user_id', userId)
     const have = new Set((existing ?? []).map(r => r.property_id as string))
     for (const propertyId of localIds.filter(id => !have.has(id))) {
-      await supabase.from('favorites').insert({ user_id: userId, property_id: propertyId }).then(() => {})
+      await supabase.from('favorites').insert({ user_id: userId, property_id: propertyId }).then(() => {}, () => {})
     }
     saveLocalIds([])
   },

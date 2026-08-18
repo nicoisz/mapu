@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Building2, KeyRound, List, Map as MapIcon, Tag } from 'lucide-react'
 import { PropertyOperation } from '@/types/enums'
@@ -19,6 +20,8 @@ type ViewMode = 'map' | 'list'
 interface Bounds { contains(lngLat: [number, number]): boolean }
 
 function SearchContent() {
+  const searchParams = useSearchParams()
+  const urlQuery = searchParams.get('q') ?? ''
   const [showFilters, setShowFilters] = useState(false)
   const [selected, setSelected] = useState<Property | null>(null)
   const [bounds, setBounds] = useState<Bounds | null>(null)
@@ -65,7 +68,7 @@ function SearchContent() {
   const {
     query, filters, results, suggestions, activeFilterCount, sort, setSort, isSearching, searchError,
     handleQueryChange, handleSearch, updateFilters, clearFilters, setSuggestions,
-  } = useSearch()
+  } = useSearch(urlQuery)
 
   // Stagger the cards in when a new result set arrives (not on map pans).
   useLayoutEffect(() => {

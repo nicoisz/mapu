@@ -14,8 +14,14 @@ const SORT_MAP: Record<SortOption, Pick<PropertySearchQuery, 'sortBy' | 'sortOrd
   area_desc: { sortBy: 'area', sortOrder: 'desc' },
 }
 
-export function useSearch() {
-  const [query, setQuery] = useState('')
+export function useSearch(initialQuery = '') {
+  const [query, setQuery] = useState(initialQuery)
+
+  // Sync when the URL-provided query changes (e.g. navigating from the landing
+  // search to /buscar?q=... while already on the page).
+  useEffect(() => {
+    if (initialQuery) setQuery(initialQuery)
+  }, [initialQuery])
   const [filters, setFilters] = useState<PropertySearchFilters>({})
   const [sort, setSort] = useState<SortOption>('recent')
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])

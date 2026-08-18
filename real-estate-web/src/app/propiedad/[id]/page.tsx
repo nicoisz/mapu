@@ -28,8 +28,6 @@ export default async function PropertyPage({ params }: Props) {
   const property = await propertyService.getById(id)
   if (!property) notFound()
 
-  propertyService.registerView(property.id)
-
   return (
     <div className="h-full overflow-y-auto bg-background">
       <PropertyDetail property={property} />

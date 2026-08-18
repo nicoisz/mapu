@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
+import { propertyService } from '@/services/propertyService'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { MiniMap } from '@/components/map/MiniMap'
@@ -47,6 +48,11 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
   const images = property.media.images
   const isRent = property.operation === PropertyOperation.RENT
   const amenities = AMENITY_MAP.filter(a => property.features[a.key])
+
+  // Register the view once per client mount (server renders no longer count).
+  useEffect(() => {
+    propertyService.registerView(property.id)
+  }, [property.id])
 
   function prevImage() { setCurrentImageIdx(i => (i === 0 ? images.length - 1 : i - 1)) }
   function nextImage() { setCurrentImageIdx(i => (i === images.length - 1 ? 0 : i + 1)) }
