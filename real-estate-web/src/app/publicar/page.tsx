@@ -7,14 +7,14 @@ import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
 import { z } from 'zod'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
-import { uploadPropertyImages, validateImageFile } from '@/services/storageService'
+import { uploadPropertyImages, validateImageFile, deletePropertyImages } from '@/services/storageService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
 import {
   ChileanRegion, ContactMethod, Currency, PropertyOperation, PropertyType,
 } from '@/types/enums'
-import type { Property } from '@/types/property'
+import type { Property, PropertyImage } from '@/types/property'
 
 const TYPES = [PropertyType.HOUSE, PropertyType.APARTMENT, PropertyType.LAND, PropertyType.OFFICE, PropertyType.COMMERCIAL, PropertyType.WAREHOUSE]
 const REGIONS = Object.values(ChileanRegion)
@@ -98,7 +98,12 @@ export default function PublicarPage() {
       if (problem) errorsFound.push(problem)
       else accepted.push({ file, previewUrl: URL.createObjectURL(file) })
     })
-    setImages(prev => [...prev, ...accepted].slice(0, MAX_IMAGES))
+    setImages(prev => {
+      const merged = [...prev, ...accepted]
+      // Revoke previews of files dropped past the limit.
+      merged.slice(MAX_IMAGES).forEach(img => URL.revokeObjectURL(img.previewUrl))
+      return merged.slice(0, MAX_IMAGES)
+    })
     setErrors(e => ({ ...e, images: errorsFound.length ? errorsFound.join(' · ') : undefined }))
   }
 
@@ -131,8 +136,9 @@ export default function PublicarPage() {
     if (!parsed.success || images.length === 0) return
 
     setSubmitting(true)
+    let uploaded: PropertyImage[] = []
     try {
-      const uploaded = await uploadPropertyImages(user.id, images.map(i => i.file))
+      uploaded = await uploadPropertyImages(user.id, images.map(i => i.file))
 
       const v = parsed.data
       const isRent = operation === PropertyOperation.RENT
@@ -182,6 +188,8 @@ export default function PublicarPage() {
       void refreshUser()
       router.push('/dashboard')
     } catch (err) {
+      // Roll back orphaned uploads when the property insert fails.
+      if (uploaded.length) void deletePropertyImages(uploaded).catch(() => {})
       setSubmitError(err instanceof Error ? err.message : 'No se pudo publicar la propiedad')
       setSubmitting(false)
     }

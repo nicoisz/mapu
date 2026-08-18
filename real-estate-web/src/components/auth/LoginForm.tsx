@@ -23,8 +23,10 @@ export function LoginForm() {
   }
 
   async function handleSocial(provider: 'google' | 'apple' | 'facebook') {
-    const result = await loginWithSocial(provider)
-    if (result.success) router.push('/')
+    // signInWithOAuth navega al proveedor y vuelve con la sesión; AuthContext
+    // la detecta via onAuthStateChange. No navegar aquí: un push() tras iniciar
+    // el flujo puede cancelar la redirección OAuth.
+    await loginWithSocial(provider)
   }
 
   return (
