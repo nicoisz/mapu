@@ -4,8 +4,23 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  ArrowLeft, Bath, Bed, Building, Calendar, ChevronLeft, ChevronRight,
-  Eye, Heart, Mail, MapPin, MessageCircle, Move, Phone, Share2, Shield, Star
+  ArrowLeft,
+  Bath,
+  Bed,
+  Building,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Heart,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Move,
+  Phone,
+  Share2,
+  Shield,
+  Star,
 } from 'lucide-react'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
@@ -45,15 +60,19 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
   const { amount, suffix } = getDisplayPrice(property)
   const images = property.media.images
   const isRent = property.operation === PropertyOperation.RENT
-  const amenities = AMENITY_MAP.filter(a => property.features[a.key])
+  const amenities = AMENITY_MAP.filter((a) => property.features[a.key])
 
   // Register the view once per client mount (server renders no longer count).
   useEffect(() => {
     propertyService.registerView(property.id)
   }, [property.id])
 
-  function prevImage() { setCurrentImageIdx(i => (i === 0 ? images.length - 1 : i - 1)) }
-  function nextImage() { setCurrentImageIdx(i => (i === images.length - 1 ? 0 : i + 1)) }
+  function prevImage() {
+    setCurrentImageIdx((i) => (i === 0 ? images.length - 1 : i - 1))
+  }
+  function nextImage() {
+    setCurrentImageIdx((i) => (i === images.length - 1 ? 0 : i + 1))
+  }
 
   async function handleShare() {
     await shareService.shareProperty(property)
@@ -66,7 +85,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
   return (
     <div className="max-w-4xl mx-auto pb-24">
       <div className="flex items-center justify-between p-4">
-        <Link href="/" className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors"
+        >
           <ArrowLeft size={20} />
           <span className="text-sm font-medium">Volver al mapa</span>
         </Link>
@@ -74,11 +96,24 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           <button
             onClick={() => toggle(property)}
             aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-            className={cn('p-2 rounded-lg border transition-all', fav ? 'border-accent text-accent bg-error/10' : 'border-outline-variant/60 text-on-surface-variant hover:border-accent hover:text-accent')}
+            className={cn(
+              'p-2 rounded-lg border transition-all',
+              fav
+                ? 'border-accent text-accent bg-error/10'
+                : 'border-outline-variant/60 text-on-surface-variant hover:border-accent hover:text-accent'
+            )}
           >
-            <Heart size={18} fill={fav ? 'currentColor' : 'none'} className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''} />
+            <Heart
+              size={18}
+              fill={fav ? 'currentColor' : 'none'}
+              className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''}
+            />
           </button>
-          <button onClick={handleShare} aria-label="Compartir propiedad" className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary transition-all">
+          <button
+            onClick={handleShare}
+            aria-label="Compartir propiedad"
+            className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary transition-all"
+          >
             <Share2 size={18} />
           </button>
         </div>
@@ -98,10 +133,18 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             />
             {images.length > 1 && (
               <>
-                <button onClick={prevImage} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
+                <button
+                  onClick={prevImage}
+                  aria-label="Foto anterior"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
+                >
                   <ChevronLeft size={20} />
                 </button>
-                <button onClick={nextImage} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
+                <button
+                  onClick={nextImage}
+                  aria-label="Foto siguiente"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
+                >
                   <ChevronRight size={20} />
                 </button>
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -110,7 +153,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                       key={i}
                       onClick={() => setCurrentImageIdx(i)}
                       aria-label={`Ver foto ${i + 1} de ${images.length}`}
-                      className={cn('w-2 h-2 rounded-full transition-all', i === currentImageIdx ? 'bg-white w-4' : 'bg-white/50')}
+                      className={cn(
+                        'w-2 h-2 rounded-full transition-all',
+                        i === currentImageIdx ? 'bg-white w-4' : 'bg-white/50'
+                      )}
                     />
                   ))}
                 </div>
@@ -118,7 +164,9 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             )}
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-on-surface-variant">Sin imágenes</div>
+          <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
+            Sin imágenes
+          </div>
         )}
 
         <div className="absolute top-3 left-3 flex gap-2">
@@ -140,17 +188,32 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             </div>
             <h1 className="text-2xl font-bold text-on-surface">{property.title}</h1>
             <div className="mt-2 flex items-baseline gap-1">
-              <span className="font-headline text-4xl font-bold text-on-surface tracking-tight">{amount}</span>
+              <span className="font-headline text-4xl font-bold text-on-surface tracking-tight">
+                {amount}
+              </span>
               {suffix && <span className="text-on-surface-variant">{suffix}</span>}
-              {property.pricing.isNegotiable && <span className="ml-2 text-sm text-on-surface-variant font-medium">• Negociable</span>}
+              {property.pricing.isNegotiable && (
+                <span className="ml-2 text-sm text-on-surface-variant font-medium">
+                  • Negociable
+                </span>
+              )}
             </div>
           </div>
 
           {/* Stats */}
           <div className="flex gap-4 text-sm text-on-surface-variant">
-            <span className="flex items-center gap-1"><Eye size={14} />{property.listing.views.toLocaleString()} vistas</span>
-            <span className="flex items-center gap-1"><Heart size={14} />{property.listing.favorites} favoritos</span>
-            <span className="flex items-center gap-1"><Calendar size={14} />Publicado {formatDate(property.listing.publishedAt)}</span>
+            <span className="flex items-center gap-1">
+              <Eye size={14} />
+              {property.listing.views.toLocaleString()} vistas
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart size={14} />
+              {property.listing.favorites} favoritos
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar size={14} />
+              Publicado {formatDate(property.listing.publishedAt)}
+            </span>
           </div>
 
           {/* Features grid */}
@@ -161,14 +224,18 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                 <div className="bg-surface-container rounded-xl p-3 text-center">
                   <Bed size={22} className="mx-auto text-primary mb-1" />
                   <div className="font-bold text-on-surface">{property.features.bedrooms}</div>
-                  <div className="text-xs text-on-surface-variant">Dormitorio{property.features.bedrooms !== 1 ? 's' : ''}</div>
+                  <div className="text-xs text-on-surface-variant">
+                    Dormitorio{property.features.bedrooms !== 1 ? 's' : ''}
+                  </div>
                 </div>
               )}
               {property.features.bathrooms !== undefined && (
                 <div className="bg-surface-container rounded-xl p-3 text-center">
                   <Bath size={22} className="mx-auto text-primary mb-1" />
                   <div className="font-bold text-on-surface">{property.features.bathrooms}</div>
-                  <div className="text-xs text-on-surface-variant">Baño{property.features.bathrooms !== 1 ? 's' : ''}</div>
+                  <div className="text-xs text-on-surface-variant">
+                    Baño{property.features.bathrooms !== 1 ? 's' : ''}
+                  </div>
                 </div>
               )}
               <div className="bg-surface-container rounded-xl p-3 text-center">
@@ -180,7 +247,9 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                 <div className="bg-surface-container rounded-xl p-3 text-center">
                   <span className="text-xl block mb-1">🅿️</span>
                   <div className="font-bold text-on-surface">{property.features.parkingSpots}</div>
-                  <div className="text-xs text-on-surface-variant">Estacionamiento{property.features.parkingSpots !== 1 ? 's' : ''}</div>
+                  <div className="text-xs text-on-surface-variant">
+                    Estacionamiento{property.features.parkingSpots !== 1 ? 's' : ''}
+                  </div>
                 </div>
               )}
             </div>
@@ -207,7 +276,9 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           {/* Description */}
           <div>
             <h2 className="font-semibold text-on-surface mb-2">Descripción</h2>
-            <p className="text-on-surface-variant leading-relaxed text-sm">{property.description}</p>
+            <p className="text-on-surface-variant leading-relaxed text-sm">
+              {property.description}
+            </p>
           </div>
 
           {/* Amenities */}
@@ -215,8 +286,11 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             <div>
               <h2 className="font-semibold text-on-surface mb-3">Amenidades</h2>
               <div className="flex flex-wrap gap-2">
-                {amenities.map(a => (
-                  <span key={a.key} className="flex items-center gap-1 bg-secondary/10 text-secondary text-sm px-3 py-1 rounded-full font-medium">
+                {amenities.map((a) => (
+                  <span
+                    key={a.key}
+                    className="flex items-center gap-1 bg-secondary/10 text-secondary text-sm px-3 py-1 rounded-full font-medium"
+                  >
                     ✓ {a.label}
                   </span>
                 ))}
@@ -227,8 +301,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           {/* Tags */}
           {property.tags && property.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {property.tags.map(tag => (
-                <Badge key={tag} variant="gray" size="sm">#{tag}</Badge>
+              {property.tags.map((tag) => (
+                <Badge key={tag} variant="gray" size="sm">
+                  #{tag}
+                </Badge>
               ))}
             </div>
           )}
@@ -242,7 +318,11 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
 
             <div className="flex items-center gap-3 mb-4">
               {property.contact.avatar ? (
-                <img src={property.contact.avatar} alt={property.contact.name} className="w-12 h-12 rounded-full object-cover" />
+                <img
+                  src={property.contact.avatar}
+                  alt={property.contact.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">
                   {property.contact.name.charAt(0)}
@@ -269,19 +349,34 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
 
             <div className="space-y-2">
               {property.contact.whatsapp && (
-                <Button fullWidth size="sm" variant="secondary" onClick={() => contactService.contactViaWhatsApp(property.contact)}>
+                <Button
+                  fullWidth
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => contactService.contactViaWhatsApp(property.contact)}
+                >
                   <MessageCircle size={15} />
                   WhatsApp
                 </Button>
               )}
               {property.contact.phone && (
-                <Button fullWidth size="sm" variant="outline" onClick={() => contactService.contactViaPhone(property.contact)}>
+                <Button
+                  fullWidth
+                  size="sm"
+                  variant="outline"
+                  onClick={() => contactService.contactViaPhone(property.contact)}
+                >
                   <Phone size={15} />
                   Llamar
                 </Button>
               )}
               {property.contact.email && (
-                <Button fullWidth size="sm" variant="ghost" onClick={() => contactService.contactViaEmail(property.contact)}>
+                <Button
+                  fullWidth
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => contactService.contactViaEmail(property.contact)}
+                >
                   <Mail size={15} />
                   Email
                 </Button>
@@ -303,10 +398,16 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           {/* Location map */}
           <div className="bg-surface-container-low border border-outline-variant/60 rounded-xl p-4">
             <h2 className="font-semibold text-on-surface mb-3">Ubicación</h2>
-            <MiniMap latitude={property.location.latitude} longitude={property.location.longitude} />
+            <MiniMap
+              latitude={property.location.latitude}
+              longitude={property.location.longitude}
+            />
             <p className="text-sm text-on-surface-variant mt-3 flex items-start gap-1.5">
               <MapPin size={14} className="shrink-0 mt-0.5" />
-              <span>{property.location.displayAddress ?? `${property.location.address.street} ${property.location.address.number ?? ''}, ${property.location.address.city}`}</span>
+              <span>
+                {property.location.displayAddress ??
+                  `${property.location.address.street} ${property.location.address.number ?? ''}, ${property.location.address.city}`}
+              </span>
             </p>
           </div>
         </div>
@@ -315,8 +416,15 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       {/* Mobile sticky CTA */}
       <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
         <div className="min-w-0">
-          <p className="font-headline font-bold text-on-surface text-lg leading-tight truncate">{amount}{suffix && <span className="text-on-surface-variant text-xs font-normal">{suffix}</span>}</p>
-          <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">{OPERATION_LABELS[property.operation]}</p>
+          <p className="font-headline font-bold text-on-surface text-lg leading-tight truncate">
+            {amount}
+            {suffix && (
+              <span className="text-on-surface-variant text-xs font-normal">{suffix}</span>
+            )}
+          </p>
+          <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">
+            {OPERATION_LABELS[property.operation]}
+          </p>
         </div>
         <Button size="lg" onClick={handleContact} className="flex-1">
           <Phone size={18} />

@@ -33,18 +33,31 @@ export function useSearch(initialQuery = '') {
   useEffect(() => {
     let cancelled = false
     setIsSearching(true)
-    const t = setTimeout(async () => {
-      try {
-        const searchQuery = { ...searchService.buildSearchQuery(query, filters), ...SORT_MAP[sort] }
-        const data = await searchService.searchProperties(searchQuery)
-        if (!cancelled) { setResults(data); setSearchError(null) }
-      } catch (err) {
-        if (!cancelled) setSearchError(err instanceof Error ? err.message : 'Error al buscar propiedades')
-      } finally {
-        if (!cancelled) setIsSearching(false)
-      }
-    }, query ? 300 : 0)
-    return () => { cancelled = true; clearTimeout(t) }
+    const t = setTimeout(
+      async () => {
+        try {
+          const searchQuery = {
+            ...searchService.buildSearchQuery(query, filters),
+            ...SORT_MAP[sort],
+          }
+          const data = await searchService.searchProperties(searchQuery)
+          if (!cancelled) {
+            setResults(data)
+            setSearchError(null)
+          }
+        } catch (err) {
+          if (!cancelled)
+            setSearchError(err instanceof Error ? err.message : 'Error al buscar propiedades')
+        } finally {
+          if (!cancelled) setIsSearching(false)
+        }
+      },
+      query ? 300 : 0
+    )
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
   }, [query, filters, sort])
 
   const handleQueryChange = useCallback((value: string) => {
@@ -63,7 +76,7 @@ export function useSearch(initialQuery = '') {
   }, [])
 
   const updateFilters = useCallback((newFilters: Partial<PropertySearchFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }))
+    setFilters((prev) => ({ ...prev, ...newFilters }))
   }, [])
 
   const clearFilters = useCallback(() => setFilters({}), [])

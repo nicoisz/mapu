@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Format check antes de commitear (monorepo: npm vive en real-estate-web/).
+cd real-estate-web && npx prettier --check "src/**/*.{ts,tsx,css}" || { echo "Prettier falla: corre npm run format"; exit 1; }

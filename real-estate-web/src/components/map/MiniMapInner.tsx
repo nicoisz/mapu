@@ -23,7 +23,9 @@ export default function MiniMapInner({ latitude, longitude }: Props) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const initialStyle = document.documentElement.classList.contains('dark') ? STYLE_DARK : STYLE_LIGHT
+    const initialStyle = document.documentElement.classList.contains('dark')
+      ? STYLE_DARK
+      : STYLE_LIGHT
     styleRef.current = initialStyle
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -45,7 +47,10 @@ export default function MiniMapInner({ latitude, longitude }: Props) {
     })
     mapRef.current = map
 
-    return () => { map.remove(); mapRef.current = null }
+    return () => {
+      map.remove()
+      mapRef.current = null
+    }
   }, [latitude, longitude])
 
   useEffect(() => {

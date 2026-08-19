@@ -21,7 +21,7 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
   const { isFavorite, toggle } = useFavoritesContext()
   const fav = isFavorite(property.id)
   const { amount, suffix } = getDisplayPrice(property)
-  const mainImage = property.media.images.find(img => img.isMain) ?? property.media.images[0]
+  const mainImage = property.media.images.find((img) => img.isMain) ?? property.media.images[0]
   const isRent = property.operation === PropertyOperation.RENT
 
   return (
@@ -57,10 +57,17 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
           <Badge variant={isRent ? 'rent' : 'sale'} size="sm">
             {OPERATION_LABELS[property.operation]}
           </Badge>
-          {property.listing.isPremium && <Badge variant="premium" size="sm">★ Destacado</Badge>}
+          {property.listing.isPremium && (
+            <Badge variant="premium" size="sm">
+              ★ Destacado
+            </Badge>
+          )}
         </div>
         <button
-          onClick={e => { e.stopPropagation(); toggle(property) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            toggle(property)
+          }}
           className={cn(
             'absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition-all',
             fav ? 'bg-primary text-on-primary' : 'bg-black/35 text-white hover:bg-black/55'
@@ -78,7 +85,14 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
       <div className={cn(compact ? 'p-3 flex-1 min-w-0' : 'p-5')}>
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
-            <span className={cn('font-headline font-bold text-on-surface tracking-tight', compact ? 'text-lg' : 'text-2xl')}>{amount}</span>
+            <span
+              className={cn(
+                'font-headline font-bold text-on-surface tracking-tight',
+                compact ? 'text-lg' : 'text-2xl'
+              )}
+            >
+              {amount}
+            </span>
             {suffix && <span className="text-on-surface-variant text-sm">{suffix}</span>}
           </div>
           {!compact && (
@@ -88,7 +102,12 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
           )}
         </div>
 
-        <h3 className={cn('font-medium text-on-surface leading-tight mt-1.5', compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2')}>
+        <h3
+          className={cn(
+            'font-medium text-on-surface leading-tight mt-1.5',
+            compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
+          )}
+        >
           {property.title}
         </h3>
 
@@ -102,15 +121,24 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
         {!compact && (
           <div className="flex items-center gap-5 mt-4 pt-3.5 border-t border-outline-variant/30 text-xs text-on-surface-variant">
             {property.features.bedrooms !== undefined && (
-              <span className="flex items-center gap-1.5"><Bed size={13} />{property.features.bedrooms}</span>
+              <span className="flex items-center gap-1.5">
+                <Bed size={13} />
+                {property.features.bedrooms}
+              </span>
             )}
             {property.features.bathrooms !== undefined && (
-              <span className="flex items-center gap-1.5"><Bath size={13} />{property.features.bathrooms}</span>
+              <span className="flex items-center gap-1.5">
+                <Bath size={13} />
+                {property.features.bathrooms}
+              </span>
             )}
-            <span className="flex items-center gap-1.5"><Move size={13} />{formatArea(property.features.area)}</span>
+            <span className="flex items-center gap-1.5">
+              <Move size={13} />
+              {formatArea(property.features.area)}
+            </span>
             <Link
               href={`/propiedad/${property.id}`}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               className="ml-auto font-semibold text-on-surface hover:text-primary transition-colors"
             >
               Ver detalle →
@@ -125,7 +153,12 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
 /** Loading placeholder matching PropertyCard's layout. */
 export function PropertyCardSkeleton({ compact }: { compact?: boolean }) {
   return (
-    <div className={cn('bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/25', compact ? 'flex gap-3' : '')}>
+    <div
+      className={cn(
+        'bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/25',
+        compact ? 'flex gap-3' : ''
+      )}
+    >
       <div className={cn('skeleton shrink-0', compact ? 'w-28 h-24' : 'h-60')} />
       <div className={cn(compact ? 'p-3 flex-1' : 'p-5', 'space-y-3')}>
         <div className="skeleton h-6 w-28 rounded-md" />

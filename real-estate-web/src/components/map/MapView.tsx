@@ -10,8 +10,14 @@ import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
 import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
 import {
-  computePriceZones, zonesToGeoJSON, getZoneColor, easeOutElastic, scaleZoneGeometry,
-  ZoneMode, ZoneBucket, ZoneCell,
+  computePriceZones,
+  zonesToGeoJSON,
+  getZoneColor,
+  easeOutElastic,
+  scaleZoneGeometry,
+  ZoneMode,
+  ZoneBucket,
+  ZoneCell,
 } from '@/lib/priceZones'
 
 // OpenFreeMap — free vector tiles, no API key. Native styles per theme.
@@ -22,7 +28,9 @@ const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark'
 const SATELLITE_SOURCES: StyleSpecification['sources'] = {
   satellite: {
     type: 'raster',
-    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+    tiles: [
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    ],
     tileSize: 256,
     maxzoom: 19,
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
@@ -30,13 +38,17 @@ const SATELLITE_SOURCES: StyleSpecification['sources'] = {
   // Esri reference overlays, designed to sit on top of World Imagery.
   'esri-roads': {
     type: 'raster',
-    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'],
+    tiles: [
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+    ],
     tileSize: 256,
     maxzoom: 19,
   },
   'esri-labels': {
     type: 'raster',
-    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],
+    tiles: [
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    ],
     tileSize: 256,
     maxzoom: 19,
   },
@@ -90,7 +102,12 @@ type PointProps = { propertyId: string }
 
 /** Price pill colored by operation (sale/rent); the selected one scales up
  *  with a solid white ring. */
-function makePinElement(label: string, isSelected: boolean, isRent: boolean, animate: boolean): HTMLDivElement {
+function makePinElement(
+  label: string,
+  isSelected: boolean,
+  isRent: boolean,
+  animate: boolean
+): HTMLDivElement {
   const wrap = document.createElement('div')
   wrap.style.cursor = 'pointer'
 
@@ -118,8 +135,12 @@ function makePinElement(label: string, isSelected: boolean, isRent: boolean, ani
   wrap.appendChild(inner)
 
   if (!isSelected) {
-    wrap.onmouseenter = () => { inner.style.transform = 'scale(1.08)' }
-    wrap.onmouseleave = () => { inner.style.transform = 'scale(1)' }
+    wrap.onmouseenter = () => {
+      inner.style.transform = 'scale(1.08)'
+    }
+    wrap.onmouseleave = () => {
+      inner.style.transform = 'scale(1)'
+    }
   }
   return wrap
 }
@@ -165,7 +186,15 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
   return wrap
 }
 
-export default function MapView({ properties, selectedId, onPropertySelect, onMapClick, onBoundsChange, center, zoom }: MapViewProps) {
+export default function MapView({
+  properties,
+  selectedId,
+  onPropertySelect,
+  onMapClick,
+  onBoundsChange,
+  center,
+  zoom,
+}: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
@@ -212,7 +241,9 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: dark ? STYLE_DARK : STYLE_LIGHT,
-      center: center ? [center.lng, center.lat] : [DEFAULT_MAP_CENTER.longitude, DEFAULT_MAP_CENTER.latitude],
+      center: center
+        ? [center.lng, center.lat]
+        : [DEFAULT_MAP_CENTER.longitude, DEFAULT_MAP_CENTER.latitude],
       zoom: zoom ?? DEFAULT_MAP_ZOOM,
       attributionControl: { compact: true },
     })
@@ -225,14 +256,17 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
       boundsRef.current?.(map.getBounds())
     })
     // Re-cluster as the user pans/zooms, then report the new bounds.
-    map.on('moveend', () => { renderClusters(); boundsRef.current?.(map.getBounds()) })
+    map.on('moveend', () => {
+      renderClusters()
+      boundsRef.current?.(map.getBounds())
+    })
     // A click on the empty basemap (not on a marker) deselects.
     map.on('click', () => mapClickRef.current?.())
     mapRef.current = map
 
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current)
-      markersRef.current.forEach(m => m.remove())
+      markersRef.current.forEach((m) => m.remove())
       markersRef.current.clear()
       readyRef.current = false
       map.remove()
@@ -245,7 +279,7 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
   function buildIndex() {
     const data = propsDataRef.current
     const byId = new Map<string, Property>()
-    const points: Supercluster.PointFeature<PointProps>[] = data.map(p => {
+    const points: Supercluster.PointFeature<PointProps>[] = data.map((p) => {
       byId.set(p.id, p)
       return {
         type: 'Feature',
@@ -266,17 +300,23 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     if (!map || !index || !readyRef.current) return
 
     const b = map.getBounds()
-    const bbox: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+    const bbox: [number, number, number, number] = [
+      b.getWest(),
+      b.getSouth(),
+      b.getEast(),
+      b.getNorth(),
+    ]
     const z = Math.round(map.getZoom())
     const clusters = index.getClusters(bbox, z)
 
     const seen = new Set<string>()
     const prevKeys = prevKeysRef.current
     // Satellite/hybrid imagery is dark-ish: light pills read best on it.
-    const isDark = layerRef.current !== 'streets' ? false : document.documentElement.classList.contains('dark')
+    const isDark =
+      layerRef.current !== 'streets' ? false : document.documentElement.classList.contains('dark')
     const currentSelectedId = selectedIdRef.current
 
-    clusters.forEach(c => {
+    clusters.forEach((c) => {
       const [lng, lat] = c.geometry.coordinates
 
       if ('cluster' in c.properties) {
@@ -286,10 +326,15 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
         if (markersRef.current.has(key)) return // stable cluster, keep it
 
         const el = makeClusterElement(c.properties.point_count, isDark, !prevKeys.has(key))
-        el.addEventListener('click', e => {
+        el.addEventListener('click', (e) => {
           e.stopPropagation()
           const expansionZoom = index.getClusterExpansionZoom(clusterId)
-          map.flyTo({ center: [lng, lat], zoom: Math.min(expansionZoom, 18), speed: 1, essential: true })
+          map.flyTo({
+            center: [lng, lat],
+            zoom: Math.min(expansionZoom, 18),
+            speed: 1,
+            essential: true,
+          })
         })
         const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
           .setLngLat([lng, lat])
@@ -308,7 +353,10 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
       const isSelected = propId === currentSelectedId
       const isRent = property.operation === PropertyOperation.RENT
       const el = makePinElement(getMapPinPrice(property), isSelected, isRent, !prevKeys.has(key))
-      el.addEventListener('click', e => { e.stopPropagation(); selectRef.current?.(property) })
+      el.addEventListener('click', (e) => {
+        e.stopPropagation()
+        selectRef.current?.(property)
+      })
 
       // Replace any existing pin for this id so selection styling stays fresh.
       markersRef.current.get(key)?.remove()
@@ -320,7 +368,10 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
 
     // Drop markers no longer in view (or merged into a cluster).
     markersRef.current.forEach((marker, key) => {
-      if (!seen.has(key)) { marker.remove(); markersRef.current.delete(key) }
+      if (!seen.has(key)) {
+        marker.remove()
+        markersRef.current.delete(key)
+      }
     })
     prevKeysRef.current = seen
   }
@@ -330,17 +381,24 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
   // by mean price (blue = economic, purple = mid, gold = premium).
   function addZoneLayers(map: maplibregl.Map) {
     if (map.getSource(ZONE_SOURCE)) return
-    map.addSource(ZONE_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+    map.addSource(ZONE_SOURCE, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
     map.addLayer({
       id: ZONE_LAYER,
       type: 'fill',
       source: ZONE_SOURCE,
       paint: {
         'fill-color': [
-          'match', ['get', 'bucket'],
-          'economic', getZoneColor('economic'),
-          'mid', getZoneColor('mid'),
-          'premium', getZoneColor('premium'),
+          'match',
+          ['get', 'bucket'],
+          'economic',
+          getZoneColor('economic'),
+          'mid',
+          getZoneColor('mid'),
+          'premium',
+          getZoneColor('premium'),
           '#888888',
         ],
         'fill-opacity': 0.28,
@@ -350,9 +408,9 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     // Cursor + click: the selected hex does an elastic scale "boing" using the
     // easeOutElastic curve, re-feeding geometry through setData() (MapLibre
     // can't CSS-deform canvas geometry, so we swap GeoJSON coordinates live).
-    map.on('mouseenter', ZONE_LAYER, () => map.getCanvas().style.cursor = 'pointer')
-    map.on('mouseleave', ZONE_LAYER, () => map.getCanvas().style.cursor = '')
-    map.on('click', ZONE_LAYER, e => {
+    map.on('mouseenter', ZONE_LAYER, () => (map.getCanvas().style.cursor = 'pointer'))
+    map.on('mouseleave', ZONE_LAYER, () => (map.getCanvas().style.cursor = ''))
+    map.on('click', ZONE_LAYER, (e) => {
       const feat = e.features?.[0]
       const id = feat?.properties?.id as string | undefined
       if (!id || !zoneGeoRef.current) return
@@ -360,28 +418,32 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
       if (!source || !source.setData) return
       if (animRef.current) cancelAnimationFrame(animRef.current)
       // Find the target feature and animate it, keeping all others intact.
-      const target = zoneGeoRef.current.features.find(f => (f.properties as { id: string })?.id === id)
+      const target = zoneGeoRef.current.features.find(
+        (f) => (f.properties as { id: string })?.id === id
+      )
       if (!target) return
-        const targetGeom = target.geometry as GeoJSON.Polygon
-        const ring = targetGeom.coordinates[0]
-        // Hex center = midpoint of two opposite corners (v0 ↔ v3).
-        const center = {
-          lat: (ring[0][1] + ring[3][1]) / 2,
-          lng: (ring[0][0] + ring[3][0]) / 2,
-        }
-        const start = performance.now()
-        const DUR = 900
-        const tick = (now: number) => {
-          const t = Math.min((now - start) / DUR, 1)
-          const s = 1 + 0.35 * easeOutElastic(t)
-          const scaled = scaleZoneGeometry(ring.slice(0, -1) as [number, number][], center, s)
-          const copy: GeoJSON.FeatureCollection = JSON.parse(JSON.stringify(zoneGeoRef.current))
-          const copyTarget = copy.features.find(f => (f.properties as { id: string })?.id === id) as GeoJSON.Feature<GeoJSON.Polygon>
-          copyTarget.geometry.coordinates = [[...scaled, scaled[0]]]
-          source.setData(copy)
-          if (t < 1) animRef.current = requestAnimationFrame(tick)
-        }
-        animRef.current = requestAnimationFrame(tick)
+      const targetGeom = target.geometry as GeoJSON.Polygon
+      const ring = targetGeom.coordinates[0]
+      // Hex center = midpoint of two opposite corners (v0 ↔ v3).
+      const center = {
+        lat: (ring[0][1] + ring[3][1]) / 2,
+        lng: (ring[0][0] + ring[3][0]) / 2,
+      }
+      const start = performance.now()
+      const DUR = 900
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / DUR, 1)
+        const s = 1 + 0.35 * easeOutElastic(t)
+        const scaled = scaleZoneGeometry(ring.slice(0, -1) as [number, number][], center, s)
+        const copy: GeoJSON.FeatureCollection = JSON.parse(JSON.stringify(zoneGeoRef.current))
+        const copyTarget = copy.features.find(
+          (f) => (f.properties as { id: string })?.id === id
+        ) as GeoJSON.Feature<GeoJSON.Polygon>
+        copyTarget.geometry.coordinates = [[...scaled, scaled[0]]]
+        source.setData(copy)
+        if (t < 1) animRef.current = requestAnimationFrame(tick)
+      }
+      animRef.current = requestAnimationFrame(tick)
     })
   }
 
@@ -430,8 +492,14 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
   useEffect(() => {
     const map = mapRef.current
     if (!map || !selectedId) return
-    const p = properties.find(x => x.id === selectedId)
-    if (p) map.flyTo({ center: [p.location.longitude, p.location.latitude], zoom: Math.max(map.getZoom(), 14), speed: 0.8, essential: true })
+    const p = properties.find((x) => x.id === selectedId)
+    if (p)
+      map.flyTo({
+        center: [p.location.longitude, p.location.latitude],
+        zoom: Math.max(map.getZoom(), 14),
+        speed: 0.8,
+        essential: true,
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
 
@@ -450,14 +518,18 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     if (styleKeyRef.current === key) return
     styleKeyRef.current = key
     const style =
-      layer === 'satellite' ? STYLE_SATELLITE :
-      layer === 'hybrid' ? STYLE_HYBRID :
-      theme === 'dark' ? STYLE_DARK : STYLE_LIGHT
+      layer === 'satellite'
+        ? STYLE_SATELLITE
+        : layer === 'hybrid'
+          ? STYLE_HYBRID
+          : theme === 'dark'
+            ? STYLE_DARK
+            : STYLE_LIGHT
     map.setStyle(style)
     // Markers are DOM overlays (they survive setStyle) but their colors are
     // theme/layer-dependent — rebuild them. setStyle also drops the custom
     // zone source/layer; re-add them once the new style has loaded.
-    markersRef.current.forEach(m => m.remove())
+    markersRef.current.forEach((m) => m.remove())
     markersRef.current.clear()
     prevKeysRef.current = new Set()
     renderClusters()
@@ -481,7 +553,13 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
 
       {/* Base layer switch */}
       <div className="absolute bottom-6 left-3 z-10 flex rounded-full overflow-hidden border border-outline-variant/40 shadow-elevated bg-surface-container-low">
-        {([['streets', 'Mapa'], ['satellite', 'Satélite'], ['hybrid', 'Híbrido']] as [BaseLayer, string][]).map(([value, label]) => (
+        {(
+          [
+            ['streets', 'Mapa'],
+            ['satellite', 'Satélite'],
+            ['hybrid', 'Híbrido'],
+          ] as [BaseLayer, string][]
+        ).map(([value, label]) => (
           <button
             key={value}
             onClick={() => setLayer(value)}
@@ -500,19 +578,27 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
       <div className="absolute bottom-24 left-3 z-10 flex flex-col gap-2 items-start">
         <div className="flex rounded-full overflow-hidden border border-outline-variant/40 shadow-elevated bg-surface-container-low">
           <button
-            onClick={() => setZonesOn(v => !v)}
-            className={zonesOn ? 'px-3.5 py-1.5 text-xs font-bold bg-primary text-on-primary' : 'px-3.5 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors'}
+            onClick={() => setZonesOn((v) => !v)}
+            className={
+              zonesOn
+                ? 'px-3.5 py-1.5 text-xs font-bold bg-primary text-on-primary'
+                : 'px-3.5 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors'
+            }
             title="Mostrar/ocultar zonas de precio"
           >
             Zonas precio
           </button>
           {zonesOn && (
             <div className="flex">
-              {(['sale', 'rent'] as ZoneMode[]).map(mode => (
+              {(['sale', 'rent'] as ZoneMode[]).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setZoneMode(mode)}
-                  className={zoneMode === mode ? 'px-3 py-1.5 text-xs font-bold bg-surface-container-highest text-primary' : 'px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors'}
+                  className={
+                    zoneMode === mode
+                      ? 'px-3 py-1.5 text-xs font-bold bg-surface-container-highest text-primary'
+                      : 'px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors'
+                  }
                 >
                   {mode === 'sale' ? 'Venta' : 'Arriendo'}
                 </button>
@@ -526,17 +612,21 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
             <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-2">
               Zonas por precio · {zoneMode === 'sale' ? 'venta' : 'arriendo'}
             </p>
-            {(['economic', 'mid', 'premium'] as ZoneBucket[]).map(bucket => {
+            {(['economic', 'mid', 'premium'] as ZoneBucket[]).map((bucket) => {
               const range = zoneRanges[bucket]
               return (
                 <div key={bucket} className="flex items-center gap-2 text-xs py-0.5">
-                  <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: getZoneColor(bucket) }} />
+                  <span
+                    className="w-3 h-3 rounded-sm shrink-0"
+                    style={{ backgroundColor: getZoneColor(bucket) }}
+                  />
                   <span className="font-semibold text-on-surface capitalize">
                     {bucket === 'economic' ? 'Económica' : bucket === 'mid' ? 'Media' : 'Premium'}
                   </span>
                   {range && (
                     <span className="ml-auto text-on-surface-variant">
-                      {formatPriceShort(range[0], Currency.CLP)} – {formatPriceShort(range[1], Currency.CLP)}
+                      {formatPriceShort(range[0], Currency.CLP)} –{' '}
+                      {formatPriceShort(range[1], Currency.CLP)}
                     </span>
                   )}
                 </div>

@@ -1,4 +1,11 @@
-import { ChileanRegion, ContactMethod, Currency, PropertyOperation, PropertyStatus, PropertyType } from './enums'
+import {
+  ChileanRegion,
+  ContactMethod,
+  Currency,
+  PropertyOperation,
+  PropertyStatus,
+  PropertyType,
+} from './enums'
 
 export interface Address {
   street: string

@@ -37,7 +37,8 @@ export function getDisplayPrice(property: Property): { amount: string; suffix?: 
 
 export function getMapPinPrice(property: Property): string {
   const { pricing, operation } = property
-  const price = operation === PropertyOperation.RENT ? (pricing.monthlyRent ?? pricing.price) : pricing.price
+  const price =
+    operation === PropertyOperation.RENT ? (pricing.monthlyRent ?? pricing.price) : pricing.price
   return formatPriceShort(price, pricing.currency)
 }
 
@@ -64,7 +65,8 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
 
 export function buildShareText(property: Property): string {
   const { pricing, operation } = property
-  const price = operation === PropertyOperation.RENT ? (pricing.monthlyRent ?? pricing.price) : pricing.price
+  const price =
+    operation === PropertyOperation.RENT ? (pricing.monthlyRent ?? pricing.price) : pricing.price
   const priceStr = formatPrice(price, pricing.currency)
   const suffix = operation === PropertyOperation.RENT ? '/mes' : ''
   return `${property.title}\n${priceStr}${suffix}\n${property.location.displayAddress ?? property.location.address.city}`

@@ -6,7 +6,13 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   size?: 'sm' | 'md'
 }
 
-export function Badge({ className, variant = 'default', size = 'md', children, ...props }: BadgeProps) {
+export function Badge({
+  className,
+  variant = 'default',
+  size = 'md',
+  children,
+  ...props
+}: BadgeProps) {
   return (
     <span
       className={cn(

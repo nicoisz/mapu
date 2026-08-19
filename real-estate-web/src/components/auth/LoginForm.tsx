@@ -38,14 +38,16 @@ export function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-error/10 border border-error/40 rounded-lg p-3 text-error text-sm">{error}</div>
+          <div className="bg-error/10 border border-error/40 rounded-lg p-3 text-error text-sm">
+            {error}
+          </div>
         )}
 
         <Input
           label="Email"
           type="email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@email.cl"
           required
           leftIcon={<Mail size={14} />}
@@ -56,12 +58,17 @@ export function LoginForm() {
           label="Contraseña"
           type={showPassword ? 'text' : 'password'}
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
           required
           leftIcon={<Lock size={14} />}
           rightIcon={
-            <button type="button" onClick={() => setShowPassword(s => !s)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} className="text-on-surface-variant hover:text-on-surface">
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              className="text-on-surface-variant hover:text-on-surface"
+            >
               {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           }
@@ -100,7 +107,9 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-on-surface-variant mt-6">
         ¿No tienes cuenta?{' '}
-        <Link href="/register" className="text-primary font-medium hover:underline">Regístrate gratis</Link>
+        <Link href="/register" className="text-primary font-medium hover:underline">
+          Regístrate gratis
+        </Link>
       </p>
     </div>
   )

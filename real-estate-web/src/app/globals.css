@@ -148,10 +148,17 @@
     border: 1px solid rgb(var(--outline-variant) / 0.5);
   }
   .hero-gradient {
-    background: linear-gradient(180deg, rgb(var(--background) / 0.2) 0%, rgb(var(--background) / 0.92) 100%);
+    background: linear-gradient(
+      180deg,
+      rgb(var(--background) / 0.2) 0%,
+      rgb(var(--background) / 0.92) 100%
+    );
   }
   .warm-glow {
-    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    transition:
+      box-shadow 0.3s ease,
+      border-color 0.3s ease,
+      transform 0.3s ease;
   }
   .warm-glow:hover {
     box-shadow: 0 18px 40px -12px rgb(var(--primary) / 0.35);
@@ -169,7 +176,11 @@
     scrollbar-width: none;
   }
   .map-pattern {
-    background-image: radial-gradient(circle at 1px 1px, rgb(var(--outline-variant)) 1px, transparent 0);
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgb(var(--outline-variant)) 1px,
+      transparent 0
+    );
     background-size: 24px 24px;
   }
   /* Hide pre-animation content until GSAP takes over (no flash) */
@@ -179,27 +190,47 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Favorite heart pop (elastic) — applied when a property becomes favorite */
 @keyframes heartPop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.35); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Map pin entrance */
 @keyframes pinPop {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Skeleton shimmer */
 @keyframes shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 .skeleton {
   background: linear-gradient(
@@ -214,15 +245,25 @@
 
 /* Route transition (template.tsx re-mounts on navigation) */
 @keyframes pageIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .page-transition {
   animation: pageIn 0.28s ease-out both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .page-transition { animation: none; }
-  .skeleton { animation: none; }
+  .page-transition {
+    animation: none;
+  }
+  .skeleton {
+    animation: none;
+  }
 }
 
 /* MapLibre — keep map chrome below the fixed navbar */

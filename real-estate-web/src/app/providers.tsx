@@ -7,9 +7,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext'
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <FavoritesProvider>
-        {children}
-      </FavoritesProvider>
+      <FavoritesProvider>{children}</FavoritesProvider>
     </AuthProvider>
   )
 }

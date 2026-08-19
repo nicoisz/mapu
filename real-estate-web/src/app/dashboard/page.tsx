@@ -3,7 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Eye, Heart, Lock, MessageSquare, Pencil, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
+import {
+  AlertCircle,
+  Eye,
+  Heart,
+  Lock,
+  MessageSquare,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
 import { Button } from '@/components/ui/Button'
@@ -32,14 +43,17 @@ export default function DashboardPage() {
     }
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { void loadProperties() }, [loadProperties])
+  useEffect(() => {
+    void loadProperties()
+  }, [loadProperties])
 
   // Listings whose expiry date passed are shown (and renewable) as expired.
   const { activeProps, expiredProps, totals } = useMemo(() => {
     const now = Date.now()
     const isExpired = (p: Property) =>
-      p.status === 'expired' || (p.listing.expiresAt ? new Date(p.listing.expiresAt).getTime() < now : false)
-    const active = properties.filter(p => p.status === 'active' && !isExpired(p))
+      p.status === 'expired' ||
+      (p.listing.expiresAt ? new Date(p.listing.expiresAt).getTime() < now : false)
+    const active = properties.filter((p) => p.status === 'active' && !isExpired(p))
     const expired = properties.filter(isExpired)
     return {
       activeProps: active,
@@ -52,16 +66,29 @@ export default function DashboardPage() {
   }, [properties])
 
   if (isLoading) {
-    return <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">Cargando…</div>
+    return (
+      <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
+        Cargando…
+      </div>
+    )
   }
 
   if (!isAuthenticated || !user) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
-        <h2 className="font-headline text-xl font-bold text-on-surface">Necesitas iniciar sesión</h2>
-        <p className="text-on-surface-variant text-sm mt-2">Para gestionar tus propiedades debes tener una cuenta.</p>
-        <Link href="/login" className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">Iniciar sesión</Link>
+        <h2 className="font-headline text-xl font-bold text-on-surface">
+          Necesitas iniciar sesión
+        </h2>
+        <p className="text-on-surface-variant text-sm mt-2">
+          Para gestionar tus propiedades debes tener una cuenta.
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
+        >
+          Iniciar sesión
+        </Link>
       </div>
     )
   }
@@ -80,7 +107,8 @@ export default function DashboardPage() {
   }
 
   async function handleDelete(id: string, title: string) {
-    if (!window.confirm(`¿Eliminar definitivamente "${title}"? Esta acción no se puede deshacer.`)) return
+    if (!window.confirm(`¿Eliminar definitivamente "${title}"? Esta acción no se puede deshacer.`))
+      return
     setBusyId(id)
     const ok = await propertyService.deleteProperty(id)
     setBusyId(null)
@@ -97,7 +125,11 @@ export default function DashboardPage() {
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[90px] pointer-events-none" />
         <div className="relative flex items-center gap-3">
           {user.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-14 h-14 rounded-full object-cover border-2 border-primary/30" />
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-14 h-14 rounded-full object-cover border-2 border-primary/30"
+            />
           ) : (
             <div className="w-14 h-14 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xl font-bold">
               {user.name.charAt(0)}
@@ -120,7 +152,9 @@ export default function DashboardPage() {
             <div className="text-xs text-on-surface-variant mt-0.5">Activos</div>
           </div>
           <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">{totals.views.toLocaleString()}</div>
+            <div className="font-headline font-bold text-xl text-primary">
+              {totals.views.toLocaleString()}
+            </div>
             <div className="text-xs text-on-surface-variant mt-0.5">Vistas</div>
           </div>
           <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
@@ -134,7 +168,9 @@ export default function DashboardPage() {
           <div className="relative mt-4 bg-surface-container rounded-xl p-3 border border-outline-variant/40">
             <div className="flex items-center justify-between text-sm mb-2 text-on-surface">
               <span>Publicaciones gratuitas</span>
-              <span className="font-bold">{remaining} / {FREE_PLAN_LISTINGS_LIMIT}</span>
+              <span className="font-bold">
+                {remaining} / {FREE_PLAN_LISTINGS_LIMIT}
+              </span>
             </div>
             <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
               <div
@@ -170,13 +206,17 @@ export default function DashboardPage() {
             <AlertCircle size={16} className="text-error shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-on-surface">Límite alcanzado</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Actualiza a Premium para publicar sin límites.</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">
+                Actualiza a Premium para publicar sin límites.
+              </p>
             </div>
           </div>
         )}
 
         {loadingProps && (
-          <div className="text-center py-8 text-on-surface-variant text-sm">Cargando propiedades…</div>
+          <div className="text-center py-8 text-on-surface-variant text-sm">
+            Cargando propiedades…
+          </div>
         )}
 
         {/* Active properties */}
@@ -187,26 +227,50 @@ export default function DashboardPage() {
               Propiedades activas ({activeProps.length})
             </h2>
             <div className="space-y-3">
-              {activeProps.map(property => {
+              {activeProps.map((property) => {
                 const { amount, suffix } = getDisplayPrice(property)
-                const daysLeft = property.listing.expiresAt ? getRemainingDays(property.listing.expiresAt) : null
+                const daysLeft = property.listing.expiresAt
+                  ? getRemainingDays(property.listing.expiresAt)
+                  : null
                 return (
-                  <div key={property.id} className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
+                  <div
+                    key={property.id}
+                    className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <Link href={`/propiedad/${property.id}`} className="font-medium text-on-surface text-sm hover:text-primary transition-colors line-clamp-1">
+                        <Link
+                          href={`/propiedad/${property.id}`}
+                          className="font-medium text-on-surface text-sm hover:text-primary transition-colors line-clamp-1"
+                        >
                           {property.title}
                         </Link>
-                        <p className="text-xs text-on-surface-variant mt-0.5">{PROPERTY_TYPE_LABELS[property.type]} • {property.location.address.city}</p>
-                        <p className="font-bold text-primary text-sm mt-1">{amount}{suffix}</p>
+                        <p className="text-xs text-on-surface-variant mt-0.5">
+                          {PROPERTY_TYPE_LABELS[property.type]} • {property.location.address.city}
+                        </p>
+                        <p className="font-bold text-primary text-sm mt-1">
+                          {amount}
+                          {suffix}
+                        </p>
                       </div>
-                      <Badge variant="success" size="sm">{STATUS_LABELS[property.status]}</Badge>
+                      <Badge variant="success" size="sm">
+                        {STATUS_LABELS[property.status]}
+                      </Badge>
                     </div>
 
                     <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant">
-                      <span className="flex items-center gap-1"><Eye size={11} />{property.listing.views}</span>
-                      <span className="flex items-center gap-1"><Heart size={11} />{property.listing.favorites}</span>
-                      <span className="flex items-center gap-1"><MessageSquare size={11} />{property.listing.inquiries}</span>
+                      <span className="flex items-center gap-1">
+                        <Eye size={11} />
+                        {property.listing.views}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Heart size={11} />
+                        {property.listing.favorites}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare size={11} />
+                        {property.listing.inquiries}
+                      </span>
                       {daysLeft !== null && (
                         <span className={daysLeft < 7 ? 'text-error font-medium' : ''}>
                           Expira en {daysLeft}d
@@ -243,14 +307,24 @@ export default function DashboardPage() {
               Propiedades expiradas ({expiredProps.length})
             </h2>
             <div className="space-y-3">
-              {expiredProps.map(property => (
-                <div key={property.id} className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4 opacity-75">
+              {expiredProps.map((property) => (
+                <div
+                  key={property.id}
+                  className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4 opacity-75"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-on-surface text-sm line-clamp-1">{property.title}</p>
-                      <p className="text-xs text-on-surface-variant mt-0.5">Expiró el {property.listing.expiresAt ? formatDate(property.listing.expiresAt) : '—'}</p>
+                      <p className="font-medium text-on-surface text-sm line-clamp-1">
+                        {property.title}
+                      </p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        Expiró el{' '}
+                        {property.listing.expiresAt ? formatDate(property.listing.expiresAt) : '—'}
+                      </p>
                     </div>
-                    <Badge variant="gray" size="sm">Expirado</Badge>
+                    <Badge variant="gray" size="sm">
+                      Expirado
+                    </Badge>
                   </div>
                   <div className="flex gap-2 mt-3">
                     <button
@@ -258,7 +332,10 @@ export default function DashboardPage() {
                       disabled={busyId === property.id || (!isPremium && remaining === 0)}
                       className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-tertiary transition-colors disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      <RefreshCw size={11} className={busyId === property.id ? 'animate-spin' : ''} />
+                      <RefreshCw
+                        size={11}
+                        className={busyId === property.id ? 'animate-spin' : ''}
+                      />
                       Renovar 30 días
                     </button>
                     <button

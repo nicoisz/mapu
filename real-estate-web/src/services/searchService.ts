@@ -19,34 +19,37 @@ const POPULAR_SEARCHES = [
 ]
 
 const TYPE_KEYWORDS: Record<string, PropertyType> = {
-  'casa': PropertyType.HOUSE,
-  'casas': PropertyType.HOUSE,
-  'departamento': PropertyType.APARTMENT,
-  'departamentos': PropertyType.APARTMENT,
-  'depto': PropertyType.APARTMENT,
-  'deptos': PropertyType.APARTMENT,
-  'terreno': PropertyType.LAND,
-  'terrenos': PropertyType.LAND,
-  'oficina': PropertyType.OFFICE,
-  'oficinas': PropertyType.OFFICE,
-  'local': PropertyType.COMMERCIAL,
-  'locales': PropertyType.COMMERCIAL,
-  'bodega': PropertyType.WAREHOUSE,
-  'bodegas': PropertyType.WAREHOUSE,
+  casa: PropertyType.HOUSE,
+  casas: PropertyType.HOUSE,
+  departamento: PropertyType.APARTMENT,
+  departamentos: PropertyType.APARTMENT,
+  depto: PropertyType.APARTMENT,
+  deptos: PropertyType.APARTMENT,
+  terreno: PropertyType.LAND,
+  terrenos: PropertyType.LAND,
+  oficina: PropertyType.OFFICE,
+  oficinas: PropertyType.OFFICE,
+  local: PropertyType.COMMERCIAL,
+  locales: PropertyType.COMMERCIAL,
+  bodega: PropertyType.WAREHOUSE,
+  bodegas: PropertyType.WAREHOUSE,
 }
 
 const OPERATION_KEYWORDS: Record<string, PropertyOperation> = {
-  'arriendo': PropertyOperation.RENT,
-  'arrendar': PropertyOperation.RENT,
-  'alquiler': PropertyOperation.RENT,
-  'alquilar': PropertyOperation.RENT,
-  'venta': PropertyOperation.SALE,
-  'vender': PropertyOperation.SALE,
-  'comprar': PropertyOperation.SALE,
+  arriendo: PropertyOperation.RENT,
+  arrendar: PropertyOperation.RENT,
+  alquiler: PropertyOperation.RENT,
+  alquilar: PropertyOperation.RENT,
+  venta: PropertyOperation.SALE,
+  vender: PropertyOperation.SALE,
+  comprar: PropertyOperation.SALE,
 }
 
 export const searchService = {
-  parseSearchText(text: string): { cleanText: string; implicitFilters: Partial<PropertySearchFilters> } {
+  parseSearchText(text: string): {
+    cleanText: string
+    implicitFilters: Partial<PropertySearchFilters>
+  } {
     const words = text.toLowerCase().trim().split(/\s+/)
     const filters: Partial<PropertySearchFilters> = {}
     const usedIndices = new Set<number>()
@@ -73,7 +76,7 @@ export const searchService = {
           usedIndices.add(i - 1)
         }
       }
-      MAJOR_CITIES.forEach(city => {
+      MAJOR_CITIES.forEach((city) => {
         if (city.toLowerCase() === word || city.toLowerCase() === words.slice(i, i + 2).join(' ')) {
           usedIndices.add(i)
         }
@@ -101,19 +104,19 @@ export const searchService = {
     const lower = input.toLowerCase()
     const suggestions: SearchSuggestion[] = []
 
-    MAJOR_CITIES.forEach(city => {
+    MAJOR_CITIES.forEach((city) => {
       if (city.toLowerCase().includes(lower)) {
         suggestions.push({ text: city, type: 'location' })
       }
     })
 
-    Object.keys(TYPE_KEYWORDS).forEach(k => {
-      if (k.includes(lower) && !suggestions.find(s => s.text === k)) {
+    Object.keys(TYPE_KEYWORDS).forEach((k) => {
+      if (k.includes(lower) && !suggestions.find((s) => s.text === k)) {
         suggestions.push({ text: k, type: 'property_type' })
       }
     })
 
-    POPULAR_SEARCHES.forEach(ps => {
+    POPULAR_SEARCHES.forEach((ps) => {
       if (ps.toLowerCase().includes(lower)) {
         suggestions.push({ text: ps, type: 'popular' })
       }
@@ -131,14 +134,18 @@ export const searchService = {
     if (!storage) return []
     const raw = storage.getItem(STORAGE_KEYS.RECENT_SEARCHES)
     if (!raw) return []
-    try { return JSON.parse(raw) as string[] } catch { return [] }
+    try {
+      return JSON.parse(raw) as string[]
+    } catch {
+      return []
+    }
   },
 
   saveRecentSearch(term: string): void {
     const storage = getStorage()
     if (!storage || !term.trim()) return
     const current = searchService.getRecentSearchTerms()
-    const updated = [term, ...current.filter(t => t !== term)].slice(0, 10)
+    const updated = [term, ...current.filter((t) => t !== term)].slice(0, 10)
     storage.setItem(STORAGE_KEYS.RECENT_SEARCHES, JSON.stringify(updated))
   },
 

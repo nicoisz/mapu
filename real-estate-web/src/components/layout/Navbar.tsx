@@ -62,7 +62,12 @@ export function Navbar() {
   }
 
   return (
-    <nav className={cn('fixed left-0 right-0 z-50 flex transition-all duration-500', pill ? 'top-4 px-4 justify-center' : 'top-0')}>
+    <nav
+      className={cn(
+        'fixed left-0 right-0 z-50 flex transition-all duration-500',
+        pill ? 'top-4 px-4 justify-center' : 'top-0'
+      )}
+    >
       <div
         className={cn(
           'flex items-center transition-all duration-500',
@@ -71,9 +76,22 @@ export function Navbar() {
             : 'h-16 w-full gap-4 px-4 bg-surface-container-lowest/90 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm text-on-surface'
         )}
       >
-        <Link href="/" className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90" title="Inicio">
-          <span className={cn('material-symbols-outlined text-2xl', pill ? 'text-[#FF4D1C]' : 'text-primary')}>map</span>
-          <span className={cn('hidden sm:inline', pill ? 'text-white' : 'text-on-surface')}>{APP_CONFIG.name}</span>
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90"
+          title="Inicio"
+        >
+          <span
+            className={cn(
+              'material-symbols-outlined text-2xl',
+              pill ? 'text-[#FF4D1C]' : 'text-primary'
+            )}
+          >
+            map
+          </span>
+          <span className={cn('hidden sm:inline', pill ? 'text-white' : 'text-on-surface')}>
+            {APP_CONFIG.name}
+          </span>
           <span className={cn('sm:hidden', pill ? 'text-white' : 'text-on-surface')}>MapU</span>
         </Link>
 
@@ -102,9 +120,18 @@ export function Navbar() {
                 {label === 'Favoritos' && favCount > 0 ? (
                   <span className="flex items-center gap-1">
                     {label}
-                    <span className={cn('text-xs rounded-full px-1.5 py-px text-white', pill ? 'bg-[#FF4D1C]' : 'bg-accent')}>{favCount}</span>
+                    <span
+                      className={cn(
+                        'text-xs rounded-full px-1.5 py-px text-white',
+                        pill ? 'bg-[#FF4D1C]' : 'bg-accent'
+                      )}
+                    >
+                      {favCount}
+                    </span>
                   </span>
-                ) : label}
+                ) : (
+                  label
+                )}
               </Link>
             )
           })}
@@ -116,21 +143,44 @@ export function Navbar() {
             <>
               <Link href="/perfil" className="flex items-center gap-2 hover:opacity-90">
                 {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name} className={cn('w-8 h-8 rounded-full object-cover border-2', pill ? 'border-white/30' : 'border-outline-variant')} />
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className={cn(
+                      'w-8 h-8 rounded-full object-cover border-2',
+                      pill ? 'border-white/30' : 'border-outline-variant'
+                    )}
+                  />
                 ) : (
-                  <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                    pill ? 'bg-white/15 border border-white/20 text-white' : 'bg-primary/20 border border-primary/30 text-primary'
-                  )}>
+                  <div
+                    className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
+                      pill
+                        ? 'bg-white/15 border border-white/20 text-white'
+                        : 'bg-primary/20 border border-primary/30 text-primary'
+                    )}
+                  >
                     {user?.name.charAt(0)}
                   </div>
                 )}
-                <span className={cn('hidden md:inline text-sm font-medium', pill ? 'text-white' : 'text-on-surface')}>{user?.name.split(' ')[0]}</span>
+                <span
+                  className={cn(
+                    'hidden md:inline text-sm font-medium',
+                    pill ? 'text-white' : 'text-on-surface'
+                  )}
+                >
+                  {user?.name.split(' ')[0]}
+                </span>
               </Link>
               <button
                 onClick={handleLogout}
                 aria-label="Cerrar sesión"
-                className={cn('p-2 rounded-full transition-colors', pill ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container')}
+                className={cn(
+                  'p-2 rounded-full transition-colors',
+                  pill
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                )}
                 title="Cerrar sesión"
               >
                 <LogOut size={16} />
@@ -141,7 +191,9 @@ export function Navbar() {
               href="/login"
               className={cn(
                 'flex items-center gap-1.5 px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-95',
-                pill ? 'bg-[#FF4D1C] text-white rounded-full' : 'bg-primary text-on-primary rounded-lg'
+                pill
+                  ? 'bg-[#FF4D1C] text-white rounded-full'
+                  : 'bg-primary text-on-primary rounded-lg'
               )}
             >
               <LogIn size={16} />
@@ -168,7 +220,9 @@ export function Navbar() {
               <div className="relative">
                 <Icon size={20} />
                 {href === '/favoritos' && favCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{favCount}</span>
+                  <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {favCount}
+                  </span>
                 )}
               </div>
               <span>{label === 'Mis propiedades' ? 'Panel' : label}</span>
@@ -179,7 +233,9 @@ export function Navbar() {
           href={isAuthenticated ? '/perfil' : '/login'}
           className={cn(
             'flex-1 flex flex-col items-center py-2 text-xs gap-0.5 transition-colors',
-            pathname === '/perfil' || pathname === '/login' ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
+            pathname === '/perfil' || pathname === '/login'
+              ? 'text-primary'
+              : 'text-on-surface-variant hover:text-on-surface'
           )}
         >
           <User size={20} />

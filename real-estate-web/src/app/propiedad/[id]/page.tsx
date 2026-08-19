@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const property = await propertyService.getById(id)
   if (!property) return { title: 'Propiedad no encontrada' }
-  const mainImage = property.media.images.find(img => img.isMain) ?? property.media.images[0]
+  const mainImage = property.media.images.find((img) => img.isMain) ?? property.media.images[0]
   return {
     title: `${property.title} | MapU Real Estate`,
     description: property.description.slice(0, 160),

@@ -42,17 +42,21 @@ export function RegisterForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-error/10 border border-error/40 rounded-lg p-3 text-error text-sm">{error}</div>
+          <div className="bg-error/10 border border-error/40 rounded-lg p-3 text-error text-sm">
+            {error}
+          </div>
         )}
         {info && (
-          <div className="bg-primary/10 border border-primary/40 rounded-lg p-3 text-on-surface text-sm">{info}</div>
+          <div className="bg-primary/10 border border-primary/40 rounded-lg p-3 text-on-surface text-sm">
+            {info}
+          </div>
         )}
 
         <Input
           label="Nombre completo"
           type="text"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Juan Pérez"
           required
           leftIcon={<User size={14} />}
@@ -63,7 +67,7 @@ export function RegisterForm() {
           label="Email"
           type="email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@email.cl"
           required
           leftIcon={<Mail size={14} />}
@@ -74,7 +78,7 @@ export function RegisterForm() {
           label="Contraseña"
           type="password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           placeholder="Mínimo 6 caracteres"
           required
           minLength={6}
@@ -85,7 +89,7 @@ export function RegisterForm() {
         <div>
           <p className="text-sm font-medium text-on-surface mb-2">Tipo de cuenta</p>
           <div className="grid grid-cols-3 gap-2">
-            {USER_TYPE_OPTIONS.map(opt => (
+            {USER_TYPE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -109,15 +113,21 @@ export function RegisterForm() {
 
         <p className="text-xs text-on-surface-variant text-center">
           Al registrarte aceptas nuestros{' '}
-          <a href="#" className="text-primary hover:underline">Términos de servicio</a>
-          {' '}y{' '}
-          <a href="#" className="text-primary hover:underline">Política de privacidad</a>
+          <a href="#" className="text-primary hover:underline">
+            Términos de servicio
+          </a>{' '}
+          y{' '}
+          <a href="#" className="text-primary hover:underline">
+            Política de privacidad
+          </a>
         </p>
       </form>
 
       <p className="text-center text-sm text-on-surface-variant mt-6">
         ¿Ya tienes cuenta?{' '}
-        <Link href="/login" className="text-primary font-medium hover:underline">Iniciar sesión</Link>
+        <Link href="/login" className="text-primary font-medium hover:underline">
+          Iniciar sesión
+        </Link>
       </p>
     </div>
   )
