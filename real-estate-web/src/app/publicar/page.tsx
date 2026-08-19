@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
 import { uploadPropertyImages, validateImageFile, deletePropertyImages } from '@/services/storageService'
+import { geocodeAddress } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
@@ -142,14 +143,16 @@ export default function PublicarPage() {
 
       const v = parsed.data
       const isRent = operation === PropertyOperation.RENT
+      // Geocode the address; fall back to the Santiago center when unavailable.
+      const coords = await geocodeAddress({ street: v.street, commune: v.commune, city: v.city, region: form.region })
       const data: Partial<Property> = {
         title: v.title,
         description: v.description,
         type,
         operation,
         location: {
-          latitude: DEFAULT_MAP_CENTER.latitude,
-          longitude: DEFAULT_MAP_CENTER.longitude,
+          latitude: coords?.latitude ?? DEFAULT_MAP_CENTER.latitude,
+          longitude: coords?.longitude ?? DEFAULT_MAP_CENTER.longitude,
           address: {
             street: v.street,
             city: v.city || v.commune,
