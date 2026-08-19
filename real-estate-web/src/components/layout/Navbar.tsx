@@ -3,7 +3,18 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Heart, LayoutDashboard, LogIn, LogOut, Map, Moon, Search, Sun, User } from 'lucide-react'
+import {
+  Heart,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Map,
+  Moon,
+  Search,
+  Shield,
+  Sun,
+  User,
+} from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { useTheme } from '@/hooks/useTheme'
@@ -135,6 +146,20 @@ export function Navbar() {
               </Link>
             )
           })}
+          {user?.platformRole === 'superadmin' && (
+            <Link
+              href="/admin"
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
+                pill
+                  ? 'text-white/70 hover:text-white hover:bg-white/10'
+                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+              )}
+            >
+              <Shield size={16} />
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

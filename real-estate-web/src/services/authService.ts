@@ -1,7 +1,7 @@
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { AuthResult } from '@/types/results'
 import { User } from '@/types/user'
-import { SubscriptionType, UserType, ContactMethod } from '@/types/enums'
+import { SubscriptionType, UserType, ContactMethod, PlatformRole } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
 import { propertyService } from '@/services/propertyService'
@@ -13,6 +13,7 @@ interface ProfileRow {
   name: string
   avatar_url: string | null
   user_type: string
+  platform_role: string
   phone: string | null
   whatsapp: string | null
   company_name: string | null
@@ -97,6 +98,7 @@ async function buildUser(authUser: SupabaseUser): Promise<User> {
     name,
     avatar: profile?.avatar_url ?? undefined,
     userType: (profile?.user_type as UserType) ?? UserType.INDIVIDUAL,
+    platformRole: (profile?.platform_role as PlatformRole) ?? PlatformRole.USER,
     companyName: profile?.company_name ?? undefined,
     companyLogo: profile?.company_logo ?? undefined,
     licenseNumber: profile?.license_number ?? undefined,

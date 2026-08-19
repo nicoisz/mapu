@@ -35,6 +35,12 @@ export enum SubscriptionType {
   PREMIUM = 'premium',
 }
 
+/** Plataforma, no organizacional: quién administra el sistema entero. */
+export enum PlatformRole {
+  USER = 'user',
+  SUPERADMIN = 'superadmin',
+}
+
 export enum ContactMethod {
   PHONE = 'phone',
   EMAIL = 'email',
