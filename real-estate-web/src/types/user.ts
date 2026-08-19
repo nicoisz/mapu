@@ -1,5 +1,5 @@
 import { ContactInfo } from './property'
-import { SubscriptionType, UserType } from './enums'
+import { PlatformRole, SubscriptionType, UserType } from './enums'
 
 export interface UserSubscription {
   type: SubscriptionType
@@ -46,6 +46,7 @@ export interface User {
   name: string
   avatar?: string
   userType: UserType
+  platformRole: PlatformRole
   subscription: UserSubscription
   preferences: UserPreferences
   stats: UserStats
