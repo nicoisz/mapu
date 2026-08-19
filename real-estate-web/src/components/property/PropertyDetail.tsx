@@ -73,11 +73,12 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
         <div className="flex gap-2">
           <button
             onClick={() => toggle(property)}
+            aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
             className={cn('p-2 rounded-lg border transition-all', fav ? 'border-accent text-accent bg-error/10' : 'border-outline-variant/60 text-on-surface-variant hover:border-accent hover:text-accent')}
           >
             <Heart size={18} fill={fav ? 'currentColor' : 'none'} className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''} />
           </button>
-          <button onClick={handleShare} className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary transition-all">
+          <button onClick={handleShare} aria-label="Compartir propiedad" className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary transition-all">
             <Share2 size={18} />
           </button>
         </div>
@@ -97,10 +98,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             />
             {images.length > 1 && (
               <>
-                <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
+                <button onClick={prevImage} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
                   <ChevronLeft size={20} />
                 </button>
-                <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
+                <button onClick={nextImage} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
                   <ChevronRight size={20} />
                 </button>
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -108,6 +109,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                     <button
                       key={i}
                       onClick={() => setCurrentImageIdx(i)}
+                      aria-label={`Ver foto ${i + 1} de ${images.length}`}
                       className={cn('w-2 h-2 rounded-full transition-all', i === currentImageIdx ? 'bg-white w-4' : 'bg-white/50')}
                     />
                   ))}

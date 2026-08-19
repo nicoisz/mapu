@@ -61,7 +61,7 @@ export function LoginForm() {
           required
           leftIcon={<Lock size={14} />}
           rightIcon={
-            <button type="button" onClick={() => setShowPassword(s => !s)} className="text-on-surface-variant hover:text-on-surface">
+            <button type="button" onClick={() => setShowPassword(s => !s)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} className="text-on-surface-variant hover:text-on-surface">
               {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           }

@@ -129,6 +129,7 @@ export function Navbar() {
               </Link>
               <button
                 onClick={handleLogout}
+                aria-label="Cerrar sesión"
                 className={cn('p-2 rounded-full transition-colors', pill ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container')}
                 title="Cerrar sesión"
               >

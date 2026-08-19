@@ -65,7 +65,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
             {activeCount > 0 && (
               <span className="text-sm text-accent">{activeCount} activo{activeCount !== 1 ? 's' : ''}</span>
             )}
-            <button onClick={onClose} className="p-1.5 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant">
+            <button onClick={onClose} aria-label="Cerrar filtros" className="p-1.5 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant">
               <X size={18} />
             </button>
           </div>
