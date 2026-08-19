@@ -31,22 +31,22 @@ export const MAJOR_CITIES = [
 ]
 
 export const STORAGE_KEYS = {
-  AUTH_TOKEN:            '@RealEstate:auth_token',
-  REFRESH_TOKEN:         '@RealEstate:refresh_token',
-  CURRENT_USER:          '@RealEstate:current_user',
-  FAVORITES:             '@RealEstate:favorites',
-  ONBOARDING_COMPLETED:  '@RealEstate:onboarding_completed',
-  RECENT_SEARCHES:       '@RealEstate:recent_searches',
-  USER_PROPERTIES:       '@RealEstate:user_properties',
+  AUTH_TOKEN: '@RealEstate:auth_token',
+  REFRESH_TOKEN: '@RealEstate:refresh_token',
+  CURRENT_USER: '@RealEstate:current_user',
+  FAVORITES: '@RealEstate:favorites',
+  ONBOARDING_COMPLETED: '@RealEstate:onboarding_completed',
+  RECENT_SEARCHES: '@RealEstate:recent_searches',
+  USER_PROPERTIES: '@RealEstate:user_properties',
 }
 
 export const PROPERTY_TYPE_LABELS: Record<string, string> = {
-  house:      'Casa',
-  apartment:  'Departamento',
-  land:       'Terreno',
-  office:     'Oficina',
+  house: 'Casa',
+  apartment: 'Departamento',
+  land: 'Terreno',
+  office: 'Oficina',
   commercial: 'Local comercial',
-  warehouse:  'Bodega',
+  warehouse: 'Bodega',
 }
 
 export const OPERATION_LABELS: Record<string, string> = {
@@ -55,8 +55,8 @@ export const OPERATION_LABELS: Record<string, string> = {
 }
 
 export const STATUS_LABELS: Record<string, string> = {
-  active:  'Activo',
+  active: 'Activo',
   expired: 'Expirado',
-  sold:    'Vendido',
-  rented:  'Arrendado',
+  sold: 'Vendido',
+  rented: 'Arrendado',
 }

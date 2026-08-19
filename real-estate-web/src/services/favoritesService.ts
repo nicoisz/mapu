@@ -17,7 +17,11 @@ function loadLocalIds(): string[] {
   if (!storage) return []
   const raw = storage.getItem(STORAGE_KEYS.FAVORITES)
   if (!raw) return []
-  try { return JSON.parse(raw) as string[] } catch { return [] }
+  try {
+    return JSON.parse(raw) as string[]
+  } catch {
+    return []
+  }
 }
 
 function saveLocalIds(ids: string[]): void {
@@ -29,9 +33,12 @@ export const favoritesService = {
   /** Favorite ids for the current visitor (account table or local fallback). */
   async getFavoriteIds(userId: string | null): Promise<string[]> {
     if (!userId) return loadLocalIds()
-    const { data, error } = await getSupabase().from('favorites').select('property_id').eq('user_id', userId)
+    const { data, error } = await getSupabase()
+      .from('favorites')
+      .select('property_id')
+      .eq('user_id', userId)
     if (error) return []
-    return data.map(r => r.property_id as string)
+    return data.map((r) => r.property_id as string)
   },
 
   getLocalCount(): number {
@@ -43,7 +50,7 @@ export const favoritesService = {
     if (!userId) {
       const ids = loadLocalIds()
       if (ids.includes(property.id)) {
-        saveLocalIds(ids.filter(id => id !== property.id))
+        saveLocalIds(ids.filter((id) => id !== property.id))
         return false
       }
       saveLocalIds([...ids, property.id])
@@ -72,10 +79,19 @@ export const favoritesService = {
     const supabase = getSupabase()
     // No unique constraint on (user_id, property_id) in this schema, so check
     // first and insert one by one, tolerating stale/non-existent ids.
-    const { data: existing } = await supabase.from('favorites').select('property_id').eq('user_id', userId)
-    const have = new Set((existing ?? []).map(r => r.property_id as string))
-    for (const propertyId of localIds.filter(id => !have.has(id))) {
-      await supabase.from('favorites').insert({ user_id: userId, property_id: propertyId }).then(() => {}, () => {})
+    const { data: existing } = await supabase
+      .from('favorites')
+      .select('property_id')
+      .eq('user_id', userId)
+    const have = new Set((existing ?? []).map((r) => r.property_id as string))
+    for (const propertyId of localIds.filter((id) => !have.has(id))) {
+      await supabase
+        .from('favorites')
+        .insert({ user_id: userId, property_id: propertyId })
+        .then(
+          () => {},
+          () => {}
+        )
     }
     saveLocalIds([])
   },
@@ -94,7 +110,7 @@ export const favoritesService = {
     const byCity: Record<string, number> = {}
     let totalPrice = 0
 
-    properties.forEach(p => {
+    properties.forEach((p) => {
       byType[p.type] = (byType[p.type] ?? 0) + 1
       byOperation[p.operation] = (byOperation[p.operation] ?? 0) + 1
       const city = p.location.address.city

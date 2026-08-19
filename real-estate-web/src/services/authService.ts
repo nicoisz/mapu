@@ -42,7 +42,8 @@ function translateError(message: string): string {
   if (m.includes('invalid login credentials')) return 'Credenciales incorrectas'
   if (m.includes('email not confirmed')) return 'Debes confirmar tu correo antes de iniciar sesión'
   if (m.includes('already registered')) return 'Ya existe una cuenta con ese email'
-  if (m.includes('password should be at least')) return 'Contraseña demasiado corta (mínimo 6 caracteres)'
+  if (m.includes('password should be at least'))
+    return 'Contraseña demasiado corta (mínimo 6 caracteres)'
   if (m.includes('rate limit')) return 'Demasiados intentos, espera un momento'
   if (m.includes('fetch')) return 'No se pudo conectar con el servidor'
   return message
@@ -51,10 +52,15 @@ function translateError(message: string): string {
 /** Loads the profile row, creating it if missing (no DB trigger guaranteed). */
 async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow | null> {
   const supabase = getSupabase()
-  const { data: existing } = await supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle<ProfileRow>()
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authUser.id)
+    .maybeSingle<ProfileRow>()
   if (existing) return existing
 
-  const fallbackName = (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
+  const fallbackName =
+    (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
   const { data: created } = await supabase
     .from('profiles')
     .insert({
@@ -75,7 +81,11 @@ async function buildUser(authUser: SupabaseUser): Promise<User> {
     propertyService.countActiveListings(authUser.id),
   ])
 
-  const name = profile?.name || (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
+  const name =
+    profile?.name ||
+    (authUser.user_metadata?.name as string) ||
+    authUser.email?.split('@')[0] ||
+    'Usuario'
   // The mobile schema grants a 10-day trial on signup; an active trial counts as premium.
   const trialActive = !!profile?.trial_expires_at && new Date(profile.trial_expires_at) > new Date()
   const isPremium = profile?.subscription_type === 'premium' || trialActive
@@ -92,17 +102,29 @@ async function buildUser(authUser: SupabaseUser): Promise<User> {
     licenseNumber: profile?.license_number ?? undefined,
     subscription: {
       type: plan,
-      startDate: profile?.subscription_started_at ?? profile?.trial_started_at ?? authUser.created_at,
-      expiresAt: profile?.subscription_expires_at ?? (trialActive ? profile?.trial_expires_at ?? undefined : undefined),
+      startDate:
+        profile?.subscription_started_at ?? profile?.trial_started_at ?? authUser.created_at,
+      expiresAt:
+        profile?.subscription_expires_at ??
+        (trialActive ? (profile?.trial_expires_at ?? undefined) : undefined),
       isActive: true,
       features: isPremium ? ['unlimited_listings'] : ['basic_listings'],
       listingsLimit: isPremium ? undefined : FREE_PLAN_LISTINGS_LIMIT,
-      remainingListings: isPremium ? undefined : Math.max(0, FREE_PLAN_LISTINGS_LIMIT - activeListings),
+      remainingListings: isPremium
+        ? undefined
+        : Math.max(0, FREE_PLAN_LISTINGS_LIMIT - activeListings),
     },
     preferences: {
       language: (profile?.preferred_language as 'es' | 'en') ?? 'es',
       currency: (profile?.preferred_currency as 'CLP' | 'USD') ?? 'CLP',
-      notifications: { email: true, push: false, sms: false, newProperties: false, priceChanges: false, messages: true },
+      notifications: {
+        email: true,
+        push: false,
+        sms: false,
+        newProperties: false,
+        priceChanges: false,
+        messages: true,
+      },
       searchRadius: 5,
       mapType: 'standard',
     },
@@ -146,8 +168,14 @@ export const authService = {
     return { success: true, user, token: data.session.access_token }
   },
 
-  async register(data: { name: string; email: string; password: string; userType?: UserType }): Promise<AuthResult> {
-    if (!data.name || data.name.length < 2) return { success: false, error: 'Nombre demasiado corto (mínimo 2 caracteres)' }
+  async register(data: {
+    name: string
+    email: string
+    password: string
+    userType?: UserType
+  }): Promise<AuthResult> {
+    if (!data.name || data.name.length < 2)
+      return { success: false, error: 'Nombre demasiado corto (mínimo 2 caracteres)' }
     const { data: res, error } = await getSupabase().auth.signUp({
       email: data.email,
       password: data.password,
@@ -157,7 +185,10 @@ export const authService = {
 
     // With email confirmation enabled there is no session yet.
     if (!res.session || !res.user) {
-      return { success: true, info: 'Te enviamos un correo de confirmación. Revisa tu bandeja para activar la cuenta.' }
+      return {
+        success: true,
+        info: 'Te enviamos un correo de confirmación. Revisa tu bandeja para activar la cuenta.',
+      }
     }
     const user = await buildUser(res.user)
     return { success: true, user, token: res.session.access_token }
@@ -168,7 +199,11 @@ export const authService = {
       provider,
       options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
     })
-    if (error) return { success: false, error: `No se pudo iniciar con ${provider}: ${translateError(error.message)}` }
+    if (error)
+      return {
+        success: false,
+        error: `No se pudo iniciar con ${provider}: ${translateError(error.message)}`,
+      }
     // The browser redirects to the provider; the session arrives on return.
     return { success: true, info: 'Redirigiendo…' }
   },

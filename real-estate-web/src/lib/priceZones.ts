@@ -32,8 +32,8 @@ const HEX_RADIUS = 0.02
 
 const COLORS: Record<ZoneBucket, string> = {
   economic: '#3B82F6', // azul — zona económica
-  mid: '#8B5CF6',      // morado — coste medio
-  premium: '#D4AF37',  // dorado — zona más cara
+  mid: '#8B5CF6', // morado — coste medio
+  premium: '#D4AF37', // dorado — zona más cara
 }
 
 export function getZoneColor(bucket: ZoneBucket): string {
@@ -107,7 +107,7 @@ function assignBuckets(cells: ZoneCell[]): void {
     lo = sorted[Math.ceil(n / 3) - 1].meanPrice
     hi = sorted[Math.ceil((2 * n) / 3) - 1].meanPrice
   }
-  cells.forEach(cell => {
+  cells.forEach((cell) => {
     if (cell.meanPrice <= lo) cell.bucket = 'economic'
     else if (cell.meanPrice <= hi) cell.bucket = 'mid'
     else cell.bucket = 'premium'
@@ -124,10 +124,7 @@ export function computePriceZones(
   const centers = new Map<string, { lat: number; lng: number }>()
 
   for (const p of properties) {
-    const price =
-      mode === 'rent'
-        ? (p.pricing.monthlyRent ?? p.pricing.price)
-        : p.pricing.price
+    const price = mode === 'rent' ? (p.pricing.monthlyRent ?? p.pricing.price) : p.pricing.price
     if (!price || price <= 0) continue
 
     const { q, r } = axialFromLngLat(p.location.longitude, p.location.latitude, rad)
@@ -147,7 +144,7 @@ export function computePriceZones(
 
   const ranges: PriceZoneLegend['ranges'] = {}
   for (const bucket of ['economic', 'mid', 'premium'] as ZoneBucket[]) {
-    const values = cells.filter(c => c.bucket === bucket).map(c => c.meanPrice)
+    const values = cells.filter((c) => c.bucket === bucket).map((c) => c.meanPrice)
     if (values.length) ranges[bucket] = [Math.min(...values), Math.max(...values)]
   }
 
@@ -165,7 +162,7 @@ export interface ZoneFeatureProperties {
 export function zonesToGeoJSON(cells: ZoneCell[]): GeoJSON.FeatureCollection {
   return {
     type: 'FeatureCollection',
-    features: cells.map(cell => ({
+    features: cells.map((cell) => ({
       type: 'Feature' as const,
       id: cell.id,
       properties: {
@@ -176,7 +173,12 @@ export function zonesToGeoJSON(cells: ZoneCell[]): GeoJSON.FeatureCollection {
       } satisfies ZoneFeatureProperties,
       geometry: {
         type: 'Polygon' as const,
-        coordinates: [[...hexVertices(cell.center.lng, cell.center.lat, HEX_RADIUS), hexVertices(cell.center.lng, cell.center.lat, HEX_RADIUS)[0]]],
+        coordinates: [
+          [
+            ...hexVertices(cell.center.lng, cell.center.lat, HEX_RADIUS),
+            hexVertices(cell.center.lng, cell.center.lat, HEX_RADIUS)[0],
+          ],
+        ],
       },
     })),
   }

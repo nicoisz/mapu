@@ -3,7 +3,18 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, Camera, ChevronRight, Globe, Lock, LogOut, Mail, Phone, Shield, Star } from 'lucide-react'
+import {
+  Bell,
+  Camera,
+  ChevronRight,
+  Globe,
+  Lock,
+  LogOut,
+  Mail,
+  Phone,
+  Shield,
+  Star,
+} from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -25,7 +36,12 @@ export default function PerfilPage() {
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
         <h2 className="font-headline text-xl font-bold text-on-surface">No has iniciado sesión</h2>
-        <Link href="/login" className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">Iniciar sesión</Link>
+        <Link
+          href="/login"
+          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
+        >
+          Iniciar sesión
+        </Link>
       </div>
     )
   }
@@ -45,7 +61,11 @@ export default function PerfilPage() {
         <div className="relative flex flex-col items-center text-center">
           <div className="relative mb-3">
             {user.avatar ? (
-              <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover border-4 border-primary/30" />
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-20 h-20 rounded-full object-cover border-4 border-primary/30"
+              />
             ) : (
               <div className="w-20 h-20 rounded-full bg-primary/20 text-primary flex items-center justify-center text-3xl font-bold border-4 border-primary/30">
                 {user.name.charAt(0)}
@@ -62,18 +82,24 @@ export default function PerfilPage() {
               {isPremium ? '★ Premium' : 'Plan gratuito'}
             </Badge>
             <span className="text-on-surface-variant/50 text-xs">•</span>
-            <span className="text-on-surface-variant text-xs">{USER_TYPE_LABELS[user.userType]}</span>
+            <span className="text-on-surface-variant text-xs">
+              {USER_TYPE_LABELS[user.userType]}
+            </span>
           </div>
         </div>
 
         {/* Stats row */}
         <div className="relative grid grid-cols-3 gap-3 mt-6 max-w-md mx-auto">
           <div className="text-center">
-            <div className="font-headline font-bold text-2xl text-primary">{user.stats.totalListings}</div>
+            <div className="font-headline font-bold text-2xl text-primary">
+              {user.stats.totalListings}
+            </div>
             <div className="text-xs text-on-surface-variant">Publicaciones</div>
           </div>
           <div className="text-center">
-            <div className="font-headline font-bold text-2xl text-primary">{user.stats.totalViews.toLocaleString()}</div>
+            <div className="font-headline font-bold text-2xl text-primary">
+              {user.stats.totalViews.toLocaleString()}
+            </div>
             <div className="text-xs text-on-surface-variant">Vistas</div>
           </div>
           <div className="text-center">
@@ -83,7 +109,9 @@ export default function PerfilPage() {
                   <Star size={16} className="fill-primary text-primary" />
                   {user.stats.rating}
                 </div>
-                <div className="text-xs text-on-surface-variant">{user.stats.reviewCount} reseñas</div>
+                <div className="text-xs text-on-surface-variant">
+                  {user.stats.reviewCount} reseñas
+                </div>
               </>
             ) : (
               <>
@@ -98,7 +126,9 @@ export default function PerfilPage() {
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
         {/* Account info */}
         <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 overflow-hidden">
-          <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Mi cuenta</h2>
+          <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+            Mi cuenta
+          </h2>
 
           <div className="divide-y divide-outline-variant/40">
             <div className="flex items-center gap-3 px-4 py-3">
@@ -135,17 +165,22 @@ export default function PerfilPage() {
 
         {/* Subscription */}
         <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 overflow-hidden">
-          <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Suscripción</h2>
+          <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+            Suscripción
+          </h2>
 
-          <div className={`mx-4 mb-4 rounded-xl p-4 border ${isPremium ? 'bg-primary-container/40 border-primary/40' : 'bg-surface-container border-outline-variant/40'}`}>
+          <div
+            className={`mx-4 mb-4 rounded-xl p-4 border ${isPremium ? 'bg-primary-container/40 border-primary/40' : 'bg-surface-container border-outline-variant/40'}`}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-on-surface">{isPremium ? '★ Premium' : 'Plan gratuito'}</p>
+                <p className="font-semibold text-on-surface">
+                  {isPremium ? '★ Premium' : 'Plan gratuito'}
+                </p>
                 <p className="text-xs text-on-surface-variant mt-0.5">
                   {isPremium
                     ? `Activo hasta ${user.subscription.expiresAt ? new Date(user.subscription.expiresAt).toLocaleDateString('es-CL') : 'sin vencimiento'}`
-                    : `${user.subscription.remainingListings ?? 0} publicaciones restantes`
-                  }
+                    : `${user.subscription.remainingListings ?? 0} publicaciones restantes`}
                 </p>
               </div>
               {!isPremium && (
@@ -162,15 +197,24 @@ export default function PerfilPage() {
 
         {/* Settings */}
         <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 overflow-hidden">
-          <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Configuración</h2>
+          <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+            Configuración
+          </h2>
 
           <div className="divide-y divide-outline-variant/40">
             {[
               { icon: Bell, label: 'Notificaciones', desc: 'Gestiona tus alertas' },
-              { icon: Globe, label: 'Idioma y moneda', desc: `${user.preferences.language === 'es' ? 'Español' : 'English'} · ${user.preferences.currency}` },
+              {
+                icon: Globe,
+                label: 'Idioma y moneda',
+                desc: `${user.preferences.language === 'es' ? 'Español' : 'English'} · ${user.preferences.currency}`,
+              },
               { icon: Shield, label: 'Privacidad y seguridad', desc: 'Contraseña y datos' },
-            ].map(item => (
-              <button key={item.label} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container transition-colors">
+            ].map((item) => (
+              <button
+                key={item.label}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container transition-colors"
+              >
                 <item.icon size={16} className="text-on-surface-variant" />
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-on-surface">{item.label}</p>
@@ -191,7 +235,12 @@ export default function PerfilPage() {
                 <Button variant="danger" size="sm" fullWidth onClick={handleLogout}>
                   Sí, cerrar sesión
                 </Button>
-                <Button variant="outline" size="sm" fullWidth onClick={() => setShowLogoutConfirm(false)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  onClick={() => setShowLogoutConfirm(false)}
+                >
                   Cancelar
                 </Button>
               </div>

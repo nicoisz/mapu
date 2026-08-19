@@ -13,7 +13,13 @@ interface FilterPanelProps {
   onClose: () => void
 }
 
-const PROPERTY_TYPES = [PropertyType.HOUSE, PropertyType.APARTMENT, PropertyType.LAND, PropertyType.OFFICE, PropertyType.COMMERCIAL]
+const PROPERTY_TYPES = [
+  PropertyType.HOUSE,
+  PropertyType.APARTMENT,
+  PropertyType.LAND,
+  PropertyType.OFFICE,
+  PropertyType.COMMERCIAL,
+]
 const BEDROOM_OPTIONS = [1, 2, 3, 4]
 
 export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
@@ -21,26 +27,26 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
 
   function toggleType(type: PropertyType) {
     const current = local.type ?? []
-    const updated = current.includes(type) ? current.filter(t => t !== type) : [...current, type]
-    setLocal(f => ({ ...f, type: updated.length ? updated : undefined }))
+    const updated = current.includes(type) ? current.filter((t) => t !== type) : [...current, type]
+    setLocal((f) => ({ ...f, type: updated.length ? updated : undefined }))
   }
 
   function setOperation(op: PropertyOperation | undefined) {
-    setLocal(f => ({ ...f, operation: op }))
+    setLocal((f) => ({ ...f, operation: op }))
   }
 
   function setBedrooms(min: number | undefined) {
-    setLocal(f => ({ ...f, bedrooms: min ? { min } : undefined }))
+    setLocal((f) => ({ ...f, bedrooms: min ? { min } : undefined }))
   }
 
   function setPriceMin(val: string) {
     const n = val ? parseInt(val) : undefined
-    setLocal(f => ({ ...f, priceRange: { ...f.priceRange, currency: Currency.CLP, min: n } }))
+    setLocal((f) => ({ ...f, priceRange: { ...f.priceRange, currency: Currency.CLP, min: n } }))
   }
 
   function setPriceMax(val: string) {
     const n = val ? parseInt(val) : undefined
-    setLocal(f => ({ ...f, priceRange: { ...f.priceRange, currency: Currency.CLP, max: n } }))
+    setLocal((f) => ({ ...f, priceRange: { ...f.priceRange, currency: Currency.CLP, max: n } }))
   }
 
   function handleClear() {
@@ -63,9 +69,15 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
           <h2 className="font-headline font-semibold text-lg text-on-surface">Filtros</h2>
           <div className="flex items-center gap-3">
             {activeCount > 0 && (
-              <span className="text-sm text-accent">{activeCount} activo{activeCount !== 1 ? 's' : ''}</span>
+              <span className="text-sm text-accent">
+                {activeCount} activo{activeCount !== 1 ? 's' : ''}
+              </span>
             )}
-            <button onClick={onClose} aria-label="Cerrar filtros" className="p-1.5 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant">
+            <button
+              onClick={onClose}
+              aria-label="Cerrar filtros"
+              className="p-1.5 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant"
+            >
               <X size={18} />
             </button>
           </div>
@@ -76,7 +88,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
           <div>
             <p className="text-sm font-medium text-on-surface-variant mb-2">Operación</p>
             <div className="flex gap-2">
-              {([undefined, PropertyOperation.SALE, PropertyOperation.RENT] as const).map(op => (
+              {([undefined, PropertyOperation.SALE, PropertyOperation.RENT] as const).map((op) => (
                 <button
                   key={op ?? 'all'}
                   onClick={() => setOperation(op)}
@@ -96,14 +108,16 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
           <div>
             <p className="text-sm font-medium text-on-surface-variant mb-2">Tipo de propiedad</p>
             <div className="flex flex-wrap gap-2">
-              {PROPERTY_TYPES.map(type => {
+              {PROPERTY_TYPES.map((type) => {
                 const selected = local.type?.includes(type)
                 return (
                   <button
                     key={type}
                     onClick={() => toggleType(type)}
                     className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
-                      selected ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'
+                      selected
+                        ? 'bg-primary text-on-primary border-primary'
+                        : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'
                     }`}
                   >
                     {PROPERTY_TYPE_LABELS[type]}
@@ -115,7 +129,9 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
 
           {/* Bedrooms */}
           <div>
-            <p className="text-sm font-medium text-on-surface-variant mb-2">Mínimo de dormitorios</p>
+            <p className="text-sm font-medium text-on-surface-variant mb-2">
+              Mínimo de dormitorios
+            </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setBedrooms(undefined)}
@@ -123,7 +139,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
               >
                 Cualquiera
               </button>
-              {BEDROOM_OPTIONS.map(n => (
+              {BEDROOM_OPTIONS.map((n) => (
                 <button
                   key={n}
                   onClick={() => setBedrooms(n)}
@@ -137,13 +153,15 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
 
           {/* Price range */}
           <div>
-            <p className="text-sm font-medium text-on-surface-variant mb-2">Rango de precio (CLP)</p>
+            <p className="text-sm font-medium text-on-surface-variant mb-2">
+              Rango de precio (CLP)
+            </p>
             <div className="flex items-center gap-2">
               <input
                 type="number"
                 placeholder="Mínimo"
                 value={local.priceRange?.min ?? ''}
-                onChange={e => setPriceMin(e.target.value)}
+                onChange={(e) => setPriceMin(e.target.value)}
                 className="flex-1 border border-outline-variant/60 bg-surface-container-lowest text-on-surface rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant/60"
               />
               <span className="text-on-surface-variant">—</span>
@@ -151,7 +169,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
                 type="number"
                 placeholder="Máximo"
                 value={local.priceRange?.max ?? ''}
-                onChange={e => setPriceMax(e.target.value)}
+                onChange={(e) => setPriceMax(e.target.value)}
                 className="flex-1 border border-outline-variant/60 bg-surface-container-lowest text-on-surface rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant/60"
               />
             </div>
@@ -162,7 +180,13 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
           <Button variant="outline" onClick={handleClear} className="flex-1">
             Limpiar
           </Button>
-          <Button onClick={() => { onApply(local); onClose() }} className="flex-1">
+          <Button
+            onClick={() => {
+              onApply(local)
+              onClose()
+            }}
+            className="flex-1"
+          >
             Aplicar filtros
           </Button>
         </div>

@@ -5,7 +5,8 @@ const MAX_FILE_MB = 8
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
 
 export function validateImageFile(file: File): string | null {
-  if (!ALLOWED_TYPES.includes(file.type)) return `${file.name}: formato no soportado (usa JPG, PNG, WebP o AVIF)`
+  if (!ALLOWED_TYPES.includes(file.type))
+    return `${file.name}: formato no soportado (usa JPG, PNG, WebP o AVIF)`
   if (file.size > MAX_FILE_MB * 1024 * 1024) return `${file.name}: supera los ${MAX_FILE_MB} MB`
   return null
 }
@@ -15,7 +16,10 @@ export function validateImageFile(file: File): string | null {
  * (RLS only allows writing inside your own uid/ prefix). Returns the
  * PropertyImage list ready to store on the property row.
  */
-export async function uploadPropertyImages(userId: string, files: File[]): Promise<PropertyImage[]> {
+export async function uploadPropertyImages(
+  userId: string,
+  files: File[]
+): Promise<PropertyImage[]> {
   const supabase = getSupabase()
   const uploads = files.map(async (file, i) => {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
@@ -34,7 +38,7 @@ export async function uploadPropertyImages(userId: string, files: File[]): Promi
 /** Deletes previously uploaded files (paths = image.id from uploads). Used to
  *  roll back orphaned uploads when creating the property row fails. */
 export async function deletePropertyImages(images: PropertyImage[]): Promise<void> {
-  const paths = images.map(img => img.id).filter(Boolean)
+  const paths = images.map((img) => img.id).filter(Boolean)
   if (!paths.length) return
   await getSupabase().storage.from(PROPERTY_IMAGES_BUCKET).remove(paths)
 }

@@ -38,24 +38,33 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       if (active) setFavoriteIds(ids)
     }
     void load()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [userId])
 
   const isFavorite = useCallback((id: string) => favoriteIds.includes(id), [favoriteIds])
 
-  const toggle = useCallback((property: Property) => {
-    const alreadyFav = favoriteIds.includes(property.id)
-    // Block only when an anonymous visitor tries to ADD beyond the limit.
-    if (!alreadyFav && !isAuthenticated && favoriteIds.length >= ANON_FAVORITES_LIMIT) {
-      setPromptOpen(true)
-      return
-    }
-    // Optimistic update; reconcile with the service result in the background.
-    setFavoriteIds(ids => (alreadyFav ? ids.filter(id => id !== property.id) : [...ids, property.id]))
-    favoritesService.toggleFavorite(userId, property).catch(() => {
-      setFavoriteIds(ids => (alreadyFav ? [...ids, property.id] : ids.filter(id => id !== property.id)))
-    })
-  }, [favoriteIds, isAuthenticated, userId])
+  const toggle = useCallback(
+    (property: Property) => {
+      const alreadyFav = favoriteIds.includes(property.id)
+      // Block only when an anonymous visitor tries to ADD beyond the limit.
+      if (!alreadyFav && !isAuthenticated && favoriteIds.length >= ANON_FAVORITES_LIMIT) {
+        setPromptOpen(true)
+        return
+      }
+      // Optimistic update; reconcile with the service result in the background.
+      setFavoriteIds((ids) =>
+        alreadyFav ? ids.filter((id) => id !== property.id) : [...ids, property.id]
+      )
+      favoritesService.toggleFavorite(userId, property).catch(() => {
+        setFavoriteIds((ids) =>
+          alreadyFav ? [...ids, property.id] : ids.filter((id) => id !== property.id)
+        )
+      })
+    },
+    [favoriteIds, isAuthenticated, userId]
+  )
 
   return (
     <FavoritesContext.Provider
@@ -81,9 +90,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
             <div className="w-14 h-14 mx-auto rounded-full bg-primary/15 flex items-center justify-center mb-3">
               <Heart size={26} className="text-primary fill-primary" />
             </div>
-            <h2 className="font-headline text-xl font-bold text-on-surface">Crea tu lista de favoritos</h2>
+            <h2 className="font-headline text-xl font-bold text-on-surface">
+              Crea tu lista de favoritos
+            </h2>
             <p className="text-on-surface-variant text-sm mt-2">
-              Guardaste {ANON_FAVORITES_LIMIT} propiedades. Regístrate gratis para guardar todas las que quieras y verlas desde cualquier dispositivo.
+              Guardaste {ANON_FAVORITES_LIMIT} propiedades. Regístrate gratis para guardar todas las
+              que quieras y verlas desde cualquier dispositivo.
             </p>
             <div className="mt-5 space-y-2">
               <Link

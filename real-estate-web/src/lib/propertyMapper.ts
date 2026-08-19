@@ -1,5 +1,12 @@
 import { Property, PropertyImage } from '@/types/property'
-import { ChileanRegion, ContactMethod, Currency, PropertyOperation, PropertyStatus, PropertyType } from '@/types/enums'
+import {
+  ChileanRegion,
+  ContactMethod,
+  Currency,
+  PropertyOperation,
+  PropertyStatus,
+  PropertyType,
+} from '@/types/enums'
 
 /**
  * Shape of a row in public.properties — the schema shared with the mobile app
@@ -83,7 +90,7 @@ function parseImages(raw: unknown): PropertyImage[] {
         isMain: typeof o.isMain === 'boolean' ? o.isMain : i === 0,
       }
     })
-    .filter(img => img.url)
+    .filter((img) => img.url)
 }
 
 export function rowToProperty(row: PropertyRow): Property {
@@ -108,7 +115,9 @@ export function rowToProperty(row: PropertyRow): Property {
         postalCode: row.address_postal_code ?? undefined,
         country: 'Chile',
       },
-      displayAddress: [streetLine, row.address_commune ?? row.address_city].filter(Boolean).join(', ') || undefined,
+      displayAddress:
+        [streetLine, row.address_commune ?? row.address_city].filter(Boolean).join(', ') ||
+        undefined,
     },
     pricing: {
       price: Number(row.price),

@@ -7,17 +7,32 @@ import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
 import { z } from 'zod'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
-import { uploadPropertyImages, validateImageFile, deletePropertyImages } from '@/services/storageService'
+import {
+  uploadPropertyImages,
+  validateImageFile,
+  deletePropertyImages,
+} from '@/services/storageService'
 import { geocodeAddress } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
 import {
-  ChileanRegion, ContactMethod, Currency, PropertyOperation, PropertyType,
+  ChileanRegion,
+  ContactMethod,
+  Currency,
+  PropertyOperation,
+  PropertyType,
 } from '@/types/enums'
 import type { Property, PropertyImage } from '@/types/property'
 
-const TYPES = [PropertyType.HOUSE, PropertyType.APARTMENT, PropertyType.LAND, PropertyType.OFFICE, PropertyType.COMMERCIAL, PropertyType.WAREHOUSE]
+const TYPES = [
+  PropertyType.HOUSE,
+  PropertyType.APARTMENT,
+  PropertyType.LAND,
+  PropertyType.OFFICE,
+  PropertyType.COMMERCIAL,
+  PropertyType.WAREHOUSE,
+]
 const REGIONS = Object.values(ChileanRegion)
 const MAX_IMAGES = 10
 
@@ -43,7 +58,15 @@ interface PendingImage {
   existingPath?: string
 }
 
-function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+function Section({
+  title,
+  desc,
+  children,
+}: {
+  title: string
+  desc?: string
+  children: React.ReactNode
+}) {
   return (
     <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 p-5 md:p-6">
       <h2 className="font-headline font-semibold text-lg text-on-surface">{title}</h2>
@@ -55,7 +78,8 @@ function Section({ title, desc, children }: { title: string; desc?: string; chil
 }
 
 const labelCls = 'block text-sm font-medium text-on-surface-variant mb-1.5'
-const selectCls = 'w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary'
+const selectCls =
+  'w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary'
 const errorCls = 'text-error text-xs mt-1'
 
 export default function PublicarPage() {
@@ -68,9 +92,18 @@ export default function PublicarPage() {
   const [operation, setOperation] = useState<PropertyOperation>(PropertyOperation.SALE)
   const [type, setType] = useState<PropertyType>(PropertyType.HOUSE)
   const [form, setForm] = useState({
-    title: '', description: '', price: '', street: '', commune: '', city: '',
-    region: ChileanRegion.METROPOLITANA, area: '', bedrooms: '', bathrooms: '',
-    parkingSpots: '', negotiable: false,
+    title: '',
+    description: '',
+    price: '',
+    street: '',
+    commune: '',
+    city: '',
+    region: ChileanRegion.METROPOLITANA,
+    area: '',
+    bedrooms: '',
+    bathrooms: '',
+    parkingSpots: '',
+    negotiable: false,
   })
   const [images, setImages] = useState<PendingImage[]>([])
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -78,22 +111,30 @@ export default function PublicarPage() {
   const [submitting, setSubmitting] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const originalPathsRef = useRef<string[]>([])
-  const set = (k: keyof typeof form, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }))
 
   // Edit mode: load the property and prefill the form + existing images.
   useEffect(() => {
     if (!editId || !user) return
     let active = true
-    propertyService.getById(editId)
-      .then(property => {
+    propertyService
+      .getById(editId)
+      .then((property) => {
         if (!active) return
-        if (!property || property.ownerId !== user.id) { setNotFound(true); return }
+        if (!property || property.ownerId !== user.id) {
+          setNotFound(true)
+          return
+        }
         setOperation(property.operation)
         setType(property.type)
         setForm({
           title: property.title,
           description: property.description,
-          price: String(property.operation === PropertyOperation.RENT ? (property.pricing.monthlyRent ?? property.pricing.price) : property.pricing.price),
+          price: String(
+            property.operation === PropertyOperation.RENT
+              ? (property.pricing.monthlyRent ?? property.pricing.price)
+              : property.pricing.price
+          ),
           street: property.location.address.street,
           commune: property.location.address.commune ?? '',
           city: property.location.address.city,
@@ -101,22 +142,32 @@ export default function PublicarPage() {
           area: String(property.features.area),
           bedrooms: property.features.bedrooms != null ? String(property.features.bedrooms) : '',
           bathrooms: property.features.bathrooms != null ? String(property.features.bathrooms) : '',
-          parkingSpots: property.features.parkingSpots != null ? String(property.features.parkingSpots) : '',
+          parkingSpots:
+            property.features.parkingSpots != null ? String(property.features.parkingSpots) : '',
           negotiable: property.pricing.isNegotiable,
         })
-        setImages(property.media.images.map(img => ({
-          file: null,
-          previewUrl: img.url,
-          existingPath: img.id,
-        })))
-        originalPathsRef.current = property.media.images.map(img => img.id)
+        setImages(
+          property.media.images.map((img) => ({
+            file: null,
+            previewUrl: img.url,
+            existingPath: img.id,
+          }))
+        )
+        originalPathsRef.current = property.media.images.map((img) => img.id)
       })
       .catch(() => {})
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [editId, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Object URLs leak unless revoked.
-  useEffect(() => () => { images.forEach(img => URL.revokeObjectURL(img.previewUrl)) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(
+    () => () => {
+      images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+    },
+    []
+  ) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (notFound) {
     return (
@@ -124,7 +175,12 @@ export default function PublicarPage() {
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
         <h2 className="font-headline text-xl font-bold text-on-surface">Propiedad no encontrada</h2>
         <p className="text-on-surface-variant text-sm mt-2">No existe o no es tuya.</p>
-        <Link href="/dashboard" className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">Volver al panel</Link>
+        <Link
+          href="/dashboard"
+          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
+        >
+          Volver al panel
+        </Link>
       </div>
     )
   }
@@ -133,9 +189,18 @@ export default function PublicarPage() {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
-        <h2 className="font-headline text-xl font-bold text-on-surface">Inicia sesión para publicar</h2>
-        <p className="text-on-surface-variant text-sm mt-2">Necesitas una cuenta para crear una publicación.</p>
-        <Link href="/login" className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">Iniciar sesión</Link>
+        <h2 className="font-headline text-xl font-bold text-on-surface">
+          Inicia sesión para publicar
+        </h2>
+        <p className="text-on-surface-variant text-sm mt-2">
+          Necesitas una cuenta para crear una publicación.
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
+        >
+          Iniciar sesión
+        </Link>
       </div>
     )
   }
@@ -147,29 +212,29 @@ export default function PublicarPage() {
     if (!list) return
     const errorsFound: string[] = []
     const accepted: PendingImage[] = []
-    Array.from(list).forEach(file => {
+    Array.from(list).forEach((file) => {
       const problem = validateImageFile(file)
       if (problem) errorsFound.push(problem)
       else accepted.push({ file, previewUrl: URL.createObjectURL(file) })
     })
-    setImages(prev => {
+    setImages((prev) => {
       const merged = [...prev, ...accepted]
       // Revoke previews of files dropped past the limit.
-      merged.slice(MAX_IMAGES).forEach(img => URL.revokeObjectURL(img.previewUrl))
+      merged.slice(MAX_IMAGES).forEach((img) => URL.revokeObjectURL(img.previewUrl))
       return merged.slice(0, MAX_IMAGES)
     })
-    setErrors(e => ({ ...e, images: errorsFound.length ? errorsFound.join(' · ') : undefined }))
+    setErrors((e) => ({ ...e, images: errorsFound.length ? errorsFound.join(' · ') : undefined }))
   }
 
   function removeImage(index: number) {
-    setImages(prev => {
+    setImages((prev) => {
       URL.revokeObjectURL(prev[index].previewUrl)
       return prev.filter((_, i) => i !== index)
     })
   }
 
   function makeMain(index: number) {
-    setImages(prev => [prev[index], ...prev.filter((_, i) => i !== index)])
+    setImages((prev) => [prev[index], ...prev.filter((_, i) => i !== index)])
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -180,7 +245,7 @@ export default function PublicarPage() {
     const parsed = publishSchema.safeParse(form)
     const newErrors: FieldErrors = {}
     if (!parsed.success) {
-      parsed.error.issues.forEach(issue => {
+      parsed.error.issues.forEach((issue) => {
         const key = issue.path[0] as keyof FieldErrors
         if (!newErrors[key]) newErrors[key] = issue.message
       })
@@ -193,19 +258,29 @@ export default function PublicarPage() {
     let uploaded: PropertyImage[] = []
     try {
       // New files get uploaded; existing ones keep their storage path.
-      const newFiles = images.filter(i => i.file).map(i => i.file as File)
+      const newFiles = images.filter((i) => i.file).map((i) => i.file as File)
       if (newFiles.length) uploaded = await uploadPropertyImages(user.id, newFiles)
       let uploadIdx = 0
       const finalImages: PropertyImage[] = images.map((img, i) =>
         img.existingPath
           ? { id: img.existingPath, url: img.previewUrl, order: i, isMain: i === 0 }
-          : { id: uploaded[uploadIdx].id, url: uploaded[uploadIdx++].url, order: i, isMain: i === 0 }
+          : {
+              id: uploaded[uploadIdx].id,
+              url: uploaded[uploadIdx++].url,
+              order: i,
+              isMain: i === 0,
+            }
       )
 
       const v = parsed.data
       const isRent = operation === PropertyOperation.RENT
       // Geocode the address; fall back to the Santiago center when unavailable.
-      const coords = await geocodeAddress({ street: v.street, commune: v.commune, city: v.city, region: form.region })
+      const coords = await geocodeAddress({
+        street: v.street,
+        commune: v.commune,
+        city: v.city,
+        region: form.region,
+      })
       const data: Partial<Property> = {
         title: v.title,
         description: v.description,
@@ -252,10 +327,12 @@ export default function PublicarPage() {
         const updated = await propertyService.updateProperty(editId, data)
         if (!updated) throw new Error('No se pudo actualizar la propiedad')
         // Purge images the user removed from the existing set.
-        const keptPaths = new Set(finalImages.map(img => img.id))
-        const removed = originalPathsRef.current.filter(p => !keptPaths.has(p))
+        const keptPaths = new Set(finalImages.map((img) => img.id))
+        const removed = originalPathsRef.current.filter((p) => !keptPaths.has(p))
         if (removed.length) {
-          void deletePropertyImages(removed.map(p => ({ id: p, url: p, order: 0, isMain: false }))).catch(() => {})
+          void deletePropertyImages(
+            removed.map((p) => ({ id: p, url: p, order: 0, isMain: false }))
+          ).catch(() => {})
         }
       } else {
         await propertyService.createProperty(user.id, data)
@@ -273,7 +350,10 @@ export default function PublicarPage() {
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-4">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-4"
+        >
           <ArrowLeft size={18} /> Volver al panel
         </Link>
 
@@ -282,7 +362,9 @@ export default function PublicarPage() {
             {isEditing ? 'Edita tu propiedad' : 'Publica tu propiedad'}
           </h1>
           <p className="text-on-surface-variant mt-1">
-            {isEditing ? 'Actualiza los datos y guarda los cambios.' : 'Completa los datos y aparecerá en el catálogo al instante.'}
+            {isEditing
+              ? 'Actualiza los datos y guarda los cambios.'
+              : 'Completa los datos y aparecerá en el catálogo al instante.'}
           </p>
         </div>
 
@@ -291,7 +373,9 @@ export default function PublicarPage() {
             <Lock size={16} className="text-error shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-on-surface">Alcanzaste el límite del plan gratuito</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Actualiza a Premium para publicar sin límites.</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">
+                Actualiza a Premium para publicar sin límites.
+              </p>
             </div>
           </div>
         )}
@@ -302,9 +386,11 @@ export default function PublicarPage() {
             <div>
               <span className={labelCls}>Operación</span>
               <div className="flex gap-2">
-                {[PropertyOperation.SALE, PropertyOperation.RENT].map(op => (
+                {[PropertyOperation.SALE, PropertyOperation.RENT].map((op) => (
                   <button
-                    key={op} type="button" onClick={() => setOperation(op)}
+                    key={op}
+                    type="button"
+                    onClick={() => setOperation(op)}
                     className={`flex-1 py-2.5 text-sm font-medium rounded-lg border transition-all ${operation === op ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'}`}
                   >
                     {OPERATION_LABELS[op]}
@@ -314,20 +400,42 @@ export default function PublicarPage() {
             </div>
             {/* Type */}
             <div>
-              <label className={labelCls} htmlFor="type">Tipo de propiedad</label>
-              <select id="type" value={type} onChange={e => setType(e.target.value as PropertyType)} className={selectCls}>
-                {TYPES.map(t => <option key={t} value={t}>{PROPERTY_TYPE_LABELS[t]}</option>)}
+              <label className={labelCls} htmlFor="type">
+                Tipo de propiedad
+              </label>
+              <select
+                id="type"
+                value={type}
+                onChange={(e) => setType(e.target.value as PropertyType)}
+                className={selectCls}
+              >
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {PROPERTY_TYPE_LABELS[t]}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <Input label="Título" placeholder="Ej: Casa luminosa con jardín en Ñuñoa" value={form.title} onChange={e => set('title', e.target.value)} required />
+              <Input
+                label="Título"
+                placeholder="Ej: Casa luminosa con jardín en Ñuñoa"
+                value={form.title}
+                onChange={(e) => set('title', e.target.value)}
+                required
+              />
               {errors.title && <p className={errorCls}>{errors.title}</p>}
             </div>
             <div>
-              <label className={labelCls} htmlFor="desc">Descripción</label>
+              <label className={labelCls} htmlFor="desc">
+                Descripción
+              </label>
               <textarea
-                id="desc" value={form.description} onChange={e => set('description', e.target.value)}
-                rows={4} placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
+                id="desc"
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+                rows={4}
+                placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
                 className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               {errors.description && <p className={errorCls}>{errors.description}</p>}
@@ -335,18 +443,44 @@ export default function PublicarPage() {
           </Section>
 
           <Section title="Ubicación">
-            <Input label="Calle y número" placeholder="Av. Irarrázaval 1234" value={form.street} onChange={e => set('street', e.target.value)} />
+            <Input
+              label="Calle y número"
+              placeholder="Av. Irarrázaval 1234"
+              value={form.street}
+              onChange={(e) => set('street', e.target.value)}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Input label="Comuna" placeholder="Ñuñoa" value={form.commune} onChange={e => set('commune', e.target.value)} />
+                <Input
+                  label="Comuna"
+                  placeholder="Ñuñoa"
+                  value={form.commune}
+                  onChange={(e) => set('commune', e.target.value)}
+                />
                 {errors.commune && <p className={errorCls}>{errors.commune}</p>}
               </div>
-              <Input label="Ciudad" placeholder="Santiago" value={form.city} onChange={e => set('city', e.target.value)} />
+              <Input
+                label="Ciudad"
+                placeholder="Santiago"
+                value={form.city}
+                onChange={(e) => set('city', e.target.value)}
+              />
             </div>
             <div>
-              <label className={labelCls} htmlFor="region">Región</label>
-              <select id="region" value={form.region} onChange={e => set('region', e.target.value as ChileanRegion)} className={selectCls}>
-                {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+              <label className={labelCls} htmlFor="region">
+                Región
+              </label>
+              <select
+                id="region"
+                value={form.region}
+                onChange={(e) => set('region', e.target.value as ChileanRegion)}
+                className={selectCls}
+              >
+                {REGIONS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
               </select>
             </div>
           </Section>
@@ -354,45 +488,99 @@ export default function PublicarPage() {
           <Section title="Características">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Input label="Superficie (m²)" type="number" min="0" placeholder="120" value={form.area} onChange={e => set('area', e.target.value)} required />
+                <Input
+                  label="Superficie (m²)"
+                  type="number"
+                  min="0"
+                  placeholder="120"
+                  value={form.area}
+                  onChange={(e) => set('area', e.target.value)}
+                  required
+                />
                 {errors.area && <p className={errorCls}>{errors.area}</p>}
               </div>
-              <Input label="Estacionamientos" type="number" min="0" placeholder="2" value={form.parkingSpots} onChange={e => set('parkingSpots', e.target.value)} />
-              <Input label="Dormitorios" type="number" min="0" placeholder="3" value={form.bedrooms} onChange={e => set('bedrooms', e.target.value)} />
-              <Input label="Baños" type="number" min="0" placeholder="2" value={form.bathrooms} onChange={e => set('bathrooms', e.target.value)} />
+              <Input
+                label="Estacionamientos"
+                type="number"
+                min="0"
+                placeholder="2"
+                value={form.parkingSpots}
+                onChange={(e) => set('parkingSpots', e.target.value)}
+              />
+              <Input
+                label="Dormitorios"
+                type="number"
+                min="0"
+                placeholder="3"
+                value={form.bedrooms}
+                onChange={(e) => set('bedrooms', e.target.value)}
+              />
+              <Input
+                label="Baños"
+                type="number"
+                min="0"
+                placeholder="2"
+                value={form.bathrooms}
+                onChange={(e) => set('bathrooms', e.target.value)}
+              />
             </div>
           </Section>
 
           <Section title="Precio">
             <div>
               <Input
-                label={operation === PropertyOperation.RENT ? 'Arriendo mensual (CLP)' : 'Precio (CLP)'}
-                type="number" min="0" placeholder="0" value={form.price} onChange={e => set('price', e.target.value)} required
+                label={
+                  operation === PropertyOperation.RENT ? 'Arriendo mensual (CLP)' : 'Precio (CLP)'
+                }
+                type="number"
+                min="0"
+                placeholder="0"
+                value={form.price}
+                onChange={(e) => set('price', e.target.value)}
+                required
               />
               {errors.price && <p className={errorCls}>{errors.price}</p>}
             </div>
             <label className="flex items-center gap-2 text-sm text-on-surface cursor-pointer">
-              <input type="checkbox" checked={form.negotiable} onChange={e => set('negotiable', e.target.checked)} className="w-4 h-4 accent-[rgb(var(--primary))]" />
+              <input
+                type="checkbox"
+                checked={form.negotiable}
+                onChange={(e) => set('negotiable', e.target.checked)}
+                className="w-4 h-4 accent-[rgb(var(--primary))]"
+              />
               Precio negociable
             </label>
           </Section>
 
-          <Section title="Fotos" desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}>
+          <Section
+            title="Fotos"
+            desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}
+          >
             <input
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/avif"
               multiple
               className="hidden"
-              onChange={e => { addFiles(e.target.files); e.target.value = '' }}
+              onChange={(e) => {
+                addFiles(e.target.files)
+                e.target.value = ''
+              }}
             />
 
             {images.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                 {images.map((img, i) => (
-                  <div key={img.previewUrl} className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40">
+                  <div
+                    key={img.previewUrl}
+                    className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.previewUrl} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    <img
+                      src={img.previewUrl}
+                      alt={`Foto ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
                     {i === 0 ? (
                       <span className="absolute bottom-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                         <Star size={9} /> Principal
@@ -426,23 +614,44 @@ export default function PublicarPage() {
                 className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
               >
                 <ImagePlus size={22} />
-                <span className="text-sm font-medium">{images.length ? 'Agregar más fotos' : 'Seleccionar fotos'}</span>
-                <span className="text-xs">{images.length}/{MAX_IMAGES}</span>
+                <span className="text-sm font-medium">
+                  {images.length ? 'Agregar más fotos' : 'Seleccionar fotos'}
+                </span>
+                <span className="text-xs">
+                  {images.length}/{MAX_IMAGES}
+                </span>
               </button>
             )}
             {errors.images && <p className={errorCls}>{errors.images}</p>}
           </Section>
 
           {submitError && (
-            <div className="bg-error/10 border border-error/40 rounded-xl p-3 text-error text-sm">{submitError}</div>
+            <div className="bg-error/10 border border-error/40 rounded-xl p-3 text-error text-sm">
+              {submitError}
+            </div>
           )}
 
           <div className="flex gap-3 pt-1">
-            <Button type="button" variant="outline" onClick={() => router.push('/dashboard')} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/dashboard')}
+              className="flex-1"
+            >
               Cancelar
             </Button>
-            <Button type="submit" loading={submitting} disabled={!canPublish && !isEditing} className="flex-1">
-              <Check size={16} /> {submitting ? 'Subiendo fotos…' : isEditing ? 'Guardar cambios' : 'Publicar propiedad'}
+            <Button
+              type="submit"
+              loading={submitting}
+              disabled={!canPublish && !isEditing}
+              className="flex-1"
+            >
+              <Check size={16} />{' '}
+              {submitting
+                ? 'Subiendo fotos…'
+                : isEditing
+                  ? 'Guardar cambios'
+                  : 'Publicar propiedad'}
             </Button>
           </div>
         </form>

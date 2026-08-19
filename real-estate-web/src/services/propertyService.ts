@@ -89,7 +89,9 @@ export const propertyService = {
     if (query.query?.trim()) {
       // Sanitize: commas/parens are PostgREST or() syntax.
       const term = query.query.trim().replace(/[,()]/g, ' ').replace(/\s+/g, ' ')
-      q = q.or(`title.ilike.%${term}%,description.ilike.%${term}%,address_commune.ilike.%${term}%,address_city.ilike.%${term}%`)
+      q = q.or(
+        `title.ilike.%${term}%,description.ilike.%${term}%,address_commune.ilike.%${term}%,address_city.ilike.%${term}%`
+      )
     }
 
     if (query.sortBy === 'price') q = q.order('price', { ascending: query.sortOrder !== 'desc' })
@@ -106,15 +108,28 @@ export const propertyService = {
 
   async createProperty(userId: string, data: Partial<Property>): Promise<Property> {
     const expiresAt = new Date(Date.now() + LISTING_EXPIRATION_DAYS * 86_400_000).toISOString()
-    const row = { ...propertyToRow(data, userId), status: PropertyStatus.ACTIVE, expires_at: expiresAt }
-    const { data: inserted, error } = await getSupabase().from('properties').insert(row).select(ROW_COLUMNS).single()
+    const row = {
+      ...propertyToRow(data, userId),
+      status: PropertyStatus.ACTIVE,
+      expires_at: expiresAt,
+    }
+    const { data: inserted, error } = await getSupabase()
+      .from('properties')
+      .insert(row)
+      .select(ROW_COLUMNS)
+      .single()
     if (error) throw new Error(error.message)
     return rowToProperty(inserted as PropertyRow)
   },
 
   async updateProperty(id: string, updates: Partial<Property>): Promise<Property | null> {
     const row = { ...propertyToRow(updates), updated_at: new Date().toISOString() }
-    const { data, error } = await getSupabase().from('properties').update(row).eq('id', id).select(ROW_COLUMNS).maybeSingle()
+    const { data, error } = await getSupabase()
+      .from('properties')
+      .update(row)
+      .eq('id', id)
+      .select(ROW_COLUMNS)
+      .maybeSingle()
     if (error || !data) return null
     return rowToProperty(data as PropertyRow)
   },
@@ -122,7 +137,10 @@ export const propertyService = {
   async deleteProperty(id: string): Promise<boolean> {
     // Fetch the row first so we can also remove its storage files.
     const existing = await propertyService.getById(id)
-    const { error, count } = await getSupabase().from('properties').delete({ count: 'exact' }).eq('id', id)
+    const { error, count } = await getSupabase()
+      .from('properties')
+      .delete({ count: 'exact' })
+      .eq('id', id)
     if (error || !(count ?? 0)) return false
     if (existing?.media.images.length) {
       void deletePropertyImages(existing.media.images).catch(() => {})
@@ -134,7 +152,11 @@ export const propertyService = {
     const expiresAt = new Date(Date.now() + LISTING_EXPIRATION_DAYS * 86_400_000).toISOString()
     const { data, error } = await getSupabase()
       .from('properties')
-      .update({ status: PropertyStatus.ACTIVE, expires_at: expiresAt, updated_at: new Date().toISOString() })
+      .update({
+        status: PropertyStatus.ACTIVE,
+        expires_at: expiresAt,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select(ROW_COLUMNS)
       .maybeSingle()
@@ -152,11 +174,18 @@ export const propertyService = {
   registerView(id: string): void {
     if (typeof window === 'undefined') return
     const supabase = getSupabase()
-    void supabase
-      .rpc('increment_property_views', { property_id: id })
-      .then(() => {}, () => {
-        void supabase.from('property_views').insert({ property_id: id }).then(() => {}, () => {})
-      })
+    void supabase.rpc('increment_property_views', { property_id: id }).then(
+      () => {},
+      () => {
+        void supabase
+          .from('property_views')
+          .insert({ property_id: id })
+          .then(
+            () => {},
+            () => {}
+          )
+      }
+    )
   },
 
   /** Count of ACTIVE listings a user has (free-plan limit checks). */

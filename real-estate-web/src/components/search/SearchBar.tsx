@@ -23,7 +23,16 @@ const SUGGESTION_ICONS: Record<SearchSuggestion['type'], string> = {
   popular: '🔥',
 }
 
-export function SearchBar({ value, onChange, onSearch, suggestions = [], activeFilterCount = 0, onFilterClick, placeholder, className }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChange,
+  onSearch,
+  suggestions = [],
+  activeFilterCount = 0,
+  onFilterClick,
+  placeholder,
+  className,
+}: SearchBarProps) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -70,25 +79,39 @@ export function SearchBar({ value, onChange, onSearch, suggestions = [], activeF
           ref={inputRef}
           type="text"
           value={value}
-          onChange={e => { onChange(e.target.value); setShowSuggestions(true) }}
+          onChange={(e) => {
+            onChange(e.target.value)
+            setShowSuggestions(true)
+          }}
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? 'Buscar casa, departamento, sector...'}
           className="flex-1 px-3 py-2.5 text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
         />
         {value && (
-          <button onClick={handleClear} aria-label="Limpiar búsqueda" className="p-2 text-on-surface-variant hover:text-on-surface">
+          <button
+            onClick={handleClear}
+            aria-label="Limpiar búsqueda"
+            className="p-2 text-on-surface-variant hover:text-on-surface"
+          >
             <X size={14} />
           </button>
         )}
         {onFilterClick && (
           <button
             onClick={onFilterClick}
-            className={cn('flex items-center gap-1.5 px-3 py-2.5 border-l border-outline-variant/60 text-sm font-medium transition-colors', activeFilterCount > 0 ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:text-primary')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-2.5 border-l border-outline-variant/60 text-sm font-medium transition-colors',
+              activeFilterCount > 0
+                ? 'text-primary bg-primary/10'
+                : 'text-on-surface-variant hover:text-primary'
+            )}
           >
             <SlidersHorizontal size={14} />
             {activeFilterCount > 0 && (
-              <span className="bg-accent text-on-tertiary text-xs rounded-full w-4 h-4 flex items-center justify-center">{activeFilterCount}</span>
+              <span className="bg-accent text-on-tertiary text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
             )}
           </button>
         )}
@@ -104,7 +127,9 @@ export function SearchBar({ value, onChange, onSearch, suggestions = [], activeF
             >
               <span>{SUGGESTION_ICONS[s.type]}</span>
               <span className="text-on-surface">{s.text}</span>
-              <span className="ml-auto text-xs text-on-surface-variant capitalize">{s.type === 'property_type' ? 'tipo' : s.type === 'location' ? 'lugar' : s.type}</span>
+              <span className="ml-auto text-xs text-on-surface-variant capitalize">
+                {s.type === 'property_type' ? 'tipo' : s.type === 'location' ? 'lugar' : s.type}
+              </span>
             </button>
           ))}
         </div>

@@ -30,15 +30,17 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
     if (!targets.length) return
 
     if (reduced) {
-      targets.forEach(el => { el.style.visibility = 'visible' })
+      targets.forEach((el) => {
+        el.style.visibility = 'visible'
+      })
       return
     }
 
     let cleanup = () => {}
 
     Promise.all([
-      import('gsap').then(m => m.default ?? m.gsap),
-      import('gsap/ScrollTrigger').then(m => m.ScrollTrigger),
+      import('gsap').then((m) => m.default ?? m.gsap),
+      import('gsap/ScrollTrigger').then((m) => m.ScrollTrigger),
     ]).then(([gsap, ScrollTrigger]) => {
       gsap.registerPlugin(ScrollTrigger)
       const scrollerEl = scroller?.current ?? undefined
@@ -66,8 +68,8 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
 
       ScrollTrigger.refresh()
       cleanup = () => {
-        triggers.forEach(t => t.scrollTrigger?.kill())
-        triggers.forEach(t => t.kill())
+        triggers.forEach((t) => t.scrollTrigger?.kill())
+        triggers.forEach((t) => t.kill())
       }
     })
 

@@ -14,13 +14,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-on-surface-variant mb-1">
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-on-surface-variant mb-1"
+          >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">{leftIcon}</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+              {leftIcon}
+            </span>
           )}
           <input
             ref={ref}
@@ -37,7 +42,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">{rightIcon}</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+              {rightIcon}
+            </span>
           )}
         </div>
         {error && <p className="mt-1 text-xs text-error">{error}</p>}

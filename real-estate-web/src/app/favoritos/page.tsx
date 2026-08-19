@@ -18,10 +18,20 @@ export default function FavoritosPage() {
 
   useEffect(() => {
     let active = true
-    favoritesService.getFavoriteProperties(favoriteIds)
-      .then(props => { if (active) { setProperties(props); setLoading(false) } })
-      .catch(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    favoritesService
+      .getFavoriteProperties(favoriteIds)
+      .then((props) => {
+        if (active) {
+          setProperties(props)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
   }, [favoriteIds])
 
   const stats = useMemo(() => favoritesService.computeStats(properties), [properties])
@@ -34,7 +44,10 @@ export default function FavoritosPage() {
         <p className="text-on-surface-variant text-sm mt-2 max-w-xs">
           Guarda propiedades tocando el corazón y aparecerán aquí.
         </p>
-        <Link href="/buscar" className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">
+        <Link
+          href="/buscar"
+          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
+        >
           Explorar propiedades
         </Link>
       </div>
@@ -50,19 +63,25 @@ export default function FavoritosPage() {
             <Heart size={20} className="text-primary fill-primary" />
             <h1 className="font-headline text-2xl font-bold text-on-surface">Mis favoritos</h1>
           </div>
-          <p className="text-on-surface-variant text-sm">{count} propiedad{count !== 1 ? 'es' : ''} guardada{count !== 1 ? 's' : ''}</p>
+          <p className="text-on-surface-variant text-sm">
+            {count} propiedad{count !== 1 ? 'es' : ''} guardada{count !== 1 ? 's' : ''}
+          </p>
 
           {stats.totalCount > 0 && stats.averagePrice > 0 && (
             <div className="mt-4 grid grid-cols-2 gap-3 max-w-md">
               <div className="bg-surface-container rounded-xl p-3 border border-outline-variant/40">
                 <p className="text-xs text-on-surface-variant">Precio promedio</p>
-                <p className="font-bold text-sm mt-0.5 text-on-surface">{formatPrice(Math.round(stats.averagePrice), Currency.CLP)}</p>
+                <p className="font-bold text-sm mt-0.5 text-on-surface">
+                  {formatPrice(Math.round(stats.averagePrice), Currency.CLP)}
+                </p>
               </div>
               <div className="bg-surface-container rounded-xl p-3 border border-outline-variant/40">
                 <p className="text-xs text-on-surface-variant">Tipos guardados</p>
                 <div className="flex flex-wrap gap-1 mt-0.5">
                   {Object.entries(stats.byType).map(([type, n]) => (
-                    <span key={type} className="text-xs font-medium text-on-surface">{PROPERTY_TYPE_LABELS[type]} ({n})</span>
+                    <span key={type} className="text-xs font-medium text-on-surface">
+                      {PROPERTY_TYPE_LABELS[type]} ({n})
+                    </span>
                   ))}
                 </div>
               </div>
@@ -73,11 +92,13 @@ export default function FavoritosPage() {
 
       {loading ? (
         <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Array.from({ length: 3 }, (_, i) => <PropertyCardSkeleton key={i} />)}
+          {Array.from({ length: 3 }, (_, i) => (
+            <PropertyCardSkeleton key={i} />
+          ))}
         </div>
       ) : (
         <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {properties.map(property => (
+          {properties.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
         </div>

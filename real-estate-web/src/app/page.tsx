@@ -21,7 +21,7 @@ function HeroCarousel() {
   const [current, setCurrent] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(() => setCurrent(c => (c + 1) % HERO_IMAGES.length), 6000)
+    const id = setInterval(() => setCurrent((c) => (c + 1) % HERO_IMAGES.length), 6000)
     return () => clearInterval(id)
   }, [])
 
@@ -53,11 +53,20 @@ function HeroCarousel() {
 
       {/* Cinematic scrim: dark left-to-right for headline contrast, fading to
           the page background at the bottom so the hero blends into the page. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/20" style={{ zIndex: 2 }} />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30" style={{ zIndex: 2 }} />
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/20"
+        style={{ zIndex: 2 }}
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30"
+        style={{ zIndex: 2 }}
+      />
 
       {/* Vertical dot indicators on the right edge */}
-      <div className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 flex-col gap-3" style={{ zIndex: 20 }}>
+      <div
+        className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 flex-col gap-3"
+        style={{ zIndex: 20 }}
+      >
         {HERO_IMAGES.map((_, i) => (
           <button
             key={i}
@@ -83,11 +92,17 @@ function RotatingBadge() {
       className="hero-reveal hidden lg:flex absolute bottom-14 right-14 w-28 h-28 items-center justify-center group"
       style={{ zIndex: 10 }}
     >
-      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full animate-[spin_14s_linear_infinite] group-hover:[animation-play-state:paused]">
+      <svg
+        viewBox="0 0 100 100"
+        className="absolute inset-0 w-full h-full animate-[spin_14s_linear_infinite] group-hover:[animation-play-state:paused]"
+      >
         <defs>
           <path id="badge-circle" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
         </defs>
-        <text className="fill-white/80" style={{ fontSize: 8.2, letterSpacing: 2.2, fontWeight: 700 }}>
+        <text
+          className="fill-white/80"
+          style={{ fontSize: 8.2, letterSpacing: 2.2, fontWeight: 700 }}
+        >
           <textPath href="#badge-circle">EXPLORAR · PROPIEDADES · EXPLORAR ·</textPath>
         </text>
       </svg>
@@ -129,7 +144,11 @@ function FavBtn({ property }: { property: Property }) {
 
   return (
     <button
-      onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(property) }}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        toggle(property)
+      }}
       className={cn(
         'absolute top-4 right-4 p-2 bg-surface-container-lowest/50 backdrop-blur-md rounded-full transition-colors',
         fav ? 'text-error' : 'text-on-surface hover:text-error'
@@ -155,10 +174,15 @@ export default function LandingPage() {
 
   useEffect(() => {
     let active = true
-    propertyService.getFeatured(3)
-      .then(props => { if (active) setFeatured(props) })
+    propertyService
+      .getFeatured(3)
+      .then((props) => {
+        if (active) setFeatured(props)
+      })
       .catch(() => {})
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [])
 
   function handleSearch(e: React.FormEvent<HTMLFormElement>) {
@@ -172,8 +196,8 @@ export default function LandingPage() {
     let cancelled = false
 
     Promise.all([
-      import('gsap').then(m => m.default ?? m.gsap),
-      import('gsap/ScrollTrigger').then(m => m.ScrollTrigger),
+      import('gsap').then((m) => m.default ?? m.gsap),
+      import('gsap/ScrollTrigger').then((m) => m.ScrollTrigger),
     ]).then(([gsap, ScrollTrigger]) => {
       const scroller = scrollRef.current
       if (cancelled || !scroller) return
@@ -188,32 +212,60 @@ export default function LandingPage() {
         // sweeps in once its line is visible.
         const heroTl = gsap.timeline()
         heroTl
-          .from('.hero-reveal', { y: 50, opacity: 0, duration: 1, stagger: 0.15, ease: 'power3.out' })
-          .from('.hero-bar', { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' }, 0.35)
+          .from('.hero-reveal', {
+            y: 50,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.15,
+            ease: 'power3.out',
+          })
+          .from(
+            '.hero-bar',
+            { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' },
+            0.35
+          )
 
         gsap.from('.stat-item', {
           scrollTrigger: { trigger: '.stats-trigger', start: 'top 80%' },
-          y: 30, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'back.out(1.7)',
+          y: 30,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: 'back.out(1.7)',
         })
 
         gsap.from('.property-card', {
           scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 70%' },
-          y: 60, opacity: 0, duration: 1, stagger: 0.15, ease: 'power3.out',
+          y: 60,
+          opacity: 0,
+          duration: 1,
+          stagger: 0.15,
+          ease: 'power3.out',
         })
 
         gsap.from('.map-content', {
           scrollTrigger: { trigger: '.map-trigger', start: 'top 60%' },
-          x: -50, opacity: 0, duration: 1.2, ease: 'power2.out',
+          x: -50,
+          opacity: 0,
+          duration: 1.2,
+          ease: 'power2.out',
         })
 
         gsap.from('.step-card', {
           scrollTrigger: { trigger: '.how-trigger', start: 'top 70%' },
-          scale: 0.9, opacity: 0, duration: 0.8, stagger: 0.2, ease: 'power1.out',
+          scale: 0.9,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.2,
+          ease: 'power1.out',
         })
 
         gsap.from('.cta-trigger', {
           scrollTrigger: { trigger: '.cta-trigger', start: 'top 85%' },
-          y: 100, opacity: 0, duration: 1, ease: 'power4.out',
+          y: 100,
+          opacity: 0,
+          duration: 1,
+          ease: 'power4.out',
         })
       }, scroller)
 
@@ -222,7 +274,10 @@ export default function LandingPage() {
       ScrollTrigger.refresh()
     })
 
-    return () => { cancelled = true; ctx?.revert() }
+    return () => {
+      cancelled = true
+      ctx?.revert()
+    }
   }, [])
 
   useEffect(() => {
@@ -236,21 +291,31 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div ref={scrollRef} className="overflow-y-auto h-full selection:bg-primary selection:text-on-primary">
-
+    <div
+      ref={scrollRef}
+      className="overflow-y-auto h-full selection:bg-primary selection:text-on-primary"
+    >
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section className="relative h-[92vh] min-h-[560px] flex items-center overflow-hidden -mt-16">
         <HeroCarousel />
         <RotatingBadge />
 
-        <div className="relative w-full max-w-[1440px] mx-auto px-6 lg:px-20" style={{ zIndex: 10 }}>
+        <div
+          className="relative w-full max-w-[1440px] mx-auto px-6 lg:px-20"
+          style={{ zIndex: 10 }}
+        >
           {/* Headline: two offset lines, accent slash behind the first */}
           <h1 className="font-headline font-extrabold uppercase text-white leading-[0.95] tracking-tight drop-shadow-2xl">
             <span className="hero-reveal relative block text-5xl sm:text-7xl lg:text-8xl w-fit">
-              <span className="hero-bar absolute -left-6 lg:-left-20 right-[-0.5em] top-1/2 -translate-y-1/2 h-[0.32em] bg-[#FF4D1C]" aria-hidden />
+              <span
+                className="hero-bar absolute -left-6 lg:-left-20 right-[-0.5em] top-1/2 -translate-y-1/2 h-[0.32em] bg-[#FF4D1C]"
+                aria-hidden
+              />
               <span className="relative">Encuentra</span>
             </span>
-            <span className="hero-reveal block text-5xl sm:text-7xl lg:text-8xl pl-[0.8em]">tu lugar</span>
+            <span className="hero-reveal block text-5xl sm:text-7xl lg:text-8xl pl-[0.8em]">
+              tu lugar
+            </span>
           </h1>
 
           <p className="hero-reveal mt-6 text-white/85 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] max-w-md drop-shadow-lg">
@@ -258,7 +323,10 @@ export default function LandingPage() {
           </p>
 
           {/* Explore more */}
-          <Link href="/buscar" className="hero-reveal group mt-8 inline-flex items-center gap-4 text-white w-fit">
+          <Link
+            href="/buscar"
+            className="hero-reveal group mt-8 inline-flex items-center gap-4 text-white w-fit"
+          >
             <span className="text-sm font-semibold tracking-wide">Explorar más</span>
             <span className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center transition-all duration-300 group-hover:bg-[#FF4D1C] group-hover:border-[#FF4D1C] group-hover:translate-x-1.5">
               <span className="material-symbols-outlined text-lg">arrow_forward</span>
@@ -275,7 +343,7 @@ export default function LandingPage() {
               <input
                 type="text"
                 value={searchValue}
-                onChange={e => setSearchValue(e.target.value)}
+                onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Ciudad, barrio o región..."
                 className="w-full py-3 bg-transparent text-white placeholder:text-white/45 focus:outline-none text-sm"
               />
@@ -283,7 +351,7 @@ export default function LandingPage() {
             <div className="hidden sm:block w-px h-7 bg-white/15 shrink-0" />
             <select
               value={propertyType}
-              onChange={e => setPropertyType(e.target.value)}
+              onChange={(e) => setPropertyType(e.target.value)}
               className="sm:w-44 py-3 px-4 bg-transparent text-white/85 text-sm focus:outline-none cursor-pointer [&>option]:text-black"
             >
               <option value="">Tipo de propiedad</option>
@@ -305,10 +373,12 @@ export default function LandingPage() {
       {/* ─── STATS ────────────────────────────────────────── */}
       <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto stats-trigger">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map(s => (
+          {STATS.map((s) => (
             <div key={s.label} className="text-center stat-item space-y-2">
               <p className="text-primary font-headline text-4xl md:text-5xl font-bold">{s.value}</p>
-              <p className="text-on-surface-variant text-xs font-bold tracking-widest uppercase">{s.label}</p>
+              <p className="text-on-surface-variant text-xs font-bold tracking-widest uppercase">
+                {s.label}
+              </p>
             </div>
           ))}
         </div>
@@ -318,20 +388,28 @@ export default function LandingPage() {
       <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto property-grid-trigger">
         <div className="flex justify-between items-end mb-8">
           <div className="space-y-2">
-            <h2 className="font-headline text-3xl font-semibold text-on-surface">Propiedades Destacadas</h2>
-            <p className="text-on-surface-variant">Las mejores oportunidades del mercado inmobiliario chileno.</p>
+            <h2 className="font-headline text-3xl font-semibold text-on-surface">
+              Propiedades Destacadas
+            </h2>
+            <p className="text-on-surface-variant">
+              Las mejores oportunidades del mercado inmobiliario chileno.
+            </p>
           </div>
-          <Link href="/buscar" className="text-primary font-bold flex items-center gap-2 hover:underline shrink-0 ml-4">
+          <Link
+            href="/buscar"
+            className="text-primary font-bold flex items-center gap-2 hover:underline shrink-0 ml-4"
+          >
             Ver todas <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featured.map(property => {
-            const mainImg = property.media.images.find(i => i.isMain) ?? property.media.images[0]
-            const price = property.operation === PropertyOperation.RENT
-              ? (property.pricing.monthlyRent ?? property.pricing.price)
-              : property.pricing.price
+          {featured.map((property) => {
+            const mainImg = property.media.images.find((i) => i.isMain) ?? property.media.images[0]
+            const price =
+              property.operation === PropertyOperation.RENT
+                ? (property.pricing.monthlyRent ?? property.pricing.price)
+                : property.pricing.price
             const displayPrice = formatPriceShort(price, property.pricing.currency)
             const isRent = property.operation === PropertyOperation.RENT
 
@@ -355,7 +433,11 @@ export default function LandingPage() {
                     <div className="space-y-2">
                       <p className="text-primary font-headline font-bold text-2xl tracking-tight">
                         {displayPrice}
-                        {isRent && <span className="text-on-surface-variant text-base font-normal">/mes</span>}
+                        {isRent && (
+                          <span className="text-on-surface-variant text-base font-normal">
+                            /mes
+                          </span>
+                        )}
                       </p>
                       <h3 className="font-headline text-xl font-semibold text-on-surface truncate">
                         {property.title}
@@ -371,13 +453,17 @@ export default function LandingPage() {
                       {property.features.bedrooms !== undefined && (
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-outline">bed</span>
-                          <span className="text-on-surface-variant">{property.features.bedrooms}</span>
+                          <span className="text-on-surface-variant">
+                            {property.features.bedrooms}
+                          </span>
                         </div>
                       )}
                       {property.features.bathrooms !== undefined && (
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-outline">bathtub</span>
-                          <span className="text-on-surface-variant">{property.features.bathrooms}</span>
+                          <span className="text-on-surface-variant">
+                            {property.features.bathrooms}
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center gap-2">
@@ -405,7 +491,8 @@ export default function LandingPage() {
               Explora propiedades sobre el mapa
             </h2>
             <p className="text-on-surface-variant text-lg leading-relaxed">
-              Visualiza de forma interactiva la ubicación exacta de tu próximo hogar. Filtra por barrios, servicios cercanos y conectividad en tiempo real.
+              Visualiza de forma interactiva la ubicación exacta de tu próximo hogar. Filtra por
+              barrios, servicios cercanos y conectividad en tiempo real.
             </p>
             <Link
               href="/mapa"
@@ -422,12 +509,16 @@ export default function LandingPage() {
       {/* ─── HOW IT WORKS ─────────────────────────────────── */}
       <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto how-trigger">
         <div className="text-center space-y-3 mb-16">
-          <h2 className="font-headline text-3xl font-semibold text-on-surface">Tu camino a casa es simple</h2>
-          <p className="text-on-surface-variant">MapU redefine la experiencia de búsqueda con tecnología avanzada.</p>
+          <h2 className="font-headline text-3xl font-semibold text-on-surface">
+            Tu camino a casa es simple
+          </h2>
+          <p className="text-on-surface-variant">
+            MapU redefine la experiencia de búsqueda con tecnología avanzada.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {STEPS.map(step => (
+          {STEPS.map((step) => (
             <div key={step.num} className="space-y-4 text-center group step-card">
               <div className="w-20 h-20 mx-auto rounded-2xl bg-surface-container-highest flex items-center justify-center border border-outline-variant/30 group-hover:bg-primary transition-colors duration-500">
                 <span className="font-headline text-2xl font-bold text-primary group-hover:text-on-primary transition-colors duration-500">
@@ -453,7 +544,8 @@ export default function LandingPage() {
                 ¿Tienes una propiedad para publicar?
               </h2>
               <p className="text-on-surface-variant text-lg leading-relaxed">
-                Únete a la plataforma inmobiliaria más avanzada de Chile y llega a miles de compradores calificados.
+                Únete a la plataforma inmobiliaria más avanzada de Chile y llega a miles de
+                compradores calificados.
               </p>
             </div>
             <Link
@@ -481,7 +573,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 md:gap-8">
-            {['Privacidad', 'Términos', 'Contacto', 'Mapa del Sitio'].map(link => (
+            {['Privacidad', 'Términos', 'Contacto', 'Mapa del Sitio'].map((link) => (
               <a
                 key={link}
                 href="#"

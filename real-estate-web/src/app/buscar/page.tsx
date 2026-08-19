@@ -17,7 +17,9 @@ type ViewMode = 'map' | 'list'
 
 /** Anything exposing maplibre's bounds.contains — keeps the page free of the
  *  maplibre-gl import while still filtering the list by the visible area. */
-interface Bounds { contains(lngLat: [number, number]): boolean }
+interface Bounds {
+  contains(lngLat: [number, number]): boolean
+}
 
 function SearchContent() {
   const searchParams = useSearchParams()
@@ -35,8 +37,17 @@ function SearchContent() {
   // Pop the floating detail card out, then deselect (which re-expands the list).
   const closeDetail = useCallback(() => {
     const el = cardRef.current
-    if (!el || prefersReducedMotion) { setSelected(null); return }
-    gsap.to(el, { x: 24, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => setSelected(null) })
+    if (!el || prefersReducedMotion) {
+      setSelected(null)
+      return
+    }
+    gsap.to(el, {
+      x: 24,
+      opacity: 0,
+      duration: 0.22,
+      ease: 'power2.in',
+      onComplete: () => setSelected(null),
+    })
   }, [prefersReducedMotion])
 
   // Desktop list width drives the proportion: 'map' = sidebar (380px, map ~2/3),
@@ -47,12 +58,18 @@ function SearchContent() {
     const el = listColRef.current
     if (!el) return
     const isDesktop = window.matchMedia('(min-width: 768px)').matches
-    if (!isDesktop) { gsap.set(el, { clearProps: 'width,opacity' }); return }
+    if (!isDesktop) {
+      gsap.set(el, { clearProps: 'width,opacity' })
+      return
+    }
 
     let width: number | string = 380
     let opacity = 1
     if (viewMode === 'list') width = '66.6667%'
-    else if (selected) { width = 0; opacity = 0 }
+    else if (selected) {
+      width = 0
+      opacity = 0
+    }
 
     if (prefersReducedMotion) gsap.set(el, { width, opacity })
     else gsap.to(el, { width, opacity, duration: 0.45, ease: 'power3.inOut' })
@@ -66,8 +83,20 @@ function SearchContent() {
   }, [selected?.id, prefersReducedMotion])
 
   const {
-    query, filters, results, suggestions, activeFilterCount, sort, setSort, isSearching, searchError,
-    handleQueryChange, handleSearch, updateFilters, clearFilters, setSuggestions,
+    query,
+    filters,
+    results,
+    suggestions,
+    activeFilterCount,
+    sort,
+    setSort,
+    isSearching,
+    searchError,
+    handleQueryChange,
+    handleSearch,
+    updateFilters,
+    clearFilters,
+    setSuggestions,
   } = useSearch(urlQuery)
 
   // Stagger the cards in when a new result set arrives (not on map pans).
@@ -77,13 +106,23 @@ function SearchContent() {
     gsap.fromTo(
       col.querySelectorAll('.prop-stagger'),
       { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.45, stagger: 0.05, ease: 'power3.out', clearProps: 'transform,opacity' }
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.45,
+        stagger: 0.05,
+        ease: 'power3.out',
+        clearProps: 'transform,opacity',
+      }
     )
   }, [results, prefersReducedMotion])
 
   // List shows only the properties inside the area the map is currently showing.
   const visible = useMemo(
-    () => (bounds ? results.filter(p => bounds.contains([p.location.longitude, p.location.latitude])) : results),
+    () =>
+      bounds
+        ? results.filter((p) => bounds.contains([p.location.longitude, p.location.latitude]))
+        : results,
     [results, bounds]
   )
 
@@ -91,13 +130,18 @@ function SearchContent() {
   const PAGE_SIZE = 8
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const pageItems = useMemo(() => visible.slice(0, visibleCount), [visible, visibleCount])
-  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [visible])
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [visible])
 
   // Counts per operation — the chips double as the map-pin color legend.
-  const opCounts = useMemo(() => ({
-    sale: visible.filter(p => p.operation === PropertyOperation.SALE).length,
-    rent: visible.filter(p => p.operation === PropertyOperation.RENT).length,
-  }), [visible])
+  const opCounts = useMemo(
+    () => ({
+      sale: visible.filter((p) => p.operation === PropertyOperation.SALE).length,
+      rent: visible.filter((p) => p.operation === PropertyOperation.RENT).length,
+    }),
+    [visible]
+  )
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -116,13 +160,23 @@ function SearchContent() {
         <div className="hidden md:flex items-center gap-1 bg-surface-container rounded-lg p-1 shrink-0">
           <button
             onClick={() => setViewMode('map')}
-            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all', viewMode === 'map' ? 'bg-surface-container-highest shadow-soft text-primary font-medium' : 'text-on-surface-variant hover:text-on-surface')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all',
+              viewMode === 'map'
+                ? 'bg-surface-container-highest shadow-soft text-primary font-medium'
+                : 'text-on-surface-variant hover:text-on-surface'
+            )}
           >
             <MapIcon size={14} /> Mapa
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all', viewMode === 'list' ? 'bg-surface-container-highest shadow-soft text-primary font-medium' : 'text-on-surface-variant hover:text-on-surface')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all',
+              viewMode === 'list'
+                ? 'bg-surface-container-highest shadow-soft text-primary font-medium'
+                : 'text-on-surface-variant hover:text-on-surface'
+            )}
           >
             <List size={14} /> Lista
           </button>
@@ -150,13 +204,15 @@ function SearchContent() {
         {searchError && <span className="text-error">· {searchError}</span>}
         <div className="ml-auto flex items-center gap-3">
           {activeFilterCount > 0 && (
-            <button onClick={clearFilters} className="text-accent hover:underline">Limpiar filtros</button>
+            <button onClick={clearFilters} className="text-accent hover:underline">
+              Limpiar filtros
+            </button>
           )}
           <label className="flex items-center gap-1.5">
             <span className="hidden sm:inline">Ordenar:</span>
             <select
               value={sort}
-              onChange={e => setSort(e.target.value as typeof sort)}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
               className="bg-surface-container-highest border border-outline-variant/40 rounded-md px-1.5 py-1 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="recent">Más recientes</option>
@@ -181,7 +237,10 @@ function SearchContent() {
 
           {/* Floating detail card over the map (the list collapses behind it). */}
           {selected && (
-            <div ref={cardRef} className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] overflow-y-auto z-20">
+            <div
+              ref={cardRef}
+              className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] overflow-y-auto z-20"
+            >
               <PropertyCard property={selected} isSelected />
               <button
                 onClick={closeDetail}
@@ -197,12 +256,24 @@ function SearchContent() {
             property is selected so the map gets the full width. */}
         <div
           ref={listColRef}
-          className={cn('relative bg-surface-container-low border-l border-outline-variant/40 overflow-hidden shrink-0', viewMode === 'list' ? 'flex-1 md:flex-none' : 'hidden md:block md:w-[380px]')}
+          className={cn(
+            'relative bg-surface-container-low border-l border-outline-variant/40 overflow-hidden shrink-0',
+            viewMode === 'list' ? 'flex-1 md:flex-none' : 'hidden md:block md:w-[380px]'
+          )}
         >
-          <div className={cn('h-full overflow-y-auto', viewMode === 'list' ? 'w-full' : 'w-[380px]')}>
+          <div
+            className={cn('h-full overflow-y-auto', viewMode === 'list' ? 'w-full' : 'w-[380px]')}
+          >
             {isSearching && visible.length === 0 ? (
-              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col')}>
-                {Array.from({ length: 4 }, (_, i) => <PropertyCardSkeleton key={i} />)}
+              <div
+                className={cn(
+                  'p-3 gap-3',
+                  viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col'
+                )}
+              >
+                {Array.from({ length: 4 }, (_, i) => (
+                  <PropertyCardSkeleton key={i} />
+                ))}
               </div>
             ) : visible.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center text-on-surface-variant">
@@ -211,8 +282,13 @@ function SearchContent() {
                 <p className="text-sm mt-1">Mueve el mapa o ajusta los filtros</p>
               </div>
             ) : (
-              <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col')}>
-                {pageItems.map(property => (
+              <div
+                className={cn(
+                  'p-3 gap-3',
+                  viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col'
+                )}
+              >
+                {pageItems.map((property) => (
                   <div key={property.id} className="prop-stagger">
                     <PropertyCard
                       property={property}
@@ -223,7 +299,7 @@ function SearchContent() {
                 ))}
                 {visible.length > pageItems.length && (
                   <button
-                    onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                     className="w-full py-2.5 text-sm font-medium text-primary hover:underline"
                   >
                     Ver más ({visible.length - pageItems.length} restantes)
@@ -238,17 +314,28 @@ function SearchContent() {
       {/* Mobile view toggle */}
       <div className="md:hidden fixed bottom-16 right-4 z-20">
         <button
-          onClick={() => setViewMode(v => (v === 'map' ? 'list' : 'map'))}
+          onClick={() => setViewMode((v) => (v === 'map' ? 'list' : 'map'))}
           className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-full shadow-elevated text-sm font-semibold"
         >
-          {viewMode === 'map' ? <><List size={16} /> Lista</> : <><MapIcon size={16} /> Mapa</>}
+          {viewMode === 'map' ? (
+            <>
+              <List size={16} /> Lista
+            </>
+          ) : (
+            <>
+              <MapIcon size={16} /> Mapa
+            </>
+          )}
         </button>
       </div>
 
       {showFilters && (
         <FilterPanel
           filters={filters}
-          onApply={f => { updateFilters(f); setSuggestions([]) }}
+          onApply={(f) => {
+            updateFilters(f)
+            setSuggestions([])
+          }}
           onClose={() => setShowFilters(false)}
         />
       )}

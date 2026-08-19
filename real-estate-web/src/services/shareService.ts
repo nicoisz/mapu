@@ -38,7 +38,8 @@ export const shareService = {
       case 'email': {
         const subject = encodeURIComponent(`Propiedad: ${property.title}`)
         const body = encodeURIComponent(`${text}\n\nVer más: ${url}`)
-        if (typeof window !== 'undefined') window.location.href = `mailto:?subject=${subject}&body=${body}`
+        if (typeof window !== 'undefined')
+          window.location.href = `mailto:?subject=${subject}&body=${body}`
         return { success: true, platform: 'email' }
       }
     }
@@ -49,7 +50,10 @@ export const shareService = {
     return { success: true, platform }
   },
 
-  async shareProperty(property: Property, options?: { platform?: SharePlatform }): Promise<ShareResult> {
+  async shareProperty(
+    property: Property,
+    options?: { platform?: SharePlatform }
+  ): Promise<ShareResult> {
     if (options?.platform === 'clipboard') return shareService.shareToClipboard(property)
     if (options?.platform) return shareService.shareToSocialPlatform(property, options.platform)
 
