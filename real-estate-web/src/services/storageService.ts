@@ -30,3 +30,11 @@ export async function uploadPropertyImages(userId: string, files: File[]): Promi
   })
   return Promise.all(uploads)
 }
+
+/** Deletes previously uploaded files (paths = image.id from uploads). Used to
+ *  roll back orphaned uploads when creating the property row fails. */
+export async function deletePropertyImages(images: PropertyImage[]): Promise<void> {
+  const paths = images.map(img => img.id).filter(Boolean)
+  if (!paths.length) return
+  await getSupabase().storage.from(PROPERTY_IMAGES_BUCKET).remove(paths)
+}

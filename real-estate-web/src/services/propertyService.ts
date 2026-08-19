@@ -1,5 +1,5 @@
 import { Property } from '@/types/property'
-import { PropertyStatus } from '@/types/enums'
+import { PropertyOperation, PropertyStatus } from '@/types/enums'
 import { PropertySearchQuery } from '@/types/search'
 import { LISTING_EXPIRATION_DAYS } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
@@ -76,8 +76,11 @@ export const propertyService = {
     const f = query.filters
     if (f?.operation) q = q.eq('operation', f.operation)
     if (f?.type?.length) q = q.in('type', f.type)
-    if (f?.priceRange?.min) q = q.gte('price', f.priceRange.min)
-    if (f?.priceRange?.max) q = q.lte('price', f.priceRange.max)
+    // Rent listings price on monthly_rent; sales on price. Filter the column
+    // that matches the operation so ranges behave (rent vs sale scales differ).
+    const priceColumn = f?.operation === PropertyOperation.RENT ? 'monthly_rent' : 'price'
+    if (f?.priceRange?.min) q = q.gte(priceColumn, f.priceRange.min)
+    if (f?.priceRange?.max) q = q.lte(priceColumn, f.priceRange.max)
     if (f?.areaRange?.min) q = q.gte('area', f.areaRange.min)
     if (f?.areaRange?.max) q = q.lte('area', f.areaRange.max)
     if (f?.bedrooms?.min) q = q.gte('bedrooms', f.bedrooms.min)

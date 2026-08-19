@@ -1,6 +1,6 @@
 import { Property } from '@/types/property'
 import { ShareResult } from '@/types/results'
-import { buildShareText, buildWhatsAppUrl } from '@/lib/utils'
+import { buildShareText } from '@/lib/utils'
 
 export type SharePlatform = 'whatsapp' | 'facebook' | 'twitter' | 'email' | 'clipboard'
 
@@ -26,12 +26,9 @@ export const shareService = {
 
     let shareUrl = ''
     switch (platform) {
-      case 'whatsapp': {
-        const msg = `${text}\n${url}`
-        shareUrl = buildWhatsAppUrl('', msg).replace('wa.me/?text=', 'wa.me/share?text=')
+      case 'whatsapp':
         shareUrl = `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`
         break
-      }
       case 'facebook':
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
         break
