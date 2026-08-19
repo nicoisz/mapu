@@ -104,8 +104,8 @@ function assignBuckets(cells: ZoneCell[]): void {
     lo = sorted[0].meanPrice
     hi = sorted[1].meanPrice
   } else {
-    lo = sorted[Math.max(0, Math.floor(n / 3))].meanPrice
-    hi = sorted[Math.min(n - 1, Math.floor((2 * n) / 3))].meanPrice
+    lo = sorted[Math.ceil(n / 3) - 1].meanPrice
+    hi = sorted[Math.ceil((2 * n) / 3) - 1].meanPrice
   }
   cells.forEach(cell => {
     if (cell.meanPrice <= lo) cell.bucket = 'economic'
