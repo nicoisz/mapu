@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Building2, KeyRound, List, Map as MapIcon, Tag } from 'lucide-react'
@@ -86,6 +86,12 @@ function SearchContent() {
     () => (bounds ? results.filter(p => bounds.contains([p.location.longitude, p.location.latitude])) : results),
     [results, bounds]
   )
+
+  // Paginate the list client-side (the map still clusters the full result set).
+  const PAGE_SIZE = 8
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const pageItems = useMemo(() => visible.slice(0, visibleCount), [visible, visibleCount])
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [visible])
 
   // Counts per operation — the chips double as the map-pin color legend.
   const opCounts = useMemo(() => ({
@@ -206,7 +212,7 @@ function SearchContent() {
               </div>
             ) : (
               <div className={cn('p-3 gap-3', viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col')}>
-                {visible.map(property => (
+                {pageItems.map(property => (
                   <div key={property.id} className="prop-stagger">
                     <PropertyCard
                       property={property}
@@ -215,6 +221,14 @@ function SearchContent() {
                     />
                   </div>
                 ))}
+                {visible.length > pageItems.length && (
+                  <button
+                    onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                    className="w-full py-2.5 text-sm font-medium text-primary hover:underline"
+                  >
+                    Ver más ({visible.length - pageItems.length} restantes)
+                  </button>
+                )}
               </div>
             )}
           </div>
