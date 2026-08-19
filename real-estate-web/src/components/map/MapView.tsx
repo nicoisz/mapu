@@ -6,9 +6,13 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
-import { getMapPinPrice } from '@/lib/utils'
-import { PropertyOperation } from '@/types/enums'
+import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
+import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
+import {
+  computePriceZones, zonesToGeoJSON, getZoneColor, easeOutElastic, scaleZoneGeometry,
+  ZoneMode, ZoneBucket, ZoneCell,
+} from '@/lib/priceZones'
 
 // OpenFreeMap — free vector tiles, no API key. Native styles per theme.
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron'
@@ -59,6 +63,10 @@ const ACCENT = '#FF4D1C'
 // Pin color per operation — must match the legend chips in /buscar.
 export const SALE_COLOR = '#FF4D1C'
 export const RENT_COLOR = '#0D9488'
+
+// Price-zone choropleth source/layer ids (added on top of the basemap).
+const ZONE_SOURCE = 'price-zones'
+const ZONE_LAYER = 'price-zones-fill'
 
 type BaseLayer = 'streets' | 'satellite' | 'hybrid'
 
@@ -169,6 +177,17 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
   const { theme, mounted } = useTheme()
   const [layer, setLayer] = useState<BaseLayer>('streets')
 
+  // ── Price zones ────────────────────────────────────────────────
+  const [zonesOn, setZonesOn] = useState(true)
+  const [zoneMode, setZoneMode] = useState<ZoneMode>('sale')
+  const [zoneRanges, setZoneRanges] = useState<Record<ZoneBucket, [number, number]>>()
+  const zoneGeoRef = useRef<GeoJSON.FeatureCollection | null>(null)
+  const animRef = useRef<number | null>(null)
+  const zoneModeRef = useRef<ZoneMode>(zoneMode)
+  zoneModeRef.current = zoneMode
+  const zonesOnRef = useRef(zonesOn)
+  zonesOnRef.current = zonesOn
+
   // Keep latest props in refs so the map's event handlers (created once) never
   // act on stale data — e.g. properties arriving from Supabase before 'load'.
   const propsDataRef = useRef(properties)
@@ -200,6 +219,7 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     map.on('load', () => {
       readyRef.current = true
+      addZoneLayers(map)
       buildIndex()
       renderClusters()
       boundsRef.current?.(map.getBounds())
@@ -211,6 +231,7 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     mapRef.current = map
 
     return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current)
       markersRef.current.forEach(m => m.remove())
       markersRef.current.clear()
       readyRef.current = false
@@ -304,13 +325,100 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
     prevKeysRef.current = seen
   }
 
+  // ── Price-zone choropleth layers ───────────────────────────────
+  // Zone hexes are added as a vector fill layer so the whole region is tinted
+  // by mean price (blue = economic, purple = mid, gold = premium).
+  function addZoneLayers(map: maplibregl.Map) {
+    if (map.getSource(ZONE_SOURCE)) return
+    map.addSource(ZONE_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+    map.addLayer({
+      id: ZONE_LAYER,
+      type: 'fill',
+      source: ZONE_SOURCE,
+      paint: {
+        'fill-color': [
+          'match', ['get', 'bucket'],
+          'economic', getZoneColor('economic'),
+          'mid', getZoneColor('mid'),
+          'premium', getZoneColor('premium'),
+          '#888888',
+        ],
+        'fill-opacity': 0.28,
+        'fill-outline-color': 'rgba(255,255,255,0.6)',
+      },
+    })
+    // Cursor + click: the selected hex does an elastic scale "boing" using the
+    // easeOutElastic curve, re-feeding geometry through setData() (MapLibre
+    // can't CSS-deform canvas geometry, so we swap GeoJSON coordinates live).
+    map.on('mouseenter', ZONE_LAYER, () => map.getCanvas().style.cursor = 'pointer')
+    map.on('mouseleave', ZONE_LAYER, () => map.getCanvas().style.cursor = '')
+    map.on('click', ZONE_LAYER, e => {
+      const feat = e.features?.[0]
+      const id = feat?.properties?.id as string | undefined
+      if (!id || !zoneGeoRef.current) return
+      const source = map.getSource(ZONE_SOURCE) as maplibregl.GeoJSONSource
+      if (!source || !source.setData) return
+      if (animRef.current) cancelAnimationFrame(animRef.current)
+      // Find the target feature and animate it, keeping all others intact.
+      const target = zoneGeoRef.current.features.find(f => (f.properties as { id: string })?.id === id)
+      if (!target) return
+        const targetGeom = target.geometry as GeoJSON.Polygon
+        const ring = targetGeom.coordinates[0]
+        // Hex center = midpoint of two opposite corners (v0 ↔ v3).
+        const center = {
+          lat: (ring[0][1] + ring[3][1]) / 2,
+          lng: (ring[0][0] + ring[3][0]) / 2,
+        }
+        const start = performance.now()
+        const DUR = 900
+        const tick = (now: number) => {
+          const t = Math.min((now - start) / DUR, 1)
+          const s = 1 + 0.35 * easeOutElastic(t)
+          const scaled = scaleZoneGeometry(ring.slice(0, -1) as [number, number][], center, s)
+          const copy: GeoJSON.FeatureCollection = JSON.parse(JSON.stringify(zoneGeoRef.current))
+          const copyTarget = copy.features.find(f => (f.properties as { id: string })?.id === id) as GeoJSON.Feature<GeoJSON.Polygon>
+          copyTarget.geometry.coordinates = [[...scaled, scaled[0]]]
+          source.setData(copy)
+          if (t < 1) animRef.current = requestAnimationFrame(tick)
+        }
+        animRef.current = requestAnimationFrame(tick)
+    })
+  }
+
+  // Recompute zones from the current dataset + mode, update the layer data.
+  function updateZones() {
+    const map = mapRef.current
+    if (!map || !readyRef.current) return
+    const source = map.getSource(ZONE_SOURCE) as maplibregl.GeoJSONSource | undefined
+    if (!source || !source.setData) return
+    if (!zonesOnRef.current) {
+      source.setData({ type: 'FeatureCollection', features: [] })
+      setZoneRanges(undefined)
+      zoneGeoRef.current = null
+      return
+    }
+    const data = propsDataRef.current
+    const { cells, legend } = computePriceZones(data, zoneModeRef.current)
+    setZoneRanges(legend.ranges as Record<ZoneBucket, [number, number]>)
+    zoneGeoRef.current = zonesToGeoJSON(cells)
+    source.setData(zoneGeoRef.current)
+  }
+
   // Rebuild the index + redraw when the dataset changes.
   useEffect(() => {
     if (!readyRef.current) return
     buildIndex()
     renderClusters()
+    updateZones()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties])
+
+  // Recompute zones when the price mode (sale/rent) or visibility changes.
+  useEffect(() => {
+    if (!readyRef.current) return
+    updateZones()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoneMode, zonesOn])
 
   // Redraw (restyle pins) when the selection changes.
   useEffect(() => {
@@ -347,11 +455,23 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
       theme === 'dark' ? STYLE_DARK : STYLE_LIGHT
     map.setStyle(style)
     // Markers are DOM overlays (they survive setStyle) but their colors are
-    // theme/layer-dependent — rebuild them.
+    // theme/layer-dependent — rebuild them. setStyle also drops the custom
+    // zone source/layer; re-add them once the new style has loaded.
     markersRef.current.forEach(m => m.remove())
     markersRef.current.clear()
     prevKeysRef.current = new Set()
     renderClusters()
+    const restoreZones = () => {
+      if (!map.getSource(ZONE_SOURCE)) {
+        addZoneLayers(map)
+        updateZones()
+      }
+    }
+    if (map.isStyleLoaded()) {
+      restoreZones()
+    } else {
+      map.once('styledata', restoreZones)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, mounted, layer])
 
@@ -374,6 +494,56 @@ export default function MapView({ properties, selectedId, onPropertySelect, onMa
             {label}
           </button>
         ))}
+      </div>
+
+      {/* Price zones control + legend */}
+      <div className="absolute bottom-24 left-3 z-10 flex flex-col gap-2 items-start">
+        <div className="flex rounded-full overflow-hidden border border-outline-variant/40 shadow-elevated bg-surface-container-low">
+          <button
+            onClick={() => setZonesOn(v => !v)}
+            className={zonesOn ? 'px-3.5 py-1.5 text-xs font-bold bg-primary text-on-primary' : 'px-3.5 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors'}
+            title="Mostrar/ocultar zonas de precio"
+          >
+            Zonas precio
+          </button>
+          {zonesOn && (
+            <div className="flex">
+              {(['sale', 'rent'] as ZoneMode[]).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setZoneMode(mode)}
+                  className={zoneMode === mode ? 'px-3 py-1.5 text-xs font-bold bg-surface-container-highest text-primary' : 'px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors'}
+                >
+                  {mode === 'sale' ? 'Venta' : 'Arriendo'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {zonesOn && zoneRanges && (
+          <div className="rounded-xl border border-outline-variant/40 shadow-elevated bg-surface-container-low p-3 w-52">
+            <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-2">
+              Zonas por precio · {zoneMode === 'sale' ? 'venta' : 'arriendo'}
+            </p>
+            {(['economic', 'mid', 'premium'] as ZoneBucket[]).map(bucket => {
+              const range = zoneRanges[bucket]
+              return (
+                <div key={bucket} className="flex items-center gap-2 text-xs py-0.5">
+                  <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: getZoneColor(bucket) }} />
+                  <span className="font-semibold text-on-surface capitalize">
+                    {bucket === 'economic' ? 'Económica' : bucket === 'mid' ? 'Media' : 'Premium'}
+                  </span>
+                  {range && (
+                    <span className="ml-auto text-on-surface-variant">
+                      {formatPriceShort(range[0], Currency.CLP)} – {formatPriceShort(range[1], Currency.CLP)}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
