@@ -77,7 +77,7 @@ export function SearchBar({ value, onChange, onSearch, suggestions = [], activeF
           className="flex-1 px-3 py-2.5 text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
         />
         {value && (
-          <button onClick={handleClear} className="p-2 text-on-surface-variant hover:text-on-surface">
+          <button onClick={handleClear} aria-label="Limpiar búsqueda" className="p-2 text-on-surface-variant hover:text-on-surface">
             <X size={14} />
           </button>
         )}
