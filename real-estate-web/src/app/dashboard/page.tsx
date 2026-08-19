@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Eye, Heart, Lock, MessageSquare, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
+import { AlertCircle, Eye, Heart, Lock, MessageSquare, Pencil, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
 import { Button } from '@/components/ui/Button'
@@ -212,10 +212,17 @@ export default function DashboardPage() {
                           Expira en {daysLeft}d
                         </span>
                       )}
+                      <Link
+                        href={`/publicar?edit=${property.id}`}
+                        className="ml-auto flex items-center gap-1 text-accent hover:text-primary transition-colors"
+                      >
+                        <Pencil size={11} />
+                        Editar
+                      </Link>
                       <button
                         onClick={() => handleDelete(property.id, property.title)}
                         disabled={busyId === property.id}
-                        className="ml-auto flex items-center gap-1 text-error/80 hover:text-error transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1 text-error/80 hover:text-error transition-colors disabled:opacity-50"
                       >
                         <Trash2 size={11} />
                         Eliminar

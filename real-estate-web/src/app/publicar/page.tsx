@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
 import { z } from 'zod'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -37,8 +37,10 @@ const publishSchema = z.object({
 type FieldErrors = Partial<Record<keyof z.infer<typeof publishSchema> | 'images', string>>
 
 interface PendingImage {
-  file: File
+  file: File | null
   previewUrl: string
+  /** Storage path of an existing image (edit mode); null for new uploads. */
+  existingPath?: string
 }
 
 function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
@@ -58,6 +60,8 @@ const errorCls = 'text-error text-xs mt-1'
 
 export default function PublicarPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
   const { user, isAuthenticated, hasRemainingListings, refreshUser } = useAuthContext()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -72,10 +76,58 @@ export default function PublicarPage() {
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [notFound, setNotFound] = useState(false)
+  const originalPathsRef = useRef<string[]>([])
   const set = (k: keyof typeof form, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
+
+  // Edit mode: load the property and prefill the form + existing images.
+  useEffect(() => {
+    if (!editId || !user) return
+    let active = true
+    propertyService.getById(editId)
+      .then(property => {
+        if (!active) return
+        if (!property || property.ownerId !== user.id) { setNotFound(true); return }
+        setOperation(property.operation)
+        setType(property.type)
+        setForm({
+          title: property.title,
+          description: property.description,
+          price: String(property.operation === PropertyOperation.RENT ? (property.pricing.monthlyRent ?? property.pricing.price) : property.pricing.price),
+          street: property.location.address.street,
+          commune: property.location.address.commune ?? '',
+          city: property.location.address.city,
+          region: property.location.address.region,
+          area: String(property.features.area),
+          bedrooms: property.features.bedrooms != null ? String(property.features.bedrooms) : '',
+          bathrooms: property.features.bathrooms != null ? String(property.features.bathrooms) : '',
+          parkingSpots: property.features.parkingSpots != null ? String(property.features.parkingSpots) : '',
+          negotiable: property.pricing.isNegotiable,
+        })
+        setImages(property.media.images.map(img => ({
+          file: null,
+          previewUrl: img.url,
+          existingPath: img.id,
+        })))
+        originalPathsRef.current = property.media.images.map(img => img.id)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [editId, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Object URLs leak unless revoked.
   useEffect(() => () => { images.forEach(img => URL.revokeObjectURL(img.previewUrl)) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (notFound) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
+        <Lock size={48} className="text-on-surface-variant/40 mb-4" />
+        <h2 className="font-headline text-xl font-bold text-on-surface">Propiedad no encontrada</h2>
+        <p className="text-on-surface-variant text-sm mt-2">No existe o no es tuya.</p>
+        <Link href="/dashboard" className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">Volver al panel</Link>
+      </div>
+    )
+  }
 
   if (!isAuthenticated || !user) {
     return (
@@ -89,6 +141,7 @@ export default function PublicarPage() {
   }
 
   const canPublish = hasRemainingListings()
+  const isEditing = !!editId
 
   function addFiles(list: FileList | null) {
     if (!list) return
@@ -139,7 +192,15 @@ export default function PublicarPage() {
     setSubmitting(true)
     let uploaded: PropertyImage[] = []
     try {
-      uploaded = await uploadPropertyImages(user.id, images.map(i => i.file))
+      // New files get uploaded; existing ones keep their storage path.
+      const newFiles = images.filter(i => i.file).map(i => i.file as File)
+      if (newFiles.length) uploaded = await uploadPropertyImages(user.id, newFiles)
+      let uploadIdx = 0
+      const finalImages: PropertyImage[] = images.map((img, i) =>
+        img.existingPath
+          ? { id: img.existingPath, url: img.previewUrl, order: i, isMain: i === 0 }
+          : { id: uploaded[uploadIdx].id, url: uploaded[uploadIdx++].url, order: i, isMain: i === 0 }
+      )
 
       const v = parsed.data
       const isRent = operation === PropertyOperation.RENT
@@ -174,7 +235,7 @@ export default function PublicarPage() {
           bathrooms: v.bathrooms,
           parkingSpots: v.parkingSpots,
         },
-        media: { images: uploaded },
+        media: { images: finalImages },
         contact: {
           id: user.id,
           name: user.name,
@@ -187,11 +248,22 @@ export default function PublicarPage() {
         tags: [],
       }
 
-      await propertyService.createProperty(user.id, data)
+      if (editId) {
+        const updated = await propertyService.updateProperty(editId, data)
+        if (!updated) throw new Error('No se pudo actualizar la propiedad')
+        // Purge images the user removed from the existing set.
+        const keptPaths = new Set(finalImages.map(img => img.id))
+        const removed = originalPathsRef.current.filter(p => !keptPaths.has(p))
+        if (removed.length) {
+          void deletePropertyImages(removed.map(p => ({ id: p, url: p, order: 0, isMain: false }))).catch(() => {})
+        }
+      } else {
+        await propertyService.createProperty(user.id, data)
+      }
       void refreshUser()
       router.push('/dashboard')
     } catch (err) {
-      // Roll back orphaned uploads when the property insert fails.
+      // Roll back orphaned uploads when the insert/update fails.
       if (uploaded.length) void deletePropertyImages(uploaded).catch(() => {})
       setSubmitError(err instanceof Error ? err.message : 'No se pudo publicar la propiedad')
       setSubmitting(false)
@@ -206,11 +278,15 @@ export default function PublicarPage() {
         </Link>
 
         <div className="mb-6">
-          <h1 className="font-headline text-3xl font-bold text-on-surface">Publica tu propiedad</h1>
-          <p className="text-on-surface-variant mt-1">Completa los datos y aparecerá en el catálogo al instante.</p>
+          <h1 className="font-headline text-3xl font-bold text-on-surface">
+            {isEditing ? 'Edita tu propiedad' : 'Publica tu propiedad'}
+          </h1>
+          <p className="text-on-surface-variant mt-1">
+            {isEditing ? 'Actualiza los datos y guarda los cambios.' : 'Completa los datos y aparecerá en el catálogo al instante.'}
+          </p>
         </div>
 
-        {!canPublish && (
+        {!canPublish && !isEditing && (
           <div className="mb-5 flex items-start gap-3 bg-error-container/40 border border-error/40 rounded-xl p-3 text-sm">
             <Lock size={16} className="text-error shrink-0 mt-0.5" />
             <div>
@@ -365,8 +441,8 @@ export default function PublicarPage() {
             <Button type="button" variant="outline" onClick={() => router.push('/dashboard')} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" loading={submitting} disabled={!canPublish} className="flex-1">
-              <Check size={16} /> {submitting ? 'Subiendo fotos…' : 'Publicar propiedad'}
+            <Button type="submit" loading={submitting} disabled={!canPublish && !isEditing} className="flex-1">
+              <Check size={16} /> {submitting ? 'Subiendo fotos…' : isEditing ? 'Guardar cambios' : 'Publicar propiedad'}
             </Button>
           </div>
         </form>
