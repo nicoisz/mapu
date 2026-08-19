@@ -7,12 +7,19 @@ import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
 
 const ROW_COLUMNS = '*'
 
+/** Listings that are still published: status active AND not past expires_at.
+ *  Null expires_at (some mobile-created rows) counts as never-expiring. */
+function activeExpiryFilter(): string {
+  return `expires_at.is.null,expires_at.gte.${new Date().toISOString()}`
+}
+
 export const propertyService = {
   async getAll(): Promise<Property[]> {
     const { data, error } = await getSupabase()
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('status', PropertyStatus.ACTIVE)
+      .or(activeExpiryFilter())
       .order('published_at', { ascending: false })
     if (error) throw new Error(error.message)
     return (data as PropertyRow[]).map(rowToProperty)
@@ -23,6 +30,7 @@ export const propertyService = {
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('status', PropertyStatus.ACTIVE)
+      .or(activeExpiryFilter())
       .or('is_featured.eq.true,is_premium.eq.true')
       .order('published_at', { ascending: false })
       .limit(limit)
@@ -59,7 +67,11 @@ export const propertyService = {
   },
 
   async searchProperties(query: PropertySearchQuery): Promise<Property[]> {
-    let q = getSupabase().from('properties').select(ROW_COLUMNS).eq('status', PropertyStatus.ACTIVE)
+    let q = getSupabase()
+      .from('properties')
+      .select(ROW_COLUMNS)
+      .eq('status', PropertyStatus.ACTIVE)
+      .or(activeExpiryFilter())
 
     const f = query.filters
     if (f?.operation) q = q.eq('operation', f.operation)
@@ -120,9 +132,21 @@ export const propertyService = {
     return rowToProperty(data as PropertyRow)
   },
 
-  /** Fire-and-forget view log (the mobile schema tracks views per row). */
+  /**
+   * Fire-and-forget view log. Must be called from a client effect (not during
+   * a server render) so prefetches/builds don't inflate the counter. Uses the
+   * increment_property_views RPC shared with the mobile app — the RPC keeps the
+   * counter on public.properties and logs the row in property_views. If the RPC
+   * is missing (not yet created in the project), fall back to a raw insert.
+   */
   registerView(id: string): void {
-    void getSupabase().from('property_views').insert({ property_id: id }).then(() => {})
+    if (typeof window === 'undefined') return
+    const supabase = getSupabase()
+    void supabase
+      .rpc('increment_property_views', { property_id: id })
+      .then(() => {}, () => {
+        void supabase.from('property_views').insert({ property_id: id }).then(() => {}, () => {})
+      })
   },
 
   /** Count of ACTIVE listings a user has (free-plan limit checks). */
@@ -132,6 +156,7 @@ export const propertyService = {
       .select('id', { count: 'exact', head: true })
       .eq('owner_id', userId)
       .eq('status', PropertyStatus.ACTIVE)
+      .or(activeExpiryFilter())
     if (error) return 0
     return count ?? 0
   },
