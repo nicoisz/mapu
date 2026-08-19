@@ -3,6 +3,7 @@ import { PropertyOperation, PropertyStatus } from '@/types/enums'
 import { PropertySearchQuery } from '@/types/search'
 import { LISTING_EXPIRATION_DAYS } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
+import { deletePropertyImages } from '@/services/storageService'
 import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
 
 const ROW_COLUMNS = '*'
@@ -119,8 +120,14 @@ export const propertyService = {
   },
 
   async deleteProperty(id: string): Promise<boolean> {
+    // Fetch the row first so we can also remove its storage files.
+    const existing = await propertyService.getById(id)
     const { error, count } = await getSupabase().from('properties').delete({ count: 'exact' }).eq('id', id)
-    return !error && (count ?? 0) > 0
+    if (error || !(count ?? 0)) return false
+    if (existing?.media.images.length) {
+      void deletePropertyImages(existing.media.images).catch(() => {})
+    }
+    return true
   },
 
   async renewProperty(id: string): Promise<Property | null> {
