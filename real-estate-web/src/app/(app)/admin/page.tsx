@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Lock,
   Mail,
@@ -13,6 +14,7 @@ import {
   Building2,
   Plus,
   X,
+  Eye,
   Building,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -75,6 +77,7 @@ function ResumenTab() {
 }
 
 function UsersTab() {
+  const router = useRouter()
   const [users, setUsers] = useState<AdminUserRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -223,6 +226,13 @@ function UsersTab() {
                       )}
                     >
                       <Phone size={14} />
+                    </button>
+                    <button
+                      onClick={() => router.push(`/dashboard?as=${u.id}`)}
+                      title="Ver como este usuario"
+                      className="p-1.5 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <Eye size={14} />
                     </button>
                   </div>
                 </div>
