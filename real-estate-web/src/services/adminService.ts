@@ -88,4 +88,76 @@ export const adminService = {
     if (error) throw new Error(error.message)
     return (data ?? []) as PropertyRow[]
   },
+
+  /** Organizaciones con conteo de miembros (superadmin). */
+  async listOrganizations(search?: string): Promise<OrganizationRow[]> {
+    let q = getSupabase()
+      .from('organizations')
+      .select('*, organization_members(count)')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (search?.trim()) q = q.ilike('name', `%${search.trim()}%`)
+    const { data, error } = await q
+    if (error) throw new Error(error.message)
+    return (data ?? []) as OrganizationRow[]
+  },
+
+  /** Crea organización con su dueño como miembro owner. */
+  async createOrganization(input: {
+    name: string
+    type: 'brokerage' | 'company'
+    ownerId: string
+    licenseNumber?: string
+    rut?: string
+  }): Promise<void> {
+    const supabase = getSupabase()
+    const { data: org, error } = await supabase
+      .from('organizations')
+      .insert({
+        name: input.name,
+        type: input.type,
+        license_number: input.licenseNumber ?? null,
+        rut: input.rut ?? null,
+        created_by: input.ownerId,
+      })
+      .select('id')
+      .single()
+    if (error) throw new Error(error.message)
+    const { error: memberError } = await supabase
+      .from('organization_members')
+      .insert({ org_id: org.id, user_id: input.ownerId, role: 'owner', status: 'active' })
+    if (memberError) throw new Error(memberError.message)
+  },
+
+  /** Añade/quita un miembro y ajusta su rol. */
+  async setMemberRole(
+    orgId: string,
+    userId: string,
+    role: 'owner' | 'admin' | 'agent' | null
+  ): Promise<void> {
+    const supabase = getSupabase()
+    const { error } =
+      role === null
+        ? await supabase
+            .from('organization_members')
+            .delete()
+            .eq('org_id', orgId)
+            .eq('user_id', userId)
+        : await supabase
+            .from('organization_members')
+            .upsert({ org_id: orgId, user_id: userId, role, status: 'active' })
+    if (error) throw new Error(error.message)
+  },
+}
+
+/** Fila de organizations con members_count (de la relación embed). */
+export interface OrganizationRow {
+  id: string
+  type: string
+  name: string
+  logo_url: string | null
+  is_verified: boolean
+  created_at: string
+  created_by: string
+  organization_members: { count: number }[]
 }
