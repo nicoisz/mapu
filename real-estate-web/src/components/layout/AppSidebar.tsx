@@ -16,6 +16,7 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ size?: number }>
   adminOnly?: boolean
+  orgOnly?: boolean
 }
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
@@ -25,16 +26,18 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
 
   const isAdmin = user?.platformRole === PlatformRole.SUPERADMIN
+  const isOrgMember = !!user?.organizationId
 
   const items: NavItem[] = [
     { href: '/buscar', label: 'Explorar', icon: Map },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
     { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard },
+    { href: '/equipo', label: 'Mi empresa', icon: Building2, orgOnly: true },
     { href: '/admin', label: 'Administración', icon: Shield, adminOnly: true },
     { href: '/admin/empresas', label: 'Empresas', icon: Building2, adminOnly: true },
   ]
 
-  const visible = items.filter((i) => !i.adminOnly || isAdmin)
+  const visible = items.filter((i) => (!i.adminOnly || isAdmin) && (!i.orgOnly || isOrgMember))
 
   function handleLogout() {
     logout()
