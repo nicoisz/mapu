@@ -256,10 +256,12 @@ export default function DashboardPage() {
             Nueva propiedad
           </Button>
           {!isPremium && (
-            <Button variant="outline" onClick={() => alert('Upgrade a Premium (próximamente)')}>
-              <Star size={16} className="text-primary" />
-              Premium
-            </Button>
+            <Link href="/mejorar">
+              <Button variant="outline">
+                <Star size={16} className="text-primary" />
+                Premium
+              </Button>
+            </Link>
           )}
         </div>
 
