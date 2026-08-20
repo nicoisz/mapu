@@ -77,9 +77,20 @@ async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow |
 
 /** Builds the app User from the Supabase session user + profile + listing counts. */
 async function buildUser(authUser: SupabaseUser): Promise<User> {
-  const [profile, activeListings] = await Promise.all([
+  const [profile, activeListings, membership] = await Promise.all([
     loadOrCreateProfile(authUser),
     propertyService.countActiveListings(authUser.id),
+    // Active org membership (multi-tenant): first org the user belongs to.
+    getSupabase()
+      .from('organization_members')
+      .select('org_id, role')
+      .eq('user_id', authUser.id)
+      .eq('status', 'active')
+      .maybeSingle()
+      .then(
+        ({ data }) => data ?? null,
+        () => null
+      ),
   ])
 
   const name =
@@ -99,6 +110,8 @@ async function buildUser(authUser: SupabaseUser): Promise<User> {
     avatar: profile?.avatar_url ?? undefined,
     userType: (profile?.user_type as UserType) ?? UserType.INDIVIDUAL,
     platformRole: (profile?.platform_role as PlatformRole) ?? PlatformRole.USER,
+    organizationId: membership?.org_id ?? undefined,
+    organizationRole: membership?.role as User['organizationRole'],
     companyName: profile?.company_name ?? undefined,
     companyLogo: profile?.company_logo ?? undefined,
     licenseNumber: profile?.license_number ?? undefined,

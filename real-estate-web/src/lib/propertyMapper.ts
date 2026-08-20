@@ -15,6 +15,7 @@ import {
 export interface PropertyRow {
   id: string
   owner_id: string
+  organization_id: string | null
   title: string
   description: string
   type: string
@@ -182,9 +183,14 @@ export function rowToProperty(row: PropertyRow): Property {
 }
 
 /** Maps a (partial) Property to the column set accepted on insert/update. */
-export function propertyToRow(p: Partial<Property>, ownerId?: string): Record<string, unknown> {
+export function propertyToRow(
+  p: Partial<Property>,
+  ownerId?: string,
+  organizationId?: string
+): Record<string, unknown> {
   const row: Record<string, unknown> = {}
   if (ownerId) row.owner_id = ownerId
+  if (organizationId) row.organization_id = organizationId
   if (p.title !== undefined) row.title = p.title
   if (p.description !== undefined) row.description = p.description
   if (p.type !== undefined) row.type = p.type
