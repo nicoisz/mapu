@@ -203,4 +203,11 @@ export const propertyService = {
     if (error) return 0
     return count ?? 0
   },
+
+  /** Vistas diarias del owner (serie temporal, últimos N días). */
+  async getViewsSeries(ownerId: string, days = 30): Promise<{ day: string; count: number }[]> {
+    const { data, error } = await getSupabase().rpc('get_owner_views', { owner_id: ownerId, days })
+    if (error) return []
+    return (data ?? []) as { day: string; count: number }[]
+  },
 }
