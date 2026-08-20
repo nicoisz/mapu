@@ -11,14 +11,20 @@ export interface OrgInfo {
   rating: number | null
 }
 
+// Module cache: the same org appears on many cards; one fetch per id.
+const orgCache = new Map<string, OrgInfo>()
+
 export const organizationService = {
   async getById(orgId: string): Promise<OrgInfo | null> {
+    const cached = orgCache.get(orgId)
+    if (cached) return cached
     const { data, error } = await getSupabase()
       .from('organizations')
       .select('id, name, logo_url, type, is_verified, rating')
       .eq('id', orgId)
       .maybeSingle()
     if (error || !data) return null
+    orgCache.set(orgId, data as OrgInfo)
     return data as OrgInfo
   },
 
