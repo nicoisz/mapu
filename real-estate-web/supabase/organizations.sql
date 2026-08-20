@@ -44,34 +44,46 @@ create table public.organization_members (
 alter table public.organizations enable row level security;
 alter table public.organization_members enable row level security;
 
+-- Helpers de membresía (SECURITY DEFINER: evitan recursión de RLS).
+create or replace function public.is_org_member(org_id uuid)
+returns boolean language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.organization_members
+    where org_id = is_org_member.org_id
+      and user_id = auth.uid()
+      and status = 'active'
+  );
+$$;
+
+create or replace function public.is_org_admin(org_id uuid)
+returns boolean language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.organization_members
+    where org_id = is_org_admin.org_id
+      and user_id = auth.uid()
+      and status = 'active'
+      and role in ('owner', 'admin')
+  );
+$$;
+
 create policy "orgs readable by authenticated"
 on public.organizations for select to authenticated
 using (true);
 
-create policy "orgs writable by superadmin or owner"
+create policy "orgs writable by superadmin or org admin"
 on public.organizations for all to authenticated
-using (public.is_superadmin() or exists (
-  select 1 from public.organization_members m
-  where m.org_id = id and m.user_id = auth.uid() and m.role in ('owner', 'admin')
-));
+using (public.is_superadmin() or public.is_org_admin(id));
 
 create policy "members readable by superadmin or org members"
 on public.organization_members for select to authenticated
-using (public.is_superadmin() or exists (
-  select 1 from public.organization_members m2
-  where m2.org_id = org_id and m2.user_id = auth.uid()
-));
+using (public.is_superadmin() or public.is_org_member(org_id));
 
-create policy "members managed by superadmin or org owner/admin"
+create policy "members managed by superadmin or org admin"
 on public.organization_members for insert to authenticated
-with check (public.is_superadmin() or exists (
-  select 1 from public.organization_members m
-  where m.org_id = org_id and m.user_id = auth.uid() and m.role in ('owner', 'admin')
-));
+with check (public.is_superadmin() or public.is_org_admin(org_id));
 
-create policy "members updated by superadmin or org owner/admin"
+create policy "members updated by superadmin or org admin"
 on public.organization_members for update to authenticated
-using (public.is_superadmin() or exists (
-  select 1 from public.organization_members m
-  where m.org_id = org_id and m.user_id = auth.uid() and m.role in ('owner', 'admin')
-));
+using (public.is_superadmin() or public.is_org_admin(org_id));
