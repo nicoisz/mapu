@@ -1,6 +1,9 @@
 -- ============================================================
 -- F0.3 — Organizaciones (empresas) + miembros — multi-tenant
 --
+-- NOTA: el ALTER de public.properties vive en organizations-alter.sql.
+-- Correlo SEPARADO (evita deadlock con la app viva que consulta properties).
+--
 -- Ejecutar en: Dashboard → SQL Editor → Run
 -- ============================================================
 
@@ -36,10 +39,6 @@ create table public.organization_members (
   created_at     timestamptz not null default now(),
   primary key (org_id, user_id)
 );
-
--- Las propiedades pueden quedar ligadas a una organización.
-alter table public.properties
-  add column if not exists organization_id uuid references public.organizations(id);
 
 -- RLS: organizaciones leíbles por autenticados, editables por dueño.
 alter table public.organizations enable row level security;
