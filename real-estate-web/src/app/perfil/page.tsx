@@ -18,6 +18,7 @@ import {
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Reviews } from '@/components/reviews/Reviews'
 import { SubscriptionType, UserType } from '@/types/enums'
 
 const USER_TYPE_LABELS: Record<UserType, string> = {
@@ -224,6 +225,11 @@ export default function PerfilPage() {
               </button>
             ))}
           </div>
+        </section>
+
+        {/* Reviews */}
+        <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 p-4">
+          <Reviews subjectId={user.id} organizationId={user.organizationId} />
         </section>
 
         {/* Logout */}
