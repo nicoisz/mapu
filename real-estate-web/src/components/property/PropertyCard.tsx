@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { cn, formatArea, getDisplayPrice } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
 import { PropertyOperation } from '@/types/enums'
+import { OrgBadge } from '@/components/property/OrgBadge'
 
 interface PropertyCardProps {
   property: Property
@@ -63,6 +64,12 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
             </Badge>
           )}
         </div>
+        {property.organizationId && (
+          <OrgBadge
+            organizationId={property.organizationId}
+            className="absolute top-2.5 left-1/2 -translate-x-1/2"
+          />
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation()

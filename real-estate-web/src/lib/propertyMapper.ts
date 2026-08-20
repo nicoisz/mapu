@@ -99,6 +99,7 @@ export function rowToProperty(row: PropertyRow): Property {
   return {
     id: row.id,
     ownerId: row.owner_id,
+    organizationId: row.organization_id ?? undefined,
     title: row.title,
     description: row.description,
     type: row.type as PropertyType,

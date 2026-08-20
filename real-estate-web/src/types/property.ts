@@ -139,6 +139,7 @@ export interface Property {
   features: PropertyFeatures
   media: PropertyMedia
   ownerId: string
+  organizationId?: string
   contact: ContactInfo
   listing: PropertyListing
   tags?: string[]
