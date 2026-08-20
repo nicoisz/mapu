@@ -106,10 +106,14 @@ export const propertyService = {
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
-  async createProperty(userId: string, data: Partial<Property>): Promise<Property> {
+  async createProperty(
+    userId: string,
+    data: Partial<Property>,
+    organizationId?: string
+  ): Promise<Property> {
     const expiresAt = new Date(Date.now() + LISTING_EXPIRATION_DAYS * 86_400_000).toISOString()
     const row = {
-      ...propertyToRow(data, userId),
+      ...propertyToRow(data, userId, organizationId),
       status: PropertyStatus.ACTIVE,
       expires_at: expiresAt,
     }

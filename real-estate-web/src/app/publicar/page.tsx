@@ -335,7 +335,7 @@ export default function PublicarPage() {
           ).catch(() => {})
         }
       } else {
-        await propertyService.createProperty(user.id, data)
+        await propertyService.createProperty(user.id, data, user.organizationId)
       }
       void refreshUser()
       router.push('/dashboard')

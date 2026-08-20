@@ -47,6 +47,8 @@ export interface User {
   avatar?: string
   userType: UserType
   platformRole: PlatformRole
+  organizationId?: string
+  organizationRole?: 'owner' | 'admin' | 'agent'
   subscription: UserSubscription
   preferences: UserPreferences
   stats: UserStats
