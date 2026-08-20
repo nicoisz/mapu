@@ -8,9 +8,25 @@ export interface Review {
   property_id: string | null
   rating: number
   comment: string
+  status?: string
   created_at: string
   author_name?: string
   property_title?: string
+}
+
+/** Fila de `reviews` con los joins a profiles/properties. */
+interface ReviewJoinRow {
+  id: string
+  author_id: string
+  subject_id: string
+  organization_id: string | null
+  property_id: string | null
+  rating: number
+  comment: string
+  status: string
+  created_at: string
+  profiles?: { name: string | null } | null
+  properties?: { title: string | null } | null
 }
 
 export const reviewService = {
@@ -22,7 +38,7 @@ export const reviewService = {
       .eq('status', 'published')
       .order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: ReviewJoinRow) => ({
       id: r.id,
       author_id: r.author_id,
       subject_id: r.subject_id,
@@ -31,8 +47,8 @@ export const reviewService = {
       rating: r.rating,
       comment: r.comment,
       created_at: r.created_at,
-      author_name: r.profiles?.name,
-      property_title: r.properties?.title,
+      author_name: r.profiles?.name ?? undefined,
+      property_title: r.properties?.title ?? undefined,
     }))
   },
 
@@ -74,7 +90,7 @@ export const reviewService = {
       .order('created_at', { ascending: false })
       .limit(100)
     if (error) throw new Error(error.message)
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).map((r: ReviewJoinRow) => ({
       id: r.id,
       author_id: r.author_id,
       subject_id: r.subject_id,
@@ -84,8 +100,8 @@ export const reviewService = {
       comment: r.comment,
       status: r.status,
       created_at: r.created_at,
-      author_name: r.profiles?.name,
-      property_title: r.properties?.title,
+      author_name: r.profiles?.name ?? undefined,
+      property_title: r.properties?.title ?? undefined,
     }))
   },
 

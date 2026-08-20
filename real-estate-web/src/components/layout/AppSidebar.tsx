@@ -3,20 +3,33 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, Heart, LayoutDashboard, LogOut, Map, Menu, Shield, X } from 'lucide-react'
+import {
+  BarChart3,
+  Building,
+  Building2,
+  Bug,
+  Heart,
+  LayoutDashboard,
+  LogOut,
+  Map,
+  Menu,
+  ShieldCheck,
+  Star,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import { PlatformRole } from '@/types/enums'
+import { getAppRole, AppRole } from '@/lib/roles'
 
 interface NavItem {
   href: string
   label: string
   icon: React.ComponentType<{ size?: number }>
-  adminOnly?: boolean
-  orgOnly?: boolean
 }
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
@@ -25,19 +38,40 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { count: favCount } = useFavoritesContext()
   const [open, setOpen] = useState(false)
 
-  const isAdmin = user?.platformRole === PlatformRole.SUPERADMIN
-  const isOrgMember = !!user?.organizationId
+  const role: AppRole = getAppRole(user)
 
-  const items: NavItem[] = [
+  const exploreItems: NavItem[] = [
     { href: '/buscar', label: 'Explorar', icon: Map },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
     { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard },
-    { href: '/equipo', label: 'Mi empresa', icon: Building2, orgOnly: true },
-    { href: '/admin', label: 'Administración', icon: Shield, adminOnly: true },
-    { href: '/admin/empresas', label: 'Empresas', icon: Building2, adminOnly: true },
   ]
 
-  const visible = items.filter((i) => (!i.adminOnly || isAdmin) && (!i.orgOnly || isOrgMember))
+  const metricsItem: NavItem = { href: '/metricas', label: 'Métricas', icon: BarChart3 }
+  const teamItem: NavItem = { href: '/equipo', label: 'Mi empresa', icon: Building2 }
+
+  const adminItems: NavItem[] = [
+    { href: '/admin', label: 'Panel', icon: ShieldCheck },
+    { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
+    { href: '/admin/propiedades', label: 'Propiedades', icon: Building2 },
+    { href: '/admin/empresas', label: 'Empresas', icon: Building },
+    { href: '/admin/resenas', label: 'Reseñas', icon: Star },
+    { href: '/admin/ingresos', label: 'Ingresos', icon: TrendingUp },
+    { href: '/admin/errores', label: 'Log de errores', icon: Bug },
+  ]
+
+  // Menú según rol: cada rol solo ve lo que le corresponde.
+  let items: NavItem[]
+  let showTeamSeparator = false
+  if (role === 'superadmin') {
+    items = [...adminItems, metricsItem]
+    showTeamSeparator = true
+  } else if (role === 'org_owner' || role === 'org_admin') {
+    items = [teamItem, metricsItem, ...exploreItems]
+  } else if (role === 'org_agent') {
+    items = [teamItem, ...exploreItems, metricsItem]
+  } else {
+    items = [...exploreItems, metricsItem]
+  }
 
   function handleLogout() {
     logout()
@@ -59,7 +93,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {visible.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`)
           return (
             <Link
@@ -83,6 +117,24 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             </Link>
           )
         })}
+        {showTeamSeparator && (
+          <>
+            <div className="pt-3 mt-3 border-t border-outline-variant/40" />
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/dashboard'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              )}
+            >
+              <LayoutDashboard size={18} />
+              Mi panel personal
+            </Link>
+          </>
+        )}
       </nav>
 
       <div className="p-3 border-t border-outline-variant/40">
@@ -99,7 +151,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-on-surface truncate">{user.name}</p>
                 <p className="text-xs text-on-surface-variant truncate">
-                  {isAdmin ? 'Superadmin' : user.email}
+                  {role === 'superadmin' ? 'Superadmin' : user.email}
                 </p>
               </div>
             </Link>
