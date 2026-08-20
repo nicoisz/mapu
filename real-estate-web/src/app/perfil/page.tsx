@@ -185,12 +185,12 @@ export default function PerfilPage() {
                 </p>
               </div>
               {!isPremium && (
-                <button
-                  onClick={() => alert('Upgrade a Premium (próximamente)')}
+                <Link
+                  href="/mejorar"
                   className="bg-primary text-on-primary text-xs font-bold px-3 py-1.5 rounded-full hover:brightness-110 transition-all"
                 >
                   Mejorar
-                </button>
+                </Link>
               )}
             </div>
           </div>
