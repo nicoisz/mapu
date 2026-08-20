@@ -122,12 +122,7 @@ export default function EquipoPage() {
                     <p className="text-sm font-medium text-on-surface truncate">{m.name}</p>
                     <p className="text-xs text-on-surface-variant truncate">{m.email}</p>
                   </div>
-                  <Badge
-                    variant={
-                      m.role === 'owner' ? 'premium' : 'gray'
-                    }
-                    size="sm"
-                  >
+                  <Badge variant={m.role === 'owner' ? 'premium' : 'gray'} size="sm">
                     {m.role}
                   </Badge>
                 </div>
@@ -140,6 +135,31 @@ export default function EquipoPage() {
           <h2 className="font-headline font-semibold text-on-surface mb-3">
             Propiedades de la organización ({properties.length})
           </h2>
+          {properties.length > 0 && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { label: 'Vistas', value: properties.reduce((s, p) => s + p.listing.views, 0) },
+                {
+                  label: 'Favoritos',
+                  value: properties.reduce((s, p) => s + p.listing.favorites, 0),
+                },
+                {
+                  label: 'Contactos',
+                  value: properties.reduce((s, p) => s + p.listing.inquiries, 0),
+                },
+              ].map((m) => (
+                <div
+                  key={m.label}
+                  className="bg-surface-container-low rounded-xl p-3 text-center border border-outline-variant/40"
+                >
+                  <div className="font-headline font-bold text-lg text-primary">
+                    {m.value.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-on-surface-variant">{m.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
           {loading ? (
             <div className="text-center py-8 text-on-surface-variant text-sm">Cargando…</div>
           ) : properties.length === 0 ? (

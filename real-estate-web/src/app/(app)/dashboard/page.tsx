@@ -20,6 +20,7 @@ import {
 import { useAuthContext } from '@/contexts/AuthContext'
 import { getSupabase } from '@/lib/supabase'
 import { propertyService } from '@/services/propertyService'
+import { Sparkline } from '@/components/charts/Sparkline'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [loadingProps, setLoadingProps] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [asUser, setAsUser] = useState<{ id: string; name: string; email: string } | null>(null)
+  const [viewsSeries, setViewsSeries] = useState<{ day: string; count: number }[]>([])
 
   // Superadmin impersonation: only when a superadmin passes ?as=<id>.
   const impersonating = !!asId && user?.platformRole === PlatformRole.SUPERADMIN
@@ -75,6 +77,17 @@ export default function DashboardPage() {
   useEffect(() => {
     void loadProperties()
   }, [loadProperties])
+
+  useEffect(() => {
+    if (!effectiveUserId) return
+    let active = true
+    propertyService.getViewsSeries(effectiveUserId).then((s) => {
+      if (active) setViewsSeries(s)
+    })
+    return () => {
+      active = false
+    }
+  }, [effectiveUserId])
 
   // Listings whose expiry date passed are shown (and renewable) as expired.
   const { activeProps, expiredProps, totals } = useMemo(() => {
@@ -249,6 +262,14 @@ export default function DashboardPage() {
             </Button>
           )}
         </div>
+
+        {/* Views metric */}
+        <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
+          <h2 className="font-headline font-semibold text-on-surface text-sm mb-2">
+            Visitas (últimos 30 días)
+          </h2>
+          <Sparkline data={viewsSeries} />
+        </section>
 
         {!isPremium && remaining === 0 && (
           <div className="flex items-start gap-3 bg-error-container/40 border border-error/40 rounded-xl p-3 text-sm">
