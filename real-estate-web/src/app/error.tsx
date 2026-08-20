@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
+import { captureError } from '@/lib/errorLogging'
 
 export default function GlobalError({
   error,
@@ -11,6 +12,7 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
+    captureError({ message: `Error de página: ${error.message}`, stack: error.stack })
     console.error('Unhandled error:', error)
   }, [error])
 

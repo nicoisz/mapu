@@ -49,11 +49,52 @@ export const organizationService = {
       .eq('org_id', orgId)
       .eq('status', 'active')
     if (error) throw new Error(error.message)
-    return (data ?? []).map((m: any) => ({
-      id: m.user_id,
-      name: m.profiles?.name ?? '—',
-      email: m.profiles?.email ?? '',
-      role: m.role,
-    }))
+    return (data ?? []).map((m) => {
+      const row = m as unknown as {
+        user_id: string
+        role: string
+        profiles?: { name: string | null; email: string | null } | null
+      }
+      return {
+        id: row.user_id,
+        name: row.profiles?.name ?? '—',
+        email: row.profiles?.email ?? '',
+        role: row.role,
+      }
+    })
+  },
+
+  /**
+   * Busca un usuario por email para invitarlo a la org. Lo respalda un RPC
+   * SECURITY DEFINER que solo deja buscar a superadmins y admins de org.
+   */
+  async findUserByEmail(
+    email: string
+  ): Promise<{ id: string; name: string; email: string } | null> {
+    const { data, error } = await getSupabase().rpc('find_user_for_org', {
+      search_email: email.trim(),
+    })
+    if (error || !data?.length) return null
+    return data[0] as { id: string; name: string; email: string }
+  },
+
+  /** Agrega/quita miembro y ajusta su rol (solo owner/admin por RLS). */
+  async setMemberRole(
+    orgId: string,
+    userId: string,
+    role: 'owner' | 'admin' | 'agent' | null
+  ): Promise<void> {
+    const supabase = getSupabase()
+    const { error } =
+      role === null
+        ? await supabase
+            .from('organization_members')
+            .delete()
+            .eq('org_id', orgId)
+            .eq('user_id', userId)
+        : await supabase
+            .from('organization_members')
+            .upsert({ org_id: orgId, user_id: userId, role, status: 'active' })
+    if (error) throw new Error(error.message)
   },
 }

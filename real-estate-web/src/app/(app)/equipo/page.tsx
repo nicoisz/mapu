@@ -2,12 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Building2, Lock, Users } from 'lucide-react'
+import { BarChart3, Building2, Lock, Trash2, UserPlus, Users } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { organizationService } from '@/services/organizationService'
 import { PropertyCard } from '@/components/property/PropertyCard'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { Property } from '@/types/property'
+import { canManageOrg } from '@/lib/roles'
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Dueño',
+  admin: 'Admin',
+  agent: 'Agente',
+}
 
 export default function EquipoPage() {
   const { user, isAuthenticated, isLoading } = useAuthContext()
@@ -17,31 +26,66 @@ export default function EquipoPage() {
     { id: string; name: string; email: string; role: string }[]
   >([])
   const [loading, setLoading] = useState(true)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'agent' | 'admin'>('agent')
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteLoading, setInviteLoading] = useState(false)
 
   const orgId = user?.organizationId
   const orgRole = user?.organizationRole
-  const canManage = orgRole === 'owner' || orgRole === 'admin'
+  const canManage = canManageOrg(user)
 
-  useEffect(() => {
+  const load = () => {
     if (!orgId) return
-    let active = true
+    setLoading(true)
     Promise.all([
       organizationService.getById(orgId),
       organizationService.getOrgProperties(orgId),
       organizationService.getOrgMembers(orgId),
     ])
       .then(([o, p, m]) => {
-        if (!active) return
         setOrg(o)
         setProperties(p)
         setMembers(m)
       })
       .catch(() => {})
-      .finally(() => active && setLoading(false))
-    return () => {
-      active = false
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+  }, [orgId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    if (!orgId || !inviteEmail.trim()) return
+    setInviteError(null)
+    setInviteLoading(true)
+    try {
+      const found = await organizationService.findUserByEmail(inviteEmail)
+      if (!found) {
+        setInviteError('No se encontró ningún usuario con ese email.')
+        return
+      }
+      await organizationService.setMemberRole(orgId, found.id, inviteRole)
+      setInviteEmail('')
+      load()
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Error al invitar')
+    } finally {
+      setInviteLoading(false)
     }
-  }, [orgId])
+  }
+
+  async function handleRoleChange(userId: string, role: 'owner' | 'admin' | 'agent' | null) {
+    if (!orgId) return
+    try {
+      await organizationService.setMemberRole(orgId, userId, role)
+      load()
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Error al actualizar rol')
+    }
+  }
 
   if (isLoading)
     return (
@@ -97,18 +141,44 @@ export default function EquipoPage() {
             </div>
             <p className="text-on-surface-variant text-sm mt-0.5">
               {org?.type === 'company' ? 'Empresa' : 'Corredora'} · {members.length} miembros · tu
-              rol: <span className="font-medium text-on-surface">{orgRole}</span>
+              rol: <span className="font-medium text-on-surface">{ROLE_LABELS[orgRole ?? ''] ?? orgRole}</span>
             </p>
           </div>
         </div>
       </div>
 
       <div className="p-4 max-w-5xl mx-auto space-y-6">
-        {canManage && members.length > 0 && (
+        {canManage && (
           <section>
             <h2 className="font-headline font-semibold text-on-surface mb-3 flex items-center gap-2">
               <Users size={16} className="text-on-surface-variant" /> Equipo
             </h2>
+
+            <form
+              onSubmit={handleInvite}
+              className="flex flex-col sm:flex-row gap-2 mb-3 bg-surface-container-low rounded-xl border border-outline-variant/40 p-3"
+            >
+              <Input
+                type="email"
+                placeholder="Email del usuario a invitar…"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="flex-1"
+              />
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as 'agent' | 'admin')}
+                className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-3 py-2 text-sm focus:outline-none"
+              >
+                <option value="agent">Agente</option>
+                <option value="admin">Admin</option>
+              </select>
+              <Button type="submit" size="sm" loading={inviteLoading}>
+                <UserPlus size={14} /> Agregar
+              </Button>
+            </form>
+            {inviteError && <p className="text-error text-sm mb-2">{inviteError}</p>}
+
             <div className="space-y-2">
               {members.map((m) => (
                 <div
@@ -122,9 +192,29 @@ export default function EquipoPage() {
                     <p className="text-sm font-medium text-on-surface truncate">{m.name}</p>
                     <p className="text-xs text-on-surface-variant truncate">{m.email}</p>
                   </div>
-                  <Badge variant={m.role === 'owner' ? 'premium' : 'gray'} size="sm">
-                    {m.role}
-                  </Badge>
+                  {m.role === 'owner' ? (
+                    <Badge variant="premium" size="sm">
+                      Dueño
+                    </Badge>
+                  ) : (
+                    <>
+                      <select
+                        value={m.role}
+                        onChange={(e) => handleRoleChange(m.id, e.target.value as 'admin' | 'agent')}
+                        className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="agent">Agente</option>
+                      </select>
+                      <button
+                        onClick={() => handleRoleChange(m.id, null)}
+                        title="Quitar de la empresa"
+                        className="p-1.5 rounded-lg border border-outline-variant/60 text-error hover:border-error/60 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -132,9 +222,17 @@ export default function EquipoPage() {
         )}
 
         <section>
-          <h2 className="font-headline font-semibold text-on-surface mb-3">
-            Propiedades de la organización ({properties.length})
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-headline font-semibold text-on-surface">
+              Propiedades de la organización ({properties.length})
+            </h2>
+            <Link
+              href="/metricas"
+              className="flex items-center gap-1 text-xs font-medium text-accent hover:text-primary transition-colors"
+            >
+              <BarChart3 size={14} /> Ver métricas
+            </Link>
+          </div>
           {properties.length > 0 && (
             <div className="grid grid-cols-3 gap-3 mb-4">
               {[

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
+  BarChart3,
   Heart,
   LayoutDashboard,
   LogIn,
@@ -45,6 +46,7 @@ const navLinks = [
   { href: '/buscar', label: 'Buscar', icon: Search },
   { href: '/favoritos', label: 'Favoritos', icon: Heart },
   { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard, authRequired: true },
+  { href: '/metricas', label: 'Métricas', icon: BarChart3, authRequired: true },
 ]
 
 export function Navbar() {
@@ -230,7 +232,7 @@ export function Navbar() {
 
       {/* Mobile bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex md:hidden z-50">
-        {navLinks.map(({ href, label, icon: Icon, authRequired }) => {
+        {navLinks.slice(0, 4).map(({ href, label, icon: Icon, authRequired }) => {
           if (authRequired && !isAuthenticated) return null
           const isActive = pathname === href
           return (
