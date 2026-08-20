@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   AlertCircle,
   Eye,
@@ -14,34 +14,63 @@ import {
   RefreshCw,
   Star,
   Trash2,
+  UserRound,
+  X,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
+import { getSupabase } from '@/lib/supabase'
 import { propertyService } from '@/services/propertyService'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
 import { Property } from '@/types/property'
-import { SubscriptionType } from '@/types/enums'
+import { SubscriptionType, PlatformRole } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT, PROPERTY_TYPE_LABELS, STATUS_LABELS } from '@/constants'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const asId = searchParams.get('as')
   const { user, isAuthenticated, isLoading, hasSubscription, refreshUser } = useAuthContext()
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [asUser, setAsUser] = useState<{ id: string; name: string; email: string } | null>(null)
+
+  // Superadmin impersonation: only when a superadmin passes ?as=<id>.
+  const impersonating = !!asId && user?.platformRole === PlatformRole.SUPERADMIN
+  const effectiveUserId = impersonating ? asId : user?.id
+
+  useEffect(() => {
+    if (!impersonating || !asId) return
+    let active = true
+    getSupabase()
+      .from('profiles')
+      .select('id, name, email')
+      .eq('id', asId)
+      .maybeSingle()
+      .then(
+        ({ data }) => {
+          if (active && data) setAsUser({ id: data.id, name: data.name, email: data.email })
+        },
+        () => {}
+      )
+    return () => {
+      active = false
+    }
+  }, [impersonating, asId])
 
   const loadProperties = useCallback(async () => {
-    if (!user) return
+    if (!effectiveUserId) return
     setLoadingProps(true)
     try {
-      setProperties(await propertyService.getUserProperties(user.id))
+      setProperties(await propertyService.getUserProperties(effectiveUserId))
     } catch {
       setProperties([])
     } finally {
       setLoadingProps(false)
     }
-  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [effectiveUserId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     void loadProperties()
@@ -97,6 +126,7 @@ export default function DashboardPage() {
   const remaining = Math.max(0, FREE_PLAN_LISTINGS_LIMIT - activeProps.length)
 
   async function handleRenew(id: string) {
+    if (impersonating) return
     setBusyId(id)
     const renewed = await propertyService.renewProperty(id)
     setBusyId(null)
@@ -107,6 +137,7 @@ export default function DashboardPage() {
   }
 
   async function handleDelete(id: string, title: string) {
+    if (impersonating) return
     if (!window.confirm(`¿Eliminar definitivamente "${title}"? Esta acción no se puede deshacer.`))
       return
     setBusyId(id)
@@ -120,6 +151,24 @@ export default function DashboardPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-background pb-20">
+      {/* Impersonation banner */}
+      {impersonating && (
+        <div className="sticky top-0 z-30 flex items-center gap-3 bg-primary/10 border-b border-primary/30 px-4 py-2">
+          <UserRound size={16} className="text-primary shrink-0" />
+          <p className="text-sm text-on-surface flex-1 min-w-0">
+            <span className="font-semibold">Modo inspección:</span> viendo el panel de{' '}
+            {asUser ? <span className="font-semibold">{asUser.name}</span> : 'este usuario'} — solo
+            lectura
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
+          >
+            <X size={14} /> Salir
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="relative bg-surface-container-low border-b border-outline-variant/40 px-4 pt-7 pb-5 overflow-hidden">
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[90px] pointer-events-none" />
@@ -276,21 +325,25 @@ export default function DashboardPage() {
                           Expira en {daysLeft}d
                         </span>
                       )}
-                      <Link
-                        href={`/publicar?edit=${property.id}`}
-                        className="ml-auto flex items-center gap-1 text-accent hover:text-primary transition-colors"
-                      >
-                        <Pencil size={11} />
-                        Editar
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(property.id, property.title)}
-                        disabled={busyId === property.id}
-                        className="flex items-center gap-1 text-error/80 hover:text-error transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 size={11} />
-                        Eliminar
-                      </button>
+                      {!impersonating && (
+                        <>
+                          <Link
+                            href={`/publicar?edit=${property.id}`}
+                            className="ml-auto flex items-center gap-1 text-accent hover:text-primary transition-colors"
+                          >
+                            <Pencil size={11} />
+                            Editar
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(property.id, property.title)}
+                            disabled={busyId === property.id}
+                            className="flex items-center gap-1 text-error/80 hover:text-error transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 size={11} />
+                            Eliminar
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )
@@ -327,25 +380,29 @@ export default function DashboardPage() {
                     </Badge>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => handleRenew(property.id)}
-                      disabled={busyId === property.id || (!isPremium && remaining === 0)}
-                      className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-tertiary transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                    >
-                      <RefreshCw
-                        size={11}
-                        className={busyId === property.id ? 'animate-spin' : ''}
-                      />
-                      Renovar 30 días
-                    </button>
-                    <button
-                      onClick={() => handleDelete(property.id, property.title)}
-                      disabled={busyId === property.id}
-                      className="flex items-center gap-1 text-xs text-error border border-error/40 rounded-lg px-2.5 py-1.5 hover:bg-error hover:text-on-error transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 size={11} />
-                      Eliminar
-                    </button>
+                    {!impersonating && (
+                      <>
+                        <button
+                          onClick={() => handleRenew(property.id)}
+                          disabled={busyId === property.id || (!isPremium && remaining === 0)}
+                          className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-tertiary transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                        >
+                          <RefreshCw
+                            size={11}
+                            className={busyId === property.id ? 'animate-spin' : ''}
+                          />
+                          Renovar 30 días
+                        </button>
+                        <button
+                          onClick={() => handleDelete(property.id, property.title)}
+                          disabled={busyId === property.id}
+                          className="flex items-center gap-1 text-xs text-error border border-error/40 rounded-lg px-2.5 py-1.5 hover:bg-error hover:text-on-error transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 size={11} />
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
