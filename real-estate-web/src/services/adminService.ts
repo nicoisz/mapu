@@ -1,5 +1,6 @@
 import { getSupabase } from '@/lib/supabase'
 import { PlatformRole } from '@/types/enums'
+import { PropertyRow } from '@/lib/propertyMapper'
 
 /** Fila mínima de profiles para el panel admin. */
 export interface AdminUserRow {
@@ -21,20 +22,19 @@ export interface AdminUserRow {
 export const adminService = {
   async getStats() {
     const supabase = getSupabase()
-    const [u, p, a, orgs] = await Promise.all([
+    // organizations se suma cuando la tabla exista (F0.3).
+    const [u, p, a] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('properties').select('id', { count: 'exact', head: true }),
       supabase
         .from('properties')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'active'),
-      supabase.from('organizations').select('id', { count: 'exact', head: true }),
     ])
     return {
       users: u.count ?? 0,
       properties: p.count ?? 0,
       active: a.count ?? 0,
-      organizations: orgs.count ?? 0,
     }
   },
 
@@ -73,5 +73,19 @@ export const adminService = {
       .update({ [field]: value })
       .eq('id', userId)
     if (error) throw new Error(error.message)
+  },
+
+  /** Todas las propiedades (superadmin), opcionalmente por status/título. */
+  async listProperties(status?: string, search?: string): Promise<PropertyRow[]> {
+    let q = getSupabase()
+      .from('properties')
+      .select('*')
+      .order('published_at', { ascending: false })
+      .limit(200)
+    if (status && status !== 'all') q = q.eq('status', status)
+    if (search?.trim()) q = q.ilike('title', `%${search.trim()}%`)
+    const { data, error } = await q
+    if (error) throw new Error(error.message)
+    return (data ?? []) as PropertyRow[]
   },
 }
