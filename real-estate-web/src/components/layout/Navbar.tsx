@@ -21,6 +21,14 @@ import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { useTheme } from '@/hooks/useTheme'
 import { APP_CONFIG } from '@/constants'
 import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 function ThemeToggle({ light }: { light?: boolean }) {
   const { theme, toggle, mounted } = useTheme()
@@ -47,6 +55,12 @@ const navLinks = [
   { href: '/favoritos', label: 'Favoritos', icon: Heart },
   { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard, authRequired: true },
   { href: '/metricas', label: 'Métricas', icon: BarChart3, authRequired: true },
+]
+
+// En el header desktop solo las opciones comunes a todos los roles.
+const commonLinks = [
+  { href: '/buscar', label: 'Buscar', icon: Search },
+  { href: '/favoritos', label: 'Favoritos', icon: Heart },
 ]
 
 export function Navbar() {
@@ -111,8 +125,7 @@ export function Navbar() {
         <div className={pill ? 'w-2' : 'flex-1'} />
 
         <div className="hidden md:flex items-center gap-1">
-          {navLinks.map(({ href, label, icon: Icon, authRequired }) => {
-            if (authRequired && !isAuthenticated) return null
+          {commonLinks.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href
             return (
               <Link
@@ -148,71 +161,70 @@ export function Navbar() {
               </Link>
             )
           })}
-          {user?.platformRole === 'superadmin' && (
-            <Link
-              href="/admin"
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
-                pill
-                  ? 'text-white/70 hover:text-white hover:bg-white/10'
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
-              )}
-            >
-              <Shield size={16} />
-              Admin
-            </Link>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
           <ThemeToggle light={pill} />
-          {isAuthenticated ? (
-            <>
-              <Link href="/perfil" className="flex items-center gap-2 hover:opacity-90">
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
+          {isAuthenticated && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-2 rounded-full hover:opacity-90 focus:outline-none"
+                  aria-label="Menú de usuario"
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className={cn(
+                        'w-8 h-8 rounded-full object-cover border-2',
+                        pill ? 'border-white/30' : 'border-outline-variant'
+                      )}
+                    />
+                  ) : (
+                    <div
+                      className={cn(
+                        'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
+                        pill
+                          ? 'bg-white/15 border border-white/20 text-white'
+                          : 'bg-primary/20 border border-primary/30 text-primary'
+                      )}
+                    >
+                      {user.name.charAt(0)}
+                    </div>
+                  )}
+                  <span
                     className={cn(
-                      'w-8 h-8 rounded-full object-cover border-2',
-                      pill ? 'border-white/30' : 'border-outline-variant'
-                    )}
-                  />
-                ) : (
-                  <div
-                    className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                      pill
-                        ? 'bg-white/15 border border-white/20 text-white'
-                        : 'bg-primary/20 border border-primary/30 text-primary'
+                      'hidden lg:inline text-sm font-medium',
+                      pill ? 'text-white' : 'text-on-surface'
                     )}
                   >
-                    {user?.name.charAt(0)}
-                  </div>
+                    {user.name.split(' ')[0]}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  {user.name} · {user.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                  <LayoutDashboard size={16} /> Mis propiedades
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/metricas')}>
+                  <BarChart3 size={16} /> Métricas
+                </DropdownMenuItem>
+                {user.platformRole === 'superadmin' && (
+                  <DropdownMenuItem onClick={() => router.push('/admin')}>
+                    <Shield size={16} /> Panel admin
+                  </DropdownMenuItem>
                 )}
-                <span
-                  className={cn(
-                    'hidden md:inline text-sm font-medium',
-                    pill ? 'text-white' : 'text-on-surface'
-                  )}
-                >
-                  {user?.name.split(' ')[0]}
-                </span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                aria-label="Cerrar sesión"
-                className={cn(
-                  'p-2 rounded-full transition-colors',
-                  pill
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-                )}
-                title="Cerrar sesión"
-              >
-                <LogOut size={16} />
-              </button>
-            </>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut size={16} /> Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link
               href="/login"
