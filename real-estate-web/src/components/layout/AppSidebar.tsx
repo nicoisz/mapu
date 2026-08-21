@@ -80,12 +80,10 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <div className="flex h-full flex-col bg-surface-container-lowest border-r border-outline-variant/40">
-      <div className="flex items-center gap-2 px-4 h-16 border-b border-outline-variant/40">
-        <span className="material-symbols-outlined text-primary">map</span>
-        <span className="font-headline font-bold text-primary">MapU</span>
+      <div className="flex justify-end px-3 py-2 md:hidden">
         <button
           onClick={() => setOpen(false)}
-          className="ml-auto p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container md:hidden"
+          className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container"
           aria-label="Cerrar menú"
         >
           <X size={18} />
