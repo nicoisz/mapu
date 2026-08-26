@@ -251,6 +251,7 @@ export default function MapView({
     map.on('load', () => {
       readyRef.current = true
       addZoneLayers(map)
+      updateZones()
       buildIndex()
       renderClusters()
       boundsRef.current?.(map.getBounds())
