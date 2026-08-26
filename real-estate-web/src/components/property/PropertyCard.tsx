@@ -32,7 +32,7 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
         isSelected
           ? 'ring-2 ring-primary border border-primary/50'
           : 'border border-outline-variant/25 hover:-translate-y-1.5 hover:shadow-elevated',
-        compact ? 'flex gap-3 items-stretch' : '',
+        compact ? 'flex flex-col sm:flex-row gap-3 items-stretch' : '',
         onClick ? 'cursor-pointer' : ''
       )}
       onClick={onClick}
@@ -40,7 +40,7 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
       <div
         className={cn(
           'relative overflow-hidden shrink-0',
-          compact ? 'w-32 self-stretch min-h-[9rem]' : 'h-60'
+          compact ? 'w-full h-40 sm:w-32 sm:h-auto sm:self-stretch sm:min-h-[9rem]' : 'h-60'
         )}
       >
         {mainImage ? (
