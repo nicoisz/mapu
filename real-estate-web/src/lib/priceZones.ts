@@ -27,8 +27,8 @@ export interface PriceZoneLegend {
   ranges: Partial<Record<ZoneBucket, [number, number]>>
 }
 
-/** Hex radius in degrees (~2.2 km at Santiago's latitude). */
-const HEX_RADIUS = 0.02
+/** Hex radius in degrees (~300 m at Santiago's latitude). */
+const HEX_RADIUS = 0.0027
 
 const COLORS: Record<ZoneBucket, string> = {
   economic: '#3B82F6', // azul — zona económica
