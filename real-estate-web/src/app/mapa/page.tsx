@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, List, Map } from 'lucide-react'
+import { Building2, List, Map, PanelRightClose, PanelRightOpen, X } from 'lucide-react'
 import DynamicMapView from '@/components/map/DynamicMapView'
 import { PropertyCard } from '@/components/property/PropertyCard'
 import { SearchBar } from '@/components/search/SearchBar'
@@ -20,6 +20,7 @@ export default function MapaPage() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
   const [showFilters, setShowFilters] = useState(false)
+  const [listOpen, setListOpen] = useState(true)
 
   const {
     query,
@@ -79,6 +80,14 @@ export default function MapaPage() {
           >
             <List size={14} /> Lista
           </button>
+          <button
+            onClick={() => setListOpen((v) => !v)}
+            title={listOpen ? 'Ocultar lista lateral' : 'Mostrar lista lateral'}
+            aria-label={listOpen ? 'Ocultar lista lateral' : 'Mostrar lista lateral'}
+            className="flex items-center justify-center p-1.5 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all"
+          >
+            {listOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
+          </button>
         </div>
       </div>
 
@@ -115,7 +124,7 @@ export default function MapaPage() {
           />
 
           {selectedProperty && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-72 z-20">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-80 sm:w-96 max-w-[calc(100vw-1.5rem)] z-20">
               <PropertyCard
                 property={selectedProperty}
                 isSelected
@@ -124,18 +133,31 @@ export default function MapaPage() {
               />
               <button
                 onClick={() => setSelectedProperty(null)}
-                className="absolute -top-2 -right-2 bg-surface-container-highest rounded-full w-5 h-5 flex items-center justify-center shadow-soft border border-outline-variant/40 text-on-surface-variant hover:text-on-surface text-sm leading-none"
+                aria-label="Cerrar"
+                className="absolute -top-3 -right-3 bg-surface-container-highest rounded-full w-8 h-8 flex items-center justify-center shadow-soft border border-outline-variant/40 text-on-surface-variant hover:text-error hover:border-error transition-colors"
               >
-                ×
+                <X size={16} />
               </button>
             </div>
+          )}
+
+          {viewMode === 'map' && !listOpen && (
+            <button
+              onClick={() => setListOpen(true)}
+              className="absolute top-3 right-3 z-20 hidden md:flex items-center gap-1.5 bg-surface-container-highest text-on-surface px-3 py-2 rounded-xl shadow-soft border border-outline-variant/40 text-sm font-medium hover:text-primary transition-all"
+            >
+              <PanelRightOpen size={15} /> Ver lista
+            </button>
           )}
         </div>
 
         <div
           className={cn(
             'bg-surface-container-low border-l border-outline-variant/40 overflow-y-auto',
-            viewMode === 'list' ? 'flex-1' : 'hidden md:block w-[360px]'
+            viewMode === 'list'
+              ? 'flex-1'
+              : 'hidden md:block w-[360px]',
+            viewMode === 'map' && !listOpen ? 'md:hidden' : ''
           )}
         >
           {results.length === 0 ? (

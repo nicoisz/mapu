@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bath, Bed, Heart, MapPin, Move } from 'lucide-react'
+import { ArrowRight, Bath, Bed, Heart, MapPin, Move } from 'lucide-react'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { Badge } from '@/components/ui/Badge'
@@ -30,14 +30,19 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
       className={cn(
         'bg-surface-container-low rounded-2xl overflow-hidden group transition-all duration-300',
         isSelected
-          ? 'ring-2 ring-primary'
+          ? 'ring-2 ring-primary border border-primary/50'
           : 'border border-outline-variant/25 hover:-translate-y-1.5 hover:shadow-elevated',
-        compact ? 'flex gap-3' : '',
+        compact ? 'flex gap-3 items-stretch' : '',
         onClick ? 'cursor-pointer' : ''
       )}
       onClick={onClick}
     >
-      <div className={cn('relative overflow-hidden shrink-0', compact ? 'w-28 h-24' : 'h-60')}>
+      <div
+        className={cn(
+          'relative overflow-hidden shrink-0',
+          compact ? 'w-32 self-stretch min-h-[9rem]' : 'h-60'
+        )}
+      >
         {mainImage ? (
           <Image
             src={mainImage.url}
@@ -89,7 +94,7 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
         </button>
       </div>
 
-      <div className={cn(compact ? 'p-3 flex-1 min-w-0' : 'p-5')}>
+      <div className={cn('min-w-0', compact ? 'p-3 flex-1 flex flex-col' : 'p-5')}>
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <span
@@ -125,7 +130,35 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
           </span>
         </div>
 
-        {!compact && (
+        {compact ? (
+          <div className="mt-auto pt-3">
+            <div className="flex items-center gap-3.5 text-xs text-on-surface-variant">
+              {property.features.bedrooms !== undefined && (
+                <span className="flex items-center gap-1">
+                  <Bed size={13} />
+                  {property.features.bedrooms}
+                </span>
+              )}
+              {property.features.bathrooms !== undefined && (
+                <span className="flex items-center gap-1">
+                  <Bath size={13} />
+                  {property.features.bathrooms}
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <Move size={13} />
+                {formatArea(property.features.area)}
+              </span>
+            </div>
+            <Link
+              href={`/propiedad/${property.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold py-2 px-3 hover:brightness-110 transition-all"
+            >
+              Ver detalle <ArrowRight size={14} />
+            </Link>
+          </div>
+        ) : (
           <div className="flex items-center gap-5 mt-4 pt-3.5 border-t border-outline-variant/30 text-xs text-on-surface-variant">
             {property.features.bedrooms !== undefined && (
               <span className="flex items-center gap-1.5">
@@ -146,9 +179,9 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
             <Link
               href={`/propiedad/${property.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="ml-auto font-semibold text-on-surface hover:text-primary transition-colors"
+              className="ml-auto inline-flex items-center gap-1 rounded-md bg-primary text-on-primary text-xs font-semibold px-3 py-1.5 hover:brightness-110 transition-all"
             >
-              Ver detalle →
+              Ver detalle <ArrowRight size={12} />
             </Link>
           </div>
         )}
