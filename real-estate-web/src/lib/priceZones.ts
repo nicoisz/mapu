@@ -71,12 +71,18 @@ function axialFromLngLat(lng: number, lat: number, rad: number): { q: number; r:
   return axialRound(q, r)
 }
 
-/** Axial coords → center lng/lat (pointy-top hexes). */
+/** Axial coords → center lng/lat (pointy-top hexes).
+ *
+ *  Inverse of `axialFromLngLat`: the y-axis is the raw latitude, and the x-axis
+ *  is longitude pre-scaled by cos(lat). Recovered as
+ *    lat = rad·√3·(r + q/2)      (from the r equation)
+ *    lng = q·rad·1.5 / cos(lat)  (undoing the cos(lat) scaling of x)
+ */
 function centerLngLat(q: number, r: number, rad: number): { lat: number; lng: number } {
-  const cx = rad * (Math.sqrt(3) / 2) * (2 * q + r)
-  const cy = rad * 1.5 * r
-  const cosLat = Math.cos((cy * Math.PI) / 180)
-  return { lng: cx / (cosLat || 1), lat: cy }
+  const lat = rad * Math.sqrt(3) * (r + q / 2)
+  const x = q * rad * 1.5
+  const cosLat = Math.cos((lat * Math.PI) / 180)
+  return { lat, lng: x / (cosLat || 1) }
 }
 
 /** Polygon vertices for a pointy-top hex (6 corners, first one at the top). */

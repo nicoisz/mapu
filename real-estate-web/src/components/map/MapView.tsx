@@ -402,8 +402,8 @@ export default function MapView({
           getZoneColor('premium'),
           '#888888',
         ],
-        'fill-opacity': 0.28,
-        'fill-outline-color': 'rgba(255,255,255,0.6)',
+        'fill-opacity': 0.5,
+        'fill-outline-color': 'rgba(255,255,255,0.85)',
       },
     })
     // Cursor + click: the selected hex does an elastic scale "boing" using the

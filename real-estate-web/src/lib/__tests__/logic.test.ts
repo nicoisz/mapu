@@ -146,6 +146,34 @@ describe('computePriceZones', () => {
     const coords = (fc.features[0].geometry as GeoJSON.Polygon).coordinates[0]
     expect(coords.length).toBe(7) // 6 vértices + cierre
   })
+
+  it('ubica el centro de la celda cerca de la propiedad (inversa correcta)', () => {
+    // Santiago: la celda resultante debe quedar en lat ~-33, no cerca del ecuador.
+    const p = makeProperty({
+      id: 'scl',
+      location: {
+        latitude: -33.4489,
+        longitude: -70.6693,
+        address: {
+          street: 'Av. Las Condes',
+          city: 'Santiago',
+          region: ChileanRegion.METROPOLITANA,
+          country: 'Chile',
+        },
+      },
+    })
+    const { cells } = computePriceZones([p], 'sale')
+    expect(cells).toHaveLength(1)
+    const c = cells[0]
+    expect(c.center.lat).toBeLessThan(-30)
+    expect(c.center.lat).toBeGreaterThan(-45)
+    expect(c.center.lng).toBeLessThan(-60)
+    // Centro a menos de ~2 radios de la propiedad.
+    const dLat = Math.abs(c.center.lat - p.location.latitude)
+    const dLng = Math.abs(c.center.lng - p.location.longitude)
+    expect(dLat).toBeLessThan(0.05)
+    expect(dLng).toBeLessThan(0.05)
+  })
 })
 
 describe('easeOutElastic', () => {
