@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
-import { Building2, KeyRound, List, Map as MapIcon, Tag } from 'lucide-react'
+import { Building2, KeyRound, List, Map as MapIcon, Tag, X } from 'lucide-react'
 import { PropertyOperation } from '@/types/enums'
 import DynamicMapView from '@/components/map/DynamicMapView'
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
@@ -239,14 +239,15 @@ function SearchContent() {
           {selected && (
             <div
               ref={cardRef}
-              className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] overflow-y-auto z-20"
+              className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] overflow-y-auto z-20 rounded-2xl"
             >
               <PropertyCard property={selected} isSelected />
               <button
                 onClick={closeDetail}
-                className="absolute -top-2 -right-2 bg-surface-container-highest rounded-full w-5 h-5 flex items-center justify-center shadow-soft border border-outline-variant/40 text-on-surface-variant hover:text-on-surface text-sm leading-none"
+                aria-label="Cerrar detalle"
+                className="absolute -top-3 -right-3 bg-surface-container-highest rounded-full w-8 h-8 flex items-center justify-center shadow-soft border border-outline-variant/40 text-on-surface-variant hover:text-error hover:border-error transition-colors"
               >
-                ×
+                <X size={16} />
               </button>
             </div>
           )}
