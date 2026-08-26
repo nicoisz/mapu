@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
@@ -15,6 +15,9 @@ import {
 import { geocodeAddress } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { MiniMap } from '@/components/map/MiniMap'
+import { computePriceZones, findZone, getZoneColor, ZoneCell, ZoneMode } from '@/lib/priceZones'
+import { formatPriceShort } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
 import {
   ChileanRegion,
@@ -112,6 +115,73 @@ export default function PublicarPage() {
   const [notFound, setNotFound] = useState(false)
   const originalPathsRef = useRef<string[]>([])
   const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }))
+
+  // ── Price-zone context for this listing ─────────────────────────
+  // Fetch the active catalogue once so we can classify the entered address
+  // into economic / mid / premium and warn the seller how their sector sits.
+  const [allProps, setAllProps] = useState<Property[]>([])
+  const [zoneInfo, setZoneInfo] = useState<{
+    lat: number
+    lng: number
+    cell?: ZoneCell
+    mode: ZoneMode
+  } | null>(null)
+  const [zoneLoading, setZoneLoading] = useState(false)
+  const [zoneError, setZoneError] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    propertyService
+      .getAll()
+      .then((props) => active && setAllProps(props))
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const zoneCells = useMemo(() => {
+    const mode: ZoneMode = operation === PropertyOperation.RENT ? 'rent' : 'sale'
+    return computePriceZones(allProps, mode).cells
+  }, [allProps, operation])
+
+  // Debounced live geocoding: as the user fills the address, resolve it to a
+  // coordinate and classify the surrounding sector.
+  useEffect(() => {
+    if (!user || zoneLoading) return
+    const hasAddress = form.street.trim() && (form.commune.trim() || form.city.trim())
+    if (!hasAddress) {
+      setZoneInfo(null)
+      return
+    }
+    setZoneLoading(true)
+    setZoneError(false)
+    const t = setTimeout(() => {
+      geocodeAddress({
+        street: form.street,
+        commune: form.commune,
+        city: form.city,
+        region: form.region,
+      }).then((coords) => {
+        if (!coords) {
+          setZoneInfo(null)
+          setZoneError(true)
+        } else {
+          setZoneInfo({
+            lat: coords.latitude,
+            lng: coords.longitude,
+            cell: findZone(zoneCells, coords.latitude, coords.longitude),
+            mode: operation === PropertyOperation.RENT ? 'rent' : 'sale',
+          })
+        }
+        setZoneLoading(false)
+      })
+    }, 700)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.street, form.commune, form.city, form.region, operation])
+
 
   // Edit mode: load the property and prefill the form + existing images.
   useEffect(() => {
@@ -482,6 +552,72 @@ export default function PublicarPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Sector price context */}
+            <div>
+              <span className={labelCls}>Contexto del sector</span>
+              {!zoneInfo && !zoneLoading && (
+                <p className="text-sm text-on-surface-variant bg-surface-container-highest/60 border border-outline-variant/40 rounded-lg px-3 py-2">
+                  Ingresa una dirección para ver si el sector está por sobre o bajo la media de
+                  precios.
+                </p>
+              )}
+              {zoneLoading && (
+                <p className="text-sm text-on-surface-variant bg-surface-container-highest/60 border border-outline-variant/40 rounded-lg px-3 py-2">
+                  Buscando el sector…
+                </p>
+              )}
+              {zoneError && !zoneLoading && (
+                <p className="text-sm text-error/90 bg-error/10 border border-error/40 rounded-lg px-3 py-2">
+                  No pudimos geolocalizar esa dirección. Revisa calle/comuna.
+                </p>
+              )}
+              {zoneInfo && (
+                <div className="space-y-3">
+                  <div
+                    className="rounded-lg px-3 py-2 text-sm border"
+                    style={{
+                      backgroundColor: zoneInfo.cell
+                        ? getZoneColor(zoneInfo.cell.bucket)
+                        : 'transparent',
+                      borderColor: zoneInfo.cell ? 'transparent' : 'var(--outline-variant)',
+                      color: zoneInfo.cell ? '#fff' : 'var(--on-surface-variant)',
+                    }}
+                  >
+                    {zoneInfo.cell ? (
+                      <>
+                        <span className="font-bold">
+                          Sector{' '}
+                          {zoneInfo.cell.bucket === 'economic'
+                            ? 'económico'
+                            : zoneInfo.cell.bucket === 'mid'
+                              ? 'de valor medio'
+                              : 'premium'}
+                        </span>{' '}
+                        {zoneInfo.cell.bucket === 'premium' ? (
+                          <span>· precio medio {formatPriceShort(zoneInfo.cell.meanPrice, Currency.CLP)} — por sobre la media del mercado.</span>
+                        ) : zoneInfo.cell.bucket === 'economic' ? (
+                          <span>· precio medio {formatPriceShort(zoneInfo.cell.meanPrice, Currency.CLP)} — por bajo la media del mercado.</span>
+                        ) : (
+                          <span>· precio medio {formatPriceShort(zoneInfo.cell.meanPrice, Currency.CLP)} — en línea con el mercado.</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-bold">Sector sin datos</span> · aún no hay
+                        propiedades en esta zona para estimar su precio.
+                      </>
+                    )}
+                  </div>
+                  <MiniMap
+                    latitude={zoneInfo.lat}
+                    longitude={zoneInfo.lng}
+                    cells={zoneCells}
+                    highlightId={zoneInfo.cell?.id}
+                  />
+                </div>
+              )}
             </div>
           </Section>
 

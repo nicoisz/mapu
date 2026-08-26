@@ -114,6 +114,15 @@ function assignBuckets(cells: ZoneCell[]): void {
   })
 }
 
+/** Finds the populated hex cell containing a coordinate, or undefined if that
+ *  sector has no property data. Reuses the exact same axial bucketing as
+ *  computePriceZones, so lookups stay consistent with the rendered map. */
+export function findZone(cells: ZoneCell[], lat: number, lng: number): ZoneCell | undefined {
+  const { q, r } = axialFromLngLat(lng, lat, HEX_RADIUS)
+  const key = `${q}:${r}`
+  return cells.find((c) => c.id === key)
+}
+
 /** Mean price per populated hex cell + tercile bucket. */
 export function computePriceZones(
   properties: Property[],
