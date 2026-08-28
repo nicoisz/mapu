@@ -27,8 +27,8 @@ export interface PriceZoneLegend {
   ranges: Partial<Record<ZoneBucket, [number, number]>>
 }
 
-/** Hex radius in degrees (~300 m at Santiago's latitude). */
-const HEX_RADIUS = 0.0027
+/** Hex radius in degrees (~200 m at Santiago's latitude). */
+const HEX_RADIUS = 0.0018
 
 const COLORS: Record<ZoneBucket, string> = {
   economic: '#3B82F6', // azul — zona económica
@@ -199,8 +199,39 @@ export function zonesToGeoJSON(cells: ZoneCell[]): GeoJSON.FeatureCollection {
   }
 }
 
+/** GeoJSON of one hexagon per property, centered exactly on the property's
+ *  pin, colored by the bucket of the cell that contains it. Keeps the pin at
+ *  the visual center of its zone. Properties with no priced cell are skipped. */
+export function propertyHexesToGeoJSON(
+  properties: Property[],
+  cells: ZoneCell[]
+): GeoJSON.FeatureCollection {
+  const features: GeoJSON.Feature[] = []
+  for (const p of properties) {
+    const cell = findZone(cells, p.location.latitude, p.location.longitude)
+    if (!cell) continue
+    const verts = hexVertices(p.location.longitude, p.location.latitude, HEX_RADIUS)
+    features.push({
+      type: 'Feature' as const,
+      id: p.id,
+      properties: {
+        id: p.id,
+        bucket: cell.bucket,
+        meanPrice: Math.round(cell.meanPrice),
+        count: cell.count,
+      } satisfies ZoneFeatureProperties,
+      geometry: {
+        type: 'Polygon' as const,
+        coordinates: [[...verts, verts[0]]],
+      },
+    })
+  }
+  return { type: 'FeatureCollection' as const, features }
+}
+
 /** Scales a hex's vertices around its center — used by the elastic animation. */
-export function scaleZoneGeometry(  verts: [number, number][],
+export function scaleZoneGeometry(
+  verts: [number, number][],
   center: { lat: number; lng: number },
   scale: number
 ): [number, number][] {
