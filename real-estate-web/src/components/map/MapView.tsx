@@ -11,7 +11,7 @@ import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
 import {
   computePriceZones,
-  zonesToGeoJSON,
+  propertyHexesToGeoJSON,
   getZoneColor,
   easeOutElastic,
   scaleZoneGeometry,
@@ -250,11 +250,16 @@ export default function MapView({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     map.on('load', () => {
       readyRef.current = true
-      addZoneLayers(map)
-      updateZones()
+      ensureZones()
       buildIndex()
       renderClusters()
       boundsRef.current?.(map.getBounds())
+    })
+    // setStyle (theme/base-layer switch) drops custom sources; re-add the zone
+    // layers + data whenever the style reloads, instead of trying to restore
+    // once after a specific setStyle call.
+    map.on('styledata', () => {
+      if (readyRef.current) ensureZones()
     })
     // Re-cluster as the user pans/zooms, then report the new bounds.
     map.on('moveend', () => {
@@ -463,8 +468,17 @@ export default function MapView({
     const data = propsDataRef.current
     const { cells, legend } = computePriceZones(data, zoneModeRef.current)
     setZoneRanges(legend.ranges as Record<ZoneBucket, [number, number]>)
-    zoneGeoRef.current = zonesToGeoJSON(cells)
+    zoneGeoRef.current = propertyHexesToGeoJSON(data, cells)
     source.setData(zoneGeoRef.current)
+  }
+
+  // Idempotent: re-add the zone source/layer if setStyle removed them, then
+  // refresh the data. Safe to call on every styledata event.
+  function ensureZones() {
+    const map = mapRef.current
+    if (!map || !readyRef.current) return
+    if (!map.getSource(ZONE_SOURCE)) addZoneLayers(map)
+    updateZones()
   }
 
   // Rebuild the index + redraw when the dataset changes.
@@ -528,23 +542,12 @@ export default function MapView({
             : STYLE_LIGHT
     map.setStyle(style)
     // Markers are DOM overlays (they survive setStyle) but their colors are
-    // theme/layer-dependent — rebuild them. setStyle also drops the custom
-    // zone source/layer; re-add them once the new style has loaded.
+    // theme/layer-dependent — rebuild them. The zone layers are re-added
+    // automatically by the persistent 'styledata' handler.
     markersRef.current.forEach((m) => m.remove())
     markersRef.current.clear()
     prevKeysRef.current = new Set()
     renderClusters()
-    const restoreZones = () => {
-      if (!map.getSource(ZONE_SOURCE)) {
-        addZoneLayers(map)
-        updateZones()
-      }
-    }
-    if (map.isStyleLoaded()) {
-      restoreZones()
-    } else {
-      map.once('styledata', restoreZones)
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, mounted, layer])
 
