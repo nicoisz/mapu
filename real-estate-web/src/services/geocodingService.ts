@@ -104,16 +104,20 @@ export async function reverseGeocode(
         town?: string
         village?: string
         municipality?: string
+        county?: string
       }
     }
     const a = data.address ?? {}
+    const city = a.city ?? a.town ?? a.village ?? a.municipality
     return {
       latitude,
       longitude,
       label: data.display_name ?? '',
       street: a.road ?? '',
       number: a.house_number,
-      city: a.city ?? a.town ?? a.village ?? a.municipality,
+      // En Chile la comuna suele venir en county; ciudad en city/town.
+      commune: a.county ?? city,
+      city,
     }
   } catch {
     return null
