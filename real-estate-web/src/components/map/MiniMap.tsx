@@ -13,9 +13,18 @@ interface MiniMapProps {
   cells?: ZoneCell[]
   /** Cell id to outline once zones are rendered. */
   highlightId?: string
+  /** Enable pan/zoom navigation + navigation controls. */
+  interactive?: boolean
 }
 
-export function MiniMap({ latitude, longitude, label, cells, highlightId }: MiniMapProps) {
+export function MiniMap({
+  latitude,
+  longitude,
+  label,
+  cells,
+  highlightId,
+  interactive,
+}: MiniMapProps) {
   return (
     <div className="w-full h-48 rounded-xl overflow-hidden border border-outline-variant/60">
       <MiniMapInner
@@ -24,6 +33,7 @@ export function MiniMap({ latitude, longitude, label, cells, highlightId }: Mini
         label={label}
         cells={cells}
         highlightId={highlightId}
+        interactive={interactive}
       />
     </div>
   )

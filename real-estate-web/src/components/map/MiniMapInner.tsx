@@ -20,6 +20,8 @@ interface Props {
   cells?: ZoneCell[]
   /** Cell id to outline once zones are rendered. */
   highlightId?: string
+  /** Enable pan/zoom navigation + navigation controls. */
+  interactive?: boolean
 }
 
 export default function MiniMapInner({
@@ -27,6 +29,7 @@ export default function MiniMapInner({
   longitude,
   cells,
   highlightId,
+  interactive,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -38,6 +41,8 @@ export default function MiniMapInner({
   cellsRef.current = cells
   const highlightRef = useRef(highlightId)
   highlightRef.current = highlightId
+  const interactiveRef = useRef(interactive)
+  interactiveRef.current = interactive
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -51,9 +56,12 @@ export default function MiniMapInner({
       style: initialStyle,
       center: [longitude, latitude],
       zoom: 13,
-      interactive: false,
+      interactive: !!interactiveRef.current,
       attributionControl: { compact: true },
     })
+    if (interactiveRef.current) {
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+    }
 
     const pin = document.createElement('div')
     pin.innerHTML = `<div style="
