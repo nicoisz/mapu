@@ -147,8 +147,7 @@ describe('computePriceZones', () => {
     expect(coords.length).toBe(7) // 6 vértices + cierre
   })
 
-  it('ubica el centro de la celda cerca de la propiedad (inversa correcta)', () => {
-    // Santiago: la celda resultante debe quedar en lat ~-33, no cerca del ecuador.
+  it('ubica el centro de la celda cerca de la propiedad (inversa correcta)', () => {    // Santiago: la celda resultante debe quedar en lat ~-33, no cerca del ecuador.
     const p = makeProperty({
       id: 'scl',
       location: {
