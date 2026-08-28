@@ -26,6 +26,16 @@ export function communesForRegion(region: string): string[] {
   return regionCommunes[region] ?? []
 }
 
+/** Región a la que pertenece una comuna (para autocompletar al geocodificar). */
+export function regionForCommune(commune: string): string | undefined {
+  if (!commune) return undefined
+  const c = commune.trim()
+  for (const [region, communes] of Object.entries(regionCommunes)) {
+    if (communes.some((x) => x === c)) return region
+  }
+  return undefined
+}
+
 /** Localidades/ciudades de una comuna, en orden y sin duplicados. */
 export function localitiesForCommune(commune: string): string[] {
   const seen = new Set<string>()
