@@ -425,34 +425,37 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
         </div>
       </div>
 
-      {/* Fullscreen map overlay */}
+      {/* Map modal — compact, map fills the whole card */}
       {mapOpen && (
-        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col">
-          <div className="flex items-center justify-between p-4 pb-2">
-            <h2 className="font-headline font-semibold text-on-surface">Ubicación</h2>
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setMapOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl h-[60vh] rounded-2xl overflow-hidden shadow-elevated"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MiniMap
+              latitude={property.location.latitude}
+              longitude={property.location.longitude}
+              interactive
+            />
             <button
               onClick={() => setMapOpen(false)}
               aria-label="Cerrar mapa"
-              className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:text-error hover:border-error transition-colors"
+              className="absolute top-2.5 right-2.5 z-20 bg-surface-container-high/95 backdrop-blur rounded-full w-8 h-8 flex items-center justify-center shadow-soft border border-outline-variant/50 text-on-surface-variant hover:text-error hover:border-error transition-colors"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
-          </div>
-          <div className="flex-1 px-4 pb-4">
-            <div className="w-full h-full rounded-2xl overflow-hidden border border-outline-variant/60">
-              <MiniMap
-                latitude={property.location.latitude}
-                longitude={property.location.longitude}
-                interactive
-              />
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 max-w-[90%]">
+              <p className="text-xs bg-surface-container-high/95 backdrop-blur text-on-surface px-3 py-1.5 rounded-full shadow-soft border border-outline-variant/50 flex items-center gap-1.5 truncate">
+                <MapPin size={12} className="shrink-0" />
+                <span className="truncate">
+                  {property.location.displayAddress ??
+                    `${property.location.address.street} ${property.location.address.number ?? ''}, ${property.location.address.city}`}
+                </span>
+              </p>
             </div>
-            <p className="text-sm text-on-surface-variant mt-3 flex items-start gap-1.5">
-              <MapPin size={14} className="shrink-0 mt-0.5" />
-              <span>
-                {property.location.displayAddress ??
-                  `${property.location.address.street} ${property.location.address.number ?? ''}, ${property.location.address.city}`}
-              </span>
-            </p>
           </div>
         </div>
       )}
