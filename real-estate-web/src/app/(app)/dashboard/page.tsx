@@ -23,6 +23,7 @@ import { propertyService } from '@/services/propertyService'
 import { Sparkline } from '@/components/charts/Sparkline'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { GlowLoader } from '@/components/ui/GlowLoader'
 import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
 import { Property } from '@/types/property'
 import { SubscriptionType, PlatformRole } from '@/types/enums'
@@ -286,8 +287,8 @@ export default function DashboardPage() {
         )}
 
         {loadingProps && (
-          <div className="text-center py-8 text-on-surface-variant text-sm">
-            Cargando propiedades…
+          <div className="flex justify-center py-8">
+            <GlowLoader label="Cargando propiedades…" />
           </div>
         )}
 
