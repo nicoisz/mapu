@@ -11,7 +11,8 @@ import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
 import {
   computePriceZones,
-  propertyHexesToGeoJSON,
+  zonesToGeoJSON,
+  findZone,
   getZoneColor,
   easeOutElastic,
   scaleZoneGeometry,
@@ -106,13 +107,17 @@ function makePinElement(
   label: string,
   isSelected: boolean,
   isRent: boolean,
-  animate: boolean
+  animate: boolean,
+  zoneColor?: string | null
 ): HTMLDivElement {
   const wrap = document.createElement('div')
   wrap.style.cursor = 'pointer'
 
   const bg = isRent ? RENT_COLOR : SALE_COLOR
   const edge = isSelected ? '#ffffff' : 'rgba(255,255,255,0.55)'
+  const diamond = zoneColor
+    ? `<span style="width:7px;height:7px;display:inline-block;background:${zoneColor};transform:rotate(45deg);border:1px solid rgba(255,255,255,.85);border-radius:1px;margin-right:5px;vertical-align:middle;"></span>`
+    : ''
 
   const inner = document.createElement('div')
   inner.style.transition = 'transform 0.15s ease'
@@ -126,7 +131,7 @@ function makePinElement(
       font-size:11px;font-weight:700;white-space:nowrap;font-family:Manrope,sans-serif;
       box-shadow:0 3px 10px rgba(0,0,0,${isSelected ? '0.5' : '0.3'});
       border:${isSelected ? '2px' : '1.5px'} solid ${edge};
-    ">${label}</div>
+    ">${diamond}${label}</div>
     <div style="
       width:0;height:0;margin:-1px auto 0;
       border-left:5px solid transparent;border-right:5px solid transparent;
@@ -210,12 +215,16 @@ export default function MapView({
   const [zonesOn, setZonesOn] = useState(true)
   const [zoneMode, setZoneMode] = useState<ZoneMode>('sale')
   const [zoneRanges, setZoneRanges] = useState<Record<ZoneBucket, [number, number]>>()
+  const [activeBucket, setActiveBucket] = useState<ZoneBucket | null>(null)
   const zoneGeoRef = useRef<GeoJSON.FeatureCollection | null>(null)
+  const globalCellsRef = useRef<ZoneCell[] | null>(null)
   const animRef = useRef<number | null>(null)
   const zoneModeRef = useRef<ZoneMode>(zoneMode)
   zoneModeRef.current = zoneMode
   const zonesOnRef = useRef(zonesOn)
   zonesOnRef.current = zonesOn
+  const activeBucketRef = useRef<ZoneBucket | null>(activeBucket)
+  activeBucketRef.current = activeBucket
 
   // Keep latest props in refs so the map's event handlers (created once) never
   // act on stale data — e.g. properties arriving from Supabase before 'load'.
@@ -284,8 +293,12 @@ export default function MapView({
   // ── Build the supercluster index from the current properties ─────
   function buildIndex() {
     const data = propsDataRef.current
+    const bucket = activeBucketRef.current
+    const cells = globalCellsRef.current
+    // Filter to the active zone bucket (pins), using the zone classification.
+    const visible = bucket && cells ? data.filter((p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket) : data
     const byId = new Map<string, Property>()
-    const points: Supercluster.PointFeature<PointProps>[] = data.map((p) => {
+    const points: Supercluster.PointFeature<PointProps>[] = visible.map((p) => {
       byId.set(p.id, p)
       return {
         type: 'Feature',
@@ -358,7 +371,13 @@ export default function MapView({
 
       const isSelected = propId === currentSelectedId
       const isRent = property.operation === PropertyOperation.RENT
-      const el = makePinElement(getMapPinPrice(property), isSelected, isRent, !prevKeys.has(key))
+      const el = makePinElement(
+        getMapPinPrice(property),
+        isSelected,
+        isRent,
+        !prevKeys.has(key),
+        bucketColorFor(property)
+      )
       el.addEventListener('click', (e) => {
         e.stopPropagation()
         selectRef.current?.(property)
@@ -467,9 +486,26 @@ export default function MapView({
     }
     const data = propsDataRef.current
     const { cells, legend } = computePriceZones(data, zoneModeRef.current)
+    globalCellsRef.current = cells
     setZoneRanges(legend.ranges as Record<ZoneBucket, [number, number]>)
-    zoneGeoRef.current = propertyHexesToGeoJSON(data, cells)
+    const bucket = activeBucketRef.current
+    zoneGeoRef.current = zonesToGeoJSON(bucket ? cells.filter((c) => c.bucket === bucket) : cells)
     source.setData(zoneGeoRef.current)
+  }
+
+  // Zone color for a property's pin (diamond), or null when zones are hidden.
+  function bucketColorFor(p: Property): string | null {
+    if (!zonesOnRef.current || !globalCellsRef.current) return null
+    const bucket = findZone(globalCellsRef.current, p.location.latitude, p.location.longitude)
+      ?.bucket
+    return bucket ? getZoneColor(bucket) : null
+  }
+
+  // Recompute zones + rebuild pins. Called whenever zones/filters change.
+  function refresh() {
+    updateZones()
+    buildIndex()
+    renderClusters()
   }
 
   // Idempotent: re-add the zone source/layer if setStyle removed them, then
@@ -481,21 +517,13 @@ export default function MapView({
     updateZones()
   }
 
-  // Rebuild the index + redraw when the dataset changes.
+  // Rebuild the index + redraw when the dataset, zone mode, visibility or the
+  // active zone filter changes.
   useEffect(() => {
     if (!readyRef.current) return
-    buildIndex()
-    renderClusters()
-    updateZones()
+    refresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties])
-
-  // Recompute zones when the price mode (sale/rent) or visibility changes.
-  useEffect(() => {
-    if (!readyRef.current) return
-    updateZones()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoneMode, zonesOn])
+  }, [properties, activeBucket, zoneMode, zonesOn])
 
   // Redraw (restyle pins) when the selection changes.
   useEffect(() => {
@@ -612,14 +640,34 @@ export default function MapView({
         </div>
 
         {zonesOn && zoneRanges && (
-          <div className="rounded-xl border border-outline-variant/40 shadow-elevated bg-surface-container-low p-3 w-52">
-            <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold mb-2">
-              Zonas por precio · {zoneMode === 'sale' ? 'venta' : 'arriendo'}
-            </p>
+          <div className="rounded-xl border border-outline-variant/40 shadow-elevated bg-surface-container-low p-3 w-56">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">
+                Zonas por precio · {zoneMode === 'sale' ? 'venta' : 'arriendo'}
+              </p>
+              {activeBucket && (
+                <button
+                  onClick={() => setActiveBucket(null)}
+                  className="text-[10px] font-semibold text-primary hover:underline"
+                >
+                  Ver todos
+                </button>
+              )}
+            </div>
             {(['economic', 'mid', 'premium'] as ZoneBucket[]).map((bucket) => {
               const range = zoneRanges[bucket]
+              const active = activeBucket === bucket
               return (
-                <div key={bucket} className="flex items-center gap-2 text-xs py-0.5">
+                <button
+                  key={bucket}
+                  onClick={() => setActiveBucket(active ? null : bucket)}
+                  title={`Mostrar solo ${bucket === 'economic' ? 'económicas' : bucket === 'mid' ? 'de valor medio' : 'premium'}`}
+                  className={`flex items-center gap-2 text-xs py-1.5 px-2 -mx-2 rounded-lg w-full text-left transition-all ${
+                    active
+                      ? 'bg-primary/10 ring-1 ring-primary'
+                      : 'hover:bg-surface-container-highest'
+                  }`}
+                >
                   <span
                     className="w-3 h-3 rounded-sm shrink-0"
                     style={{ backgroundColor: getZoneColor(bucket) }}
@@ -633,7 +681,7 @@ export default function MapView({
                       {formatPriceShort(range[1], Currency.CLP)}
                     </span>
                   )}
-                </div>
+                </button>
               )
             })}
           </div>
