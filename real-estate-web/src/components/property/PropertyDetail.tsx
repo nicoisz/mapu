@@ -17,10 +17,12 @@ import {
   MapPin,
   MessageCircle,
   Move,
+  Maximize2,
   Phone,
   Share2,
   Shield,
   Star,
+  X,
 } from 'lucide-react'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
@@ -55,6 +57,7 @@ const AMENITY_MAP: { key: keyof Property['features']; label: string }[] = [
 
 export function PropertyDetail({ property }: PropertyDetailProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0)
+  const [mapOpen, setMapOpen] = useState(false)
   const { isFavorite, toggle } = useFavoritesContext()
   const fav = isFavorite(property.id)
   const { amount, suffix } = getDisplayPrice(property)
@@ -398,10 +401,19 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           {/* Location map */}
           <div className="bg-surface-container-low border border-outline-variant/60 rounded-xl p-4">
             <h2 className="font-semibold text-on-surface mb-3">Ubicación</h2>
-            <MiniMap
-              latitude={property.location.latitude}
-              longitude={property.location.longitude}
-            />
+            <div className="relative">
+              <MiniMap
+                latitude={property.location.latitude}
+                longitude={property.location.longitude}
+              />
+              <button
+                onClick={() => setMapOpen(true)}
+                aria-label="Ampliar mapa"
+                className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-surface-container-high/95 backdrop-blur rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface shadow-soft border border-outline-variant/50 hover:text-primary transition-colors"
+              >
+                <Maximize2 size={13} /> Ampliar
+              </button>
+            </div>
             <p className="text-sm text-on-surface-variant mt-3 flex items-start gap-1.5">
               <MapPin size={14} className="shrink-0 mt-0.5" />
               <span>
@@ -412,6 +424,38 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen map overlay */}
+      {mapOpen && (
+        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center justify-between p-4 pb-2">
+            <h2 className="font-headline font-semibold text-on-surface">Ubicación</h2>
+            <button
+              onClick={() => setMapOpen(false)}
+              aria-label="Cerrar mapa"
+              className="p-2 rounded-lg border border-outline-variant/60 text-on-surface-variant hover:text-error hover:border-error transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className="flex-1 px-4 pb-4">
+            <div className="w-full h-full rounded-2xl overflow-hidden border border-outline-variant/60">
+              <MiniMap
+                latitude={property.location.latitude}
+                longitude={property.location.longitude}
+                interactive
+              />
+            </div>
+            <p className="text-sm text-on-surface-variant mt-3 flex items-start gap-1.5">
+              <MapPin size={14} className="shrink-0 mt-0.5" />
+              <span>
+                {property.location.displayAddress ??
+                  `${property.location.address.street} ${property.location.address.number ?? ''}, ${property.location.address.city}`}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Mobile sticky CTA */}
       <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
