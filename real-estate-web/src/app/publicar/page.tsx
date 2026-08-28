@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { MiniMap } from '@/components/map/MiniMap'
 import { LocationPicker } from '@/components/map/LocationPicker'
+import { GlowLoader } from '@/components/ui/GlowLoader'
 import { REGIONS, communesForRegion, localitiesForCommune, titleCase } from '@/data/chileanLocations'
 import { computePriceZones, findZone, getZoneColor, ZoneCell, ZoneMode } from '@/lib/priceZones'
 import { formatPriceShort } from '@/lib/utils'
@@ -63,19 +64,31 @@ interface PendingImage {
 }
 
 function Section({
+  step,
   title,
   desc,
   children,
 }: {
+  step?: number
   title: string
   desc?: string
   children: React.ReactNode
 }) {
   return (
-    <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 p-5 md:p-6">
-      <h2 className="font-headline font-semibold text-lg text-on-surface">{title}</h2>
-      {desc && <p className="text-sm text-on-surface-variant mt-0.5 mb-4">{desc}</p>}
-      {!desc && <div className="mb-4" />}
+    <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 p-5 md:p-6 transition-shadow hover:shadow-soft">
+      <div className="flex items-center gap-3 mb-4">
+        {step !== undefined && (
+          <span className="w-9 h-9 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+            {step}
+          </span>
+        )}
+        <div className="min-w-0">
+          <h2 className="font-headline font-semibold text-lg text-on-surface leading-tight">
+            {title}
+          </h2>
+          {desc && <p className="text-sm text-on-surface-variant mt-0.5">{desc}</p>}
+        </div>
+      </div>
       <div className="space-y-4">{children}</div>
     </section>
   )
@@ -460,23 +473,32 @@ export default function PublicarPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 pb-32 lg:pb-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-4"
+          className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-5"
         >
           <ArrowLeft size={18} /> Volver al panel
         </Link>
 
-        <div className="mb-6">
-          <h1 className="font-headline text-3xl font-bold text-on-surface">
+        <div className="mb-7">
+          <h1 className="font-headline text-3xl md:text-4xl font-bold text-on-surface tracking-tight">
             {isEditing ? 'Edita tu propiedad' : 'Publica tu propiedad'}
           </h1>
-          <p className="text-on-surface-variant mt-1">
+          <p className="text-on-surface-variant mt-1.5">
             {isEditing
               ? 'Actualiza los datos y guarda los cambios.'
               : 'Completa los datos y aparecerá en el catálogo al instante.'}
           </p>
+          <div className="mt-4 flex items-center gap-1.5">
+            {['Básico', 'Ubicación', 'Características', 'Precio', 'Fotos'].map((s, i) => (
+              <span
+                key={s}
+                className="h-1.5 flex-1 max-w-16 rounded-full bg-primary/25"
+                title={`Paso ${i + 1}: ${s}`}
+              />
+            ))}
+          </div>
         </div>
 
         {!canPublish && !isEditing && (
@@ -491,8 +513,10 @@ export default function PublicarPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <Section title="Lo básico">
+        <form id="publicar-form" onSubmit={handleSubmit} className="space-y-5">
+          <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
+            <div className="space-y-5 min-w-0">
+          <Section step={1} title="Lo básico" desc="Define qué estás publicando">
             {/* Operation */}
             <div>
               <span className={labelCls}>Operación</span>
@@ -553,7 +577,7 @@ export default function PublicarPage() {
             </div>
           </Section>
 
-          <Section title="Ubicación">
+          <Section step={2} title="Ubicación">
             <div>
               <label className={labelCls} htmlFor="region">
                 Región
@@ -731,7 +755,7 @@ export default function PublicarPage() {
             </div>
           </Section>
 
-          <Section title="Características">
+          <Section step={3} title="Características">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Input
@@ -772,7 +796,7 @@ export default function PublicarPage() {
             </div>
           </Section>
 
-          <Section title="Precio">
+          <Section step={4} title="Precio">
             <div>
               <Input
                 label={
@@ -798,8 +822,7 @@ export default function PublicarPage() {
             </label>
           </Section>
 
-          <Section
-            title="Fotos"
+          <Section step={5} title="Fotos"
             desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}
           >
             <input
@@ -876,32 +899,95 @@ export default function PublicarPage() {
               {submitError}
             </div>
           )}
+          </div>
 
-          <div className="flex gap-3 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push('/dashboard')}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
+          {/* Sticky rail (desktop): resumen + acción */}
+          <aside className="hidden lg:block lg:sticky lg:top-6">
+            <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-5 space-y-4">
+              <p className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">
+                Resumen
+              </p>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    operation === PropertyOperation.RENT
+                      ? 'bg-rent/10 text-rent'
+                      : 'bg-primary/10 text-primary'
+                  }`}
+                >
+                  {OPERATION_LABELS[operation]}
+                </span>
+                <span className="font-headline font-bold text-on-surface text-lg truncate">
+                  {form.price ? formatPriceShort(Number(form.price), Currency.CLP) : '—'}
+                </span>
+              </div>
+              <p className="text-sm text-on-surface-variant line-clamp-2">
+                {form.title || 'Sin título'}
+              </p>
+              <p className="text-xs text-on-surface-variant">
+                {[form.commune, form.city, form.region].filter(Boolean).join(' · ') || 'Sin ubicación'}
+              </p>
+              <div className="pt-2 space-y-2 border-t border-outline-variant/30">
+                <Button
+                  type="submit"
+                  loading={submitting}
+                  disabled={!canPublish && !isEditing}
+                  fullWidth
+                >
+                  <Check size={16} />{' '}
+                  {submitting
+                    ? 'Subiendo fotos…'
+                    : isEditing
+                      ? 'Guardar cambios'
+                      : 'Publicar propiedad'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push('/dashboard')}
+                  fullWidth
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </aside>
+          </div>
+        </form>
+
+        {/* Mobile sticky action bar */}
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/60 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0">
+              <p className="font-headline font-bold text-on-surface text-base leading-tight truncate">
+                {form.price ? formatPriceShort(Number(form.price), Currency.CLP) : 'Sin precio'}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">
+                {OPERATION_LABELS[operation]}
+              </p>
+            </div>
             <Button
               type="submit"
+              form="publicar-form"
               loading={submitting}
               disabled={!canPublish && !isEditing}
               className="flex-1"
             >
-              <Check size={16} />{' '}
-              {submitting
-                ? 'Subiendo fotos…'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Publicar propiedad'}
+              {isEditing ? 'Guardar' : 'Publicar'}
             </Button>
           </div>
-        </form>
+        </div>
       </div>
+
+      {submitting && (
+        <div className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center p-6">
+          <GlowLoader
+            fill
+            label="Publicando tu propiedad…"
+            className="max-w-sm w-full h-auto"
+          />
+        </div>
+      )}
     </div>
   )
 }
