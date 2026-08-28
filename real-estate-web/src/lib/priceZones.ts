@@ -200,8 +200,7 @@ export function zonesToGeoJSON(cells: ZoneCell[]): GeoJSON.FeatureCollection {
 }
 
 /** Scales a hex's vertices around its center — used by the elastic animation. */
-export function scaleZoneGeometry(
-  verts: [number, number][],
+export function scaleZoneGeometry(  verts: [number, number][],
   center: { lat: number; lng: number },
   scale: number
 ): [number, number][] {
