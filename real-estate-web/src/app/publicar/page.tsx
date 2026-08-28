@@ -12,15 +12,16 @@ import {
   validateImageFile,
   deletePropertyImages,
 } from '@/services/storageService'
-import { geocodeAddress } from '@/services/geocodingService'
+import { geocodeAddress, searchAddress, reverseGeocode, GeocodeSuggestion } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { MiniMap } from '@/components/map/MiniMap'
+import { LocationPicker } from '@/components/map/LocationPicker'
+import { REGIONS, communesForRegion, localitiesForCommune, titleCase } from '@/data/chileanLocations'
 import { computePriceZones, findZone, getZoneColor, ZoneCell, ZoneMode } from '@/lib/priceZones'
 import { formatPriceShort } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
 import {
-  ChileanRegion,
   ContactMethod,
   Currency,
   PropertyOperation,
@@ -36,7 +37,7 @@ const TYPES = [
   PropertyType.COMMERCIAL,
   PropertyType.WAREHOUSE,
 ]
-const REGIONS = Object.values(ChileanRegion)
+const DEFAULT_REGION = REGIONS.find((r) => r.includes('Metropolitana')) ?? REGIONS[0]
 const MAX_IMAGES = 10
 
 const publishSchema = z.object({
@@ -101,7 +102,7 @@ export default function PublicarPage() {
     street: '',
     commune: '',
     city: '',
-    region: ChileanRegion.METROPOLITANA,
+    region: DEFAULT_REGION,
     area: '',
     bedrooms: '',
     bathrooms: '',
@@ -115,6 +116,41 @@ export default function PublicarPage() {
   const [notFound, setNotFound] = useState(false)
   const originalPathsRef = useRef<string[]>([])
   const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }))
+
+  // ── Ubicación: geocoder + pin ───────────────────────────────────
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Aplica coordenadas y, vía reverse-geocoding, autocompleta dirección/comuna/ciudad.
+  async function applyCoords(lat: number, lng: number) {
+    setCoords({ lat, lng })
+    setSuggestions([])
+    const rev = await reverseGeocode(lat, lng)
+    if (!rev) return
+    setForm((f) => ({
+      ...f,
+      street: [rev.street, rev.number].filter(Boolean).join(' ') || f.street,
+      commune: f.commune || rev.commune || f.commune,
+      city: f.city || rev.city || f.city,
+    }))
+  }
+
+  function handleStreetChange(value: string) {
+    set('street', value)
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    if (value.trim().length < 3) {
+      setSuggestions([])
+      return
+    }
+    searchTimerRef.current = setTimeout(() => {
+      void searchAddress(value, { commune: form.commune }).then((res) => setSuggestions(res))
+    }, 450)
+  }
+
+  function handleMapPick(lat: number, lng: number) {
+    void applyCoords(lat, lng)
+  }
 
   // ── Price-zone context for this listing ─────────────────────────
   // Fetch the active catalogue once so we can classify the entered address
@@ -208,14 +244,16 @@ export default function PublicarPage() {
           street: property.location.address.street,
           commune: property.location.address.commune ?? '',
           city: property.location.address.city,
-          region: property.location.address.region,
-          area: String(property.features.area),
-          bedrooms: property.features.bedrooms != null ? String(property.features.bedrooms) : '',
+          region: REGIONS.includes(property.location.address.region)
+            ? property.location.address.region
+            : DEFAULT_REGION,
+          area: String(property.features.area),          bedrooms: property.features.bedrooms != null ? String(property.features.bedrooms) : '',
           bathrooms: property.features.bathrooms != null ? String(property.features.bathrooms) : '',
           parkingSpots:
             property.features.parkingSpots != null ? String(property.features.parkingSpots) : '',
           negotiable: property.pricing.isNegotiable,
         })
+        setCoords({ lat: property.location.latitude, lng: property.location.longitude })
         setImages(
           property.media.images.map((img) => ({
             file: null,
@@ -344,26 +382,29 @@ export default function PublicarPage() {
 
       const v = parsed.data
       const isRent = operation === PropertyOperation.RENT
-      // Geocode the address; fall back to the Santiago center when unavailable.
-      const coords = await geocodeAddress({
-        street: v.street,
-        commune: v.commune,
-        city: v.city,
-        region: form.region,
-      })
+      // Prefer the picked pin/geocoder coords; fall back to geocoding the
+      // address, then to the Santiago center.
+      const picked = coords
+        ? { latitude: coords.lat, longitude: coords.lng }
+        : await geocodeAddress({
+            street: v.street,
+            commune: v.commune,
+            city: v.city,
+            region: form.region,
+          })
       const data: Partial<Property> = {
         title: v.title,
         description: v.description,
         type,
         operation,
         location: {
-          latitude: coords?.latitude ?? DEFAULT_MAP_CENTER.latitude,
-          longitude: coords?.longitude ?? DEFAULT_MAP_CENTER.longitude,
+          latitude: picked?.latitude ?? DEFAULT_MAP_CENTER.latitude,
+          longitude: picked?.longitude ?? DEFAULT_MAP_CENTER.longitude,
           address: {
             street: v.street,
             city: v.city || v.commune,
             commune: v.commune || undefined,
-            region: form.region,
+            region: form.region as Property['location']['address']['region'],
             country: 'Chile',
           },
           displayAddress: [v.street, v.commune, v.city].filter(Boolean).join(', '),
@@ -513,29 +554,6 @@ export default function PublicarPage() {
           </Section>
 
           <Section title="Ubicación">
-            <Input
-              label="Calle y número"
-              placeholder="Av. Irarrázaval 1234"
-              value={form.street}
-              onChange={(e) => set('street', e.target.value)}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Input
-                  label="Comuna"
-                  placeholder="Ñuñoa"
-                  value={form.commune}
-                  onChange={(e) => set('commune', e.target.value)}
-                />
-                {errors.commune && <p className={errorCls}>{errors.commune}</p>}
-              </div>
-              <Input
-                label="Ciudad"
-                placeholder="Santiago"
-                value={form.city}
-                onChange={(e) => set('city', e.target.value)}
-              />
-            </div>
             <div>
               <label className={labelCls} htmlFor="region">
                 Región
@@ -543,7 +561,12 @@ export default function PublicarPage() {
               <select
                 id="region"
                 value={form.region}
-                onChange={(e) => set('region', e.target.value as ChileanRegion)}
+                onChange={(e) => {
+                  set('region', e.target.value)
+                  set('commune', '')
+                  set('city', '')
+                  setCoords(null)
+                }}
                 className={selectCls}
               >
                 {REGIONS.map((r) => (
@@ -553,6 +576,93 @@ export default function PublicarPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className={labelCls} htmlFor="commune">
+                Comuna
+              </label>
+              <select
+                id="commune"
+                value={form.commune}
+                onChange={(e) => {
+                  set('commune', e.target.value)
+                  set('city', '')
+                  setCoords(null)
+                }}
+                className={selectCls}
+              >
+                <option value="">Selecciona una comuna</option>
+                {communesForRegion(form.region).map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="city">
+                Ciudad / Localidad
+              </label>
+              <select
+                id="city"
+                value={form.city}
+                onChange={(e) => {
+                  set('city', e.target.value)
+                  setCoords(null)
+                }}
+                className={selectCls}
+              >
+                <option value="">Selecciona una ciudad</option>
+                {localitiesForCommune(form.commune).map((c) => (
+                  <option key={c} value={c}>
+                    {titleCase(c)}
+                  </option>
+                ))}
+              </select>
+              {errors.commune && <p className={errorCls}>{errors.commune}</p>}
+            </div>
+
+            {/* Address geocoder */}
+            <div className="relative">
+              <label className={labelCls} htmlFor="street">
+                Calle y número
+              </label>
+              <Input
+                id="street"
+                placeholder="Escribe la dirección… (ej: Av. Irarrázaval 1234)"
+                value={form.street}
+                onChange={(e) => handleStreetChange(e.target.value)}
+              />
+              {suggestions.length > 0 && (
+                <ul className="absolute z-20 mt-1 w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-elevated max-h-56 overflow-y-auto">
+                  {suggestions.map((s) => (
+                    <li key={s.label}>
+                      <button
+                        type="button"
+                        onClick={() => applyCoords(s.latitude, s.longitude)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-surface-container-highest"
+                      >
+                        {s.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Map with draggable pin */}
+            {coords && (
+              <div>
+                <span className={labelCls}>Pin de ubicación</span>
+                <LocationPicker
+                  latitude={coords.lat}
+                  longitude={coords.lng}
+                  onChange={handleMapPick}
+                />
+                <p className="text-xs text-on-surface-variant mt-1.5">
+                  Arrastra el pin para ajustar la ubicación exacta.
+                </p>
+              </div>
+            )}
 
             {/* Sector price context */}
             <div>
