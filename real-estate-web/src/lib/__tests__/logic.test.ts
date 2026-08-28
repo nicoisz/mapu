@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   computePriceZones,
   zonesToGeoJSON,
+  propertyHexesToGeoJSON,
   easeOutElastic,
   scaleZoneGeometry,
   ZoneMode,
@@ -147,8 +148,34 @@ describe('computePriceZones', () => {
     expect(coords.length).toBe(7) // 6 vértices + cierre
   })
 
-  it('ubica el centro de la celda cerca de la propiedad (inversa correcta)', () => {
-    // Santiago: la celda resultante debe quedar en lat ~-33, no cerca del ecuador.
+  it('centra el hexágono en el pin de cada propiedad', () => {
+    const lat = -33.4489
+    const lng = -70.6693
+    const p = makeProperty({
+      id: 'scl2',
+      location: {
+        latitude: lat,
+        longitude: lng,
+        address: {
+          street: 'Av. Las Condes',
+          city: 'Santiago',
+          region: ChileanRegion.METROPOLITANA,
+          country: 'Chile',
+        },
+      },
+    })
+    const { cells } = computePriceZones([p], 'sale')
+    const fc = propertyHexesToGeoJSON([p], cells)
+    expect(fc.features).toHaveLength(1)
+    const ring = (fc.features[0].geometry as GeoJSON.Polygon).coordinates[0]
+    // Centro = punto medio de dos vértices opuestos (v0 ↔ v3) → igual al pin.
+    const cLat = (ring[0][1] + ring[3][1]) / 2
+    const cLng = (ring[0][0] + ring[3][0]) / 2
+    expect(cLat).toBeCloseTo(lat, 6)
+    expect(cLng).toBeCloseTo(lng, 6)
+  })
+
+  it('ubica el centro de la celda cerca de la propiedad (inversa correcta)', () => {    // Santiago: la celda resultante debe quedar en lat ~-33, no cerca del ecuador.
     const p = makeProperty({
       id: 'scl',
       location: {

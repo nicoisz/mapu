@@ -11,7 +11,7 @@ import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
 import {
   computePriceZones,
-  zonesToGeoJSON,
+  propertyHexesToGeoJSON,
   findZone,
   getZoneColor,
   easeOutElastic,
@@ -489,7 +489,11 @@ export default function MapView({
     globalCellsRef.current = cells
     setZoneRanges(legend.ranges as Record<ZoneBucket, [number, number]>)
     const bucket = activeBucketRef.current
-    zoneGeoRef.current = zonesToGeoJSON(bucket ? cells.filter((c) => c.bucket === bucket) : cells)
+    // One hexagon per property, centered on its pin. Filter to the active bucket.
+    const visible = bucket
+      ? data.filter((p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket)
+      : data
+    zoneGeoRef.current = propertyHexesToGeoJSON(visible, cells)
     source.setData(zoneGeoRef.current)
   }
 
