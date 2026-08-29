@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
+import { ExchangeIndicators } from '@/components/layout/ExchangeIndicators'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -203,6 +204,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           collapsed ? 'p-2' : 'p-3'
         )}
       >
+        {!collapsed && <ExchangeIndicators className="justify-center mb-3" />}
         {isAuthenticated && user ? (
           <div className={cn('space-y-2', collapsed && 'space-y-3')}>
             <Link
