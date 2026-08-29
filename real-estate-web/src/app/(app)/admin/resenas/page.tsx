@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { reviewService, Review } from '@/services/reviewService'
+import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([])
@@ -37,14 +39,17 @@ export default function AdminReviewsPage() {
       {loading ? (
         <div className="text-center py-8 text-on-surface-variant text-sm">Cargando reseñas…</div>
       ) : reviews.length === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant text-sm">Sin reseñas</div>
+        <Card>
+          <EmptyState
+            icon={<Star size={22} />}
+            title="Sin reseñas"
+            description="Las reseñas de la plataforma aparecerán aquí."
+          />
+        </Card>
       ) : (
         <div className="space-y-2">
           {reviews.map((r) => (
-            <div
-              key={r.id}
-              className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4"
-            >
+            <Card key={r.id} className="p-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-on-surface-variant">
@@ -89,7 +94,7 @@ export default function AdminReviewsPage() {
                 <p className="text-xs text-on-surface-variant mt-1 italic">«{r.property_title}»</p>
               )}
               <p className="text-sm text-on-surface mt-1">{r.comment}</p>
-            </div>
+            </Card>
           ))}
         </div>
       )}

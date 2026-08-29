@@ -4,22 +4,14 @@ import { useEffect, useState } from 'react'
 import { CreditCard, Info } from 'lucide-react'
 import { adminService, RevenueSnapshot } from '@/services/adminService'
 import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { StatCard } from '@/components/ui/StatCard'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 const PLAN_LABELS: Record<string, string> = { free: 'Gratuito', premium: 'Premium' }
 
 function clp(amount: number): string {
   return `$${amount.toLocaleString('es-CL')}`
-}
-
-function StatCard({ label, value }: { label: string; value?: number | string }) {
-  return (
-    <div className="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/40">
-      <div className="font-headline font-bold text-2xl text-primary">
-        {value !== undefined ? value : '…'}
-      </div>
-      <div className="text-xs text-on-surface-variant mt-0.5">{label}</div>
-    </div>
-  )
 }
 
 export default function AdminRevenuePage() {
@@ -46,15 +38,15 @@ export default function AdminRevenuePage() {
   if (!data) return null
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Ingresos totales" value={clp(data.totalRevenue)} />
         <StatCard label="Pagos pagados" value={data.paidCount} />
         <StatCard label="Pagos pendientes" value={data.pendingCount} />
         <StatCard label="Propiedades vendidas" value={data.soldProperties} />
       </div>
 
-      <div className="flex items-start gap-2 bg-surface-container-low rounded-xl border border-outline-variant/40 p-3 text-xs text-on-surface-variant">
+      <div className="flex items-start gap-2 rounded-2xl border border-outline-variant/50 bg-surface-container-low p-4 text-xs text-on-surface-variant">
         <Info size={14} className="shrink-0 mt-0.5 text-primary" />
         <p>
           Ingresos calculados sobre pagos con estado <span className="font-medium">paid</span>.
@@ -64,11 +56,11 @@ export default function AdminRevenuePage() {
       </div>
 
       {data.byPlan.length > 0 && (
-        <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-          <h2 className="font-headline font-semibold text-on-surface text-sm mb-3">
-            Ingresos por plan
-          </h2>
-          <div className="space-y-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ingresos por plan</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
             {data.byPlan.map(({ plan, total, count }) => (
               <div
                 key={plan}
@@ -83,16 +75,16 @@ export default function AdminRevenuePage() {
                 <p className="text-sm font-bold text-primary">{clp(total)}</p>
               </div>
             ))}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       )}
 
       {data.byMonth.length > 0 && (
-        <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-          <h2 className="font-headline font-semibold text-on-surface text-sm mb-3">
-            Ingresos por mes
-          </h2>
-          <div className="space-y-1.5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ingresos por mes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1.5">
             {data.byMonth.map(({ month, total }) => (
               <div key={month} className="flex items-center gap-2">
                 <span className="text-xs text-on-surface-variant w-20 shrink-0">{month}</span>
@@ -107,48 +99,54 @@ export default function AdminRevenuePage() {
                 </span>
               </div>
             ))}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       )}
 
-      <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-        <h2 className="font-headline font-semibold text-on-surface text-sm mb-3">
-          Pagos recientes
-        </h2>
-        {data.recent.length === 0 ? (
-          <div className="text-center py-6 text-on-surface-variant text-sm">Sin pagos aún</div>
-        ) : (
-          <div className="space-y-2">
-            {data.recent.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between gap-3 border-b border-outline-variant/40 pb-2 last:border-0 last:pb-0"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <CreditCard size={14} className="text-on-surface-variant shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm text-on-surface truncate">
-                      {PLAN_LABELS[p.plan] ?? p.plan}
-                    </p>
-                    <p className="text-xs text-on-surface-variant truncate">
-                      {new Date(p.created_at).toLocaleString('es-CL')}
-                    </p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Pagos recientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.recent.length === 0 ? (
+            <EmptyState
+              icon={<CreditCard size={22} />}
+              title="Sin pagos aún"
+              description="Los pagos aparecerán aquí cuando haya transacciones."
+            />
+          ) : (
+            <div className="space-y-2">
+              {data.recent.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 border-b border-outline-variant/40 pb-2 last:border-0 last:pb-0"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CreditCard size={14} className="text-on-surface-variant shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm text-on-surface truncate">
+                        {PLAN_LABELS[p.plan] ?? p.plan}
+                      </p>
+                      <p className="text-xs text-on-surface-variant truncate">
+                        {new Date(p.created_at).toLocaleString('es-CL')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-bold text-on-surface">{clp(p.amount)}</span>
+                    <Badge
+                      size="sm"
+                      variant={p.status === 'paid' ? 'success' : 'gray'}
+                    >
+                      {p.status}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-bold text-on-surface">{clp(p.amount)}</span>
-                  <Badge
-                    size="sm"
-                    variant={p.status === 'paid' ? 'success' : 'gray'}
-                  >
-                    {p.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

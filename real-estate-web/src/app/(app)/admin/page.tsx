@@ -2,19 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Bug, Building2, TrendingUp, Users } from 'lucide-react'
+import { Bug, Building2, ChevronRight, TrendingUp, Users } from 'lucide-react'
 import { adminService } from '@/services/adminService'
-
-function StatCard({ label, value, suffix }: { label: string; value?: number; suffix?: string }) {
-  return (
-    <div className="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/40">
-      <div className="font-headline font-bold text-2xl text-primary">
-        {value !== undefined ? `${value.toLocaleString('es-CL')}${suffix ?? ''}` : '…'}
-      </div>
-      <div className="text-xs text-on-surface-variant mt-0.5">{label}</div>
-    </div>
-  )
-}
+import { StatCard } from '@/components/ui/StatCard'
 
 export default function AdminPanelPage() {
   const [stats, setStats] = useState<{
@@ -47,26 +37,29 @@ export default function AdminPanelPage() {
   ]
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Usuarios" value={stats?.users} />
         <StatCard label="Propiedades totales" value={stats?.properties} />
         <StatCard label="Propiedades activas" value={stats?.active} />
         <StatCard label="Ingresos (CLP)" value={revenue ?? undefined} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {quickLinks.map(({ href, label, desc, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-3 bg-surface-container-low rounded-xl border border-outline-variant/40 p-4 hover:border-primary/50 transition-colors"
+            className="group flex items-center gap-4 rounded-2xl border border-outline-variant/50 bg-surface-container-low p-4 shadow-sm shadow-black/[0.02] transition-colors hover:border-primary/50"
           >
-            <Icon size={20} className="text-primary shrink-0" />
-            <div className="min-w-0">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Icon size={20} />
+            </span>
+            <div className="min-w-0 flex-1">
               <p className="font-medium text-on-surface text-sm">{label}</p>
               <p className="text-xs text-on-surface-variant">{desc}</p>
             </div>
+            <ChevronRight size={16} className="text-on-surface-variant/50 transition-transform group-hover:translate-x-0.5" />
           </Link>
         ))}
       </div>
