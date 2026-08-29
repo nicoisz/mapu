@@ -1,9 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bug, ChevronDown, RefreshCw, Search } from 'lucide-react'
+import { Bug, ChevronDown, RefreshCw } from 'lucide-react'
 import { adminService, ErrorLogRow } from '@/services/adminService'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/utils'
 
 function formatWhen(iso: string): string {
@@ -31,16 +34,14 @@ export default function AdminErrorLogPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-surface-container-lowest rounded-lg border border-outline-variant/60 px-3 py-2">
-          <Search size={16} className="text-on-surface-variant shrink-0" />
-          <input
+        <div className="flex-1">
+          <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load(search)}
             placeholder="Buscar por mensaje, usuario o ruta…"
-            className="flex-1 bg-transparent text-sm focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
           />
         </div>
         <Button variant="outline" size="sm" onClick={() => load('')}>
@@ -53,21 +54,17 @@ export default function AdminErrorLogPage() {
       {loading && rows.length === 0 ? (
         <div className="text-center py-8 text-on-surface-variant text-sm">Cargando errores…</div>
       ) : rows.length === 0 ? (
-        <div className="flex flex-col items-center py-12 text-center text-on-surface-variant">
-          <Bug size={32} className="text-on-surface-variant/40 mb-3" />
-          <p className="font-medium text-on-surface text-sm">Sin errores registrados</p>
-          <p className="text-xs mt-1 max-w-xs">
-            Los errores de JavaScript de la app se registran aquí automáticamente (errores no
-            capturados y promesas rechazadas).
-          </p>
-        </div>
+        <Card>
+          <EmptyState
+            icon={<Bug size={22} />}
+            title="Sin errores registrados"
+            description="Los errores de JavaScript de la app se registran aquí automáticamente (errores no capturados y promesas rechazadas)."
+          />
+        </Card>
       ) : (
         <div className="space-y-2">
           {rows.map((r) => (
-            <div
-              key={r.id}
-              className="bg-surface-container-low rounded-xl border border-outline-variant/40 overflow-hidden"
-            >
+            <Card key={r.id} className="overflow-hidden">
               <button
                 className="w-full flex items-start gap-3 p-4 text-left hover:bg-surface-container/60 transition-colors"
                 onClick={() => setExpanded(expanded === r.id ? null : r.id)}
@@ -119,7 +116,7 @@ export default function AdminErrorLogPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}

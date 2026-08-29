@@ -100,7 +100,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
               href={href}
               onClick={() => setOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 active
                   ? 'bg-primary/10 text-primary'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -123,7 +123,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
               href="/dashboard"
               onClick={() => setOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 pathname === '/dashboard'
                   ? 'bg-primary/10 text-primary'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -142,7 +142,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           <div className="space-y-2">
             <Link
               href="/perfil"
-              className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-surface-container transition-colors"
+              className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container transition-colors"
             >
               <Avatar className="h-9 w-9">
                 {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}

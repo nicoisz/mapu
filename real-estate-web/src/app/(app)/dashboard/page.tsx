@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   AlertCircle,
+  Building2,
   Eye,
   Heart,
   Lock,
@@ -23,6 +24,11 @@ import { propertyService } from '@/services/propertyService'
 import { Sparkline } from '@/components/charts/Sparkline'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { StatCard } from '@/components/ui/StatCard'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { SectionHeading } from '@/components/ui/SectionHeading'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { GlowLoader } from '@/components/ui/GlowLoader'
 import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
 import { Property } from '@/types/property'
@@ -118,20 +124,17 @@ export default function DashboardPage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
-        <Lock size={48} className="text-on-surface-variant/40 mb-4" />
-        <h2 className="font-headline text-xl font-bold text-on-surface">
-          Necesitas iniciar sesión
-        </h2>
-        <p className="text-on-surface-variant text-sm mt-2">
-          Para gestionar tus propiedades debes tener una cuenta.
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
-        >
-          Iniciar sesión
-        </Link>
+      <div className="flex h-full flex-col items-center justify-center bg-background p-8">
+        <EmptyState
+          icon={<Lock size={22} />}
+          title="Necesitas iniciar sesión"
+          description="Para gestionar tus propiedades debes tener una cuenta."
+          action={
+            <Link href="/login" className="block">
+              <Button>Iniciar sesión</Button>
+            </Link>
+          }
+        />
       </div>
     )
   }
@@ -164,7 +167,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-20">
+    <div className="h-full overflow-y-auto bg-background pb-16">
       {/* Impersonation banner */}
       {impersonating && (
         <div className="sticky top-0 z-30 flex items-center gap-3 bg-primary/10 border-b border-primary/30 px-4 py-2">
@@ -184,98 +187,90 @@ export default function DashboardPage() {
       )}
 
       {/* Header */}
-      <div className="relative bg-surface-container-low border-b border-outline-variant/40 px-4 pt-7 pb-5 overflow-hidden">
-        <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[90px] pointer-events-none" />
-        <div className="relative flex items-center gap-3">
-          {user.avatar ? (
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-14 h-14 rounded-full object-cover border-2 border-primary/30"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xl font-bold">
-              {user.name.charAt(0)}
-            </div>
-          )}
-          <div>
-            <p className="font-headline font-bold text-xl text-on-surface">{user.name}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant={isPremium ? 'premium' : 'gray'} size="sm">
-                {isPremium ? '★ Premium' : 'Plan gratuito'}
-              </Badge>
-            </div>
-          </div>
-        </div>
+      <PageHeader
+        title={user.name}
+        badge={
+          <Badge variant={isPremium ? 'premium' : 'gray'} size="sm">
+            {isPremium ? '★ Premium' : 'Plan gratuito'}
+          </Badge>
+        }
+        description={
+          isPremium
+            ? 'Publica sin límites y haz crecer tu cartera.'
+            : `${remaining} de ${FREE_PLAN_LISTINGS_LIMIT} publicaciones gratuitas disponibles.`
+        }
+        actions={
+          <>
+            <Button
+              onClick={() => router.push('/publicar')}
+              disabled={!isPremium && remaining === 0}
+            >
+              <Plus size={16} />
+              Nueva propiedad
+            </Button>
+            {!isPremium && (
+              <Link href="/mejorar">
+                <Button variant="outline">
+                  <Star size={16} className="text-primary" />
+                  Premium
+                </Button>
+              </Link>
+            )}
+          </>
+        }
+      />
 
+      <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-6">
         {/* Stats */}
-        <div className="relative grid grid-cols-3 gap-3 mt-4">
-          <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">{activeProps.length}</div>
-            <div className="text-xs text-on-surface-variant mt-0.5">Activos</div>
-          </div>
-          <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">
-              {totals.views.toLocaleString()}
-            </div>
-            <div className="text-xs text-on-surface-variant mt-0.5">Vistas</div>
-          </div>
-          <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/40">
-            <div className="font-headline font-bold text-xl text-primary">{totals.contacts}</div>
-            <div className="text-xs text-on-surface-variant mt-0.5">Contactos</div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Propiedades activas"
+            value={activeProps.length}
+            icon={<Building2 size={16} />}
+            hint={`${properties.length} en total`}
+          />
+          <StatCard
+            label="Visitas"
+            value={totals.views}
+            icon={<Eye size={16} />}
+          />
+          <StatCard
+            label="Contactos"
+            value={totals.contacts}
+            icon={<MessageSquare size={16} />}
+          />
         </div>
 
         {/* Free plan limit */}
         {!isPremium && (
-          <div className="relative mt-4 bg-surface-container rounded-xl p-3 border border-outline-variant/40">
-            <div className="flex items-center justify-between text-sm mb-2 text-on-surface">
-              <span>Publicaciones gratuitas</span>
+          <Card className="p-5">
+            <div className="flex items-center justify-between text-sm text-on-surface">
+              <span className="font-medium">Publicaciones gratuitas</span>
               <span className="font-bold">
                 {remaining} / {FREE_PLAN_LISTINGS_LIMIT}
               </span>
             </div>
-            <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+            <div className="mt-3 h-2 rounded-full bg-surface-container-highest overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all"
+                className="h-full rounded-full bg-primary transition-all"
                 style={{ width: `${(remaining / FREE_PLAN_LISTINGS_LIMIT) * 100}%` }}
               />
             </div>
-          </div>
+          </Card>
         )}
-      </div>
-
-      <div className="p-4 space-y-4 max-w-3xl mx-auto">
-        {/* Actions */}
-        <div className="flex gap-3">
-          <Button
-            fullWidth
-            onClick={() => router.push('/publicar')}
-            disabled={!isPremium && remaining === 0}
-          >
-            <Plus size={16} />
-            Nueva propiedad
-          </Button>
-          {!isPremium && (
-            <Link href="/mejorar">
-              <Button variant="outline">
-                <Star size={16} className="text-primary" />
-                Premium
-              </Button>
-            </Link>
-          )}
-        </div>
 
         {/* Views metric */}
-        <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-          <h2 className="font-headline font-semibold text-on-surface text-sm mb-2">
-            Visitas (últimos 30 días)
-          </h2>
-          <Sparkline data={viewsSeries} />
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Visitas · últimos 30 días</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Sparkline data={viewsSeries} />
+          </CardContent>
+        </Card>
 
         {!isPremium && remaining === 0 && (
-          <div className="flex items-start gap-3 bg-error-container/40 border border-error/40 rounded-xl p-3 text-sm">
+          <div className="flex items-start gap-3 rounded-2xl border border-error/40 bg-error-container/40 p-4 text-sm">
             <AlertCircle size={16} className="text-error shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-on-surface">Límite alcanzado</p>
@@ -294,11 +289,8 @@ export default function DashboardPage() {
 
         {/* Active properties */}
         {activeProps.length > 0 && (
-          <section>
-            <h2 className="font-headline font-semibold text-on-surface mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-accent" />
-              Propiedades activas ({activeProps.length})
-            </h2>
+          <section className="space-y-4">
+            <SectionHeading title="Propiedades activas" count={activeProps.length} />
             <div className="space-y-3">
               {activeProps.map((property) => {
                 const { amount, suffix } = getDisplayPrice(property)
@@ -306,10 +298,7 @@ export default function DashboardPage() {
                   ? getRemainingDays(property.listing.expiresAt)
                   : null
                 return (
-                  <div
-                    key={property.id}
-                    className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4"
-                  >
+                  <Card key={property.id} className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <Link
@@ -369,7 +358,7 @@ export default function DashboardPage() {
                         </>
                       )}
                     </div>
-                  </div>
+                  </Card>
                 )
               })}
             </div>
@@ -378,17 +367,11 @@ export default function DashboardPage() {
 
         {/* Expired properties */}
         {expiredProps.length > 0 && (
-          <section>
-            <h2 className="font-headline font-semibold text-on-surface mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-outline" />
-              Propiedades expiradas ({expiredProps.length})
-            </h2>
+          <section className="space-y-4">
+            <SectionHeading title="Propiedades expiradas" count={expiredProps.length} />
             <div className="space-y-3">
               {expiredProps.map((property) => (
-                <div
-                  key={property.id}
-                  className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4 opacity-75"
-                >
+                <Card key={property.id} className="p-4 opacity-75">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-on-surface text-sm line-clamp-1">
@@ -428,18 +411,20 @@ export default function DashboardPage() {
                       </>
                     )}
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           </section>
         )}
 
         {!loadingProps && properties.length === 0 && (
-          <div className="text-center py-12 text-on-surface-variant">
-            <p className="text-4xl mb-3">🏠</p>
-            <p className="font-medium text-on-surface">Aún no has publicado propiedades</p>
-            <p className="text-sm mt-1">Haz clic en &quot;Nueva propiedad&quot; para comenzar</p>
-          </div>
+          <Card>
+            <EmptyState
+              icon={<Building2 size={22} />}
+              title="Aún no has publicado propiedades"
+              description="Haz clic en «Nueva propiedad» para comenzar."
+            />
+          </Card>
         )}
       </div>
     </div>

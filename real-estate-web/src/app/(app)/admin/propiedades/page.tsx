@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Search } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { propertyService } from '@/services/propertyService'
 import { PropertyCard } from '@/components/property/PropertyCard'
 import { rowToProperty } from '@/lib/propertyMapper'
 import { Property } from '@/types/property'
 import { STATUS_LABELS } from '@/constants'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function AdminPropertiesPage() {
   const [rows, setRows] = useState<Property[]>([])
@@ -62,16 +63,14 @@ export default function AdminPropertiesPage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-surface-container-lowest rounded-lg border border-outline-variant/60 px-3 py-2">
-          <Search size={16} className="text-on-surface-variant shrink-0" />
-          <input
+        <div className="flex-1">
+          <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load(status, search)}
             placeholder="Buscar por título…"
-            className="flex-1 bg-transparent text-sm focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
           />
         </div>
         <select
@@ -80,7 +79,7 @@ export default function AdminPropertiesPage() {
             setStatus(e.target.value)
             load(e.target.value, search)
           }}
-          className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none"
+          className="bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-3 py-2.5 text-sm text-on-surface focus:outline-none"
         >
           <option value="all">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -98,7 +97,10 @@ export default function AdminPropertiesPage() {
           Cargando propiedades…
         </div>
       ) : rows.length === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant text-sm">Sin resultados</div>
+        <EmptyState
+          title="Sin resultados"
+          description="No se encontraron propiedades para los filtros."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {rows.map((property) => (
