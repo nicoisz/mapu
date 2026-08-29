@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/Input'
 import { APP_CONFIG } from '@/constants'
 import { safeRedirectPath } from '@/lib/redirect'
 
+const DEFAULT_DESTINATION = '/buscar'
+
 export function LoginForm() {
   const router = useRouter()
   const { login, loginWithSocial, isLoading, error } = useAuthContext()
@@ -24,10 +26,13 @@ export function LoginForm() {
     []
   )
 
+  // Vuelve a ?next (p.ej. /admin) si vino de ahí; si no, al mapa /buscar.
+  const destination = next && next !== '/' ? next : DEFAULT_DESTINATION
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const result = await login(email, password)
-    if (result.success) router.push(next)
+    if (result.success) router.push(destination)
   }
 
   async function handleSocial(provider: 'google' | 'apple' | 'facebook') {
