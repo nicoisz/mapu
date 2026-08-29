@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -13,9 +13,11 @@ import {
   LogOut,
   Map,
   Menu,
+  PanelLeft,
   ShieldCheck,
   Star,
   TrendingUp,
+  UserRound,
   Users,
   X,
 } from 'lucide-react'
@@ -29,14 +31,38 @@ import { getAppRole, AppRole } from '@/lib/roles'
 interface NavItem {
   href: string
   label: string
-  icon: React.ComponentType<{ size?: number }>
+  icon: React.ComponentType<{ size?: number; className?: string }>
 }
+
+const COLLAPSE_KEY = 'mapu:sidebar-collapsed'
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuthContext()
   const { count: favCount } = useFavoritesContext()
   const [open, setOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Persistir colapso entre sesiones.
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1')
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      const next = !c
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0')
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }
 
   const role: AppRole = getAppRole(user)
 
@@ -48,6 +74,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
 
   const metricsItem: NavItem = { href: '/metricas', label: 'Métricas', icon: BarChart3 }
   const teamItem: NavItem = { href: '/equipo', label: 'Mi empresa', icon: Building2 }
+  const profileItem: NavItem = { href: '/perfil', label: 'Mi perfil', icon: UserRound }
 
   const adminItems: NavItem[] = [
     { href: '/admin', label: 'Panel', icon: ShieldCheck },
@@ -63,14 +90,14 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   let items: NavItem[]
   let showTeamSeparator = false
   if (role === 'superadmin') {
-    items = [...adminItems, metricsItem]
+    items = [...adminItems, metricsItem, profileItem]
     showTeamSeparator = true
   } else if (role === 'org_owner' || role === 'org_admin') {
-    items = [teamItem, metricsItem, ...exploreItems]
+    items = [teamItem, metricsItem, ...exploreItems, profileItem]
   } else if (role === 'org_agent') {
-    items = [teamItem, ...exploreItems, metricsItem]
+    items = [teamItem, ...exploreItems, metricsItem, profileItem]
   } else {
-    items = [...exploreItems, metricsItem]
+    items = [...exploreItems, metricsItem, profileItem]
   }
 
   function handleLogout() {
@@ -78,8 +105,36 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     window.location.href = '/login'
   }
 
+  const navLinkClasses = cn(
+    'relative flex items-center rounded-xl text-sm font-medium transition-colors',
+    collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5'
+  )
+
   const sidebar = (
-    <div className="flex h-full flex-col bg-surface-container-lowest border-r border-outline-variant/40">
+    <div className="flex h-full flex-col border-r border-outline-variant/40 bg-surface-container-lowest">
+      {/* Desktop collapse toggle */}
+      <div
+        className={cn(
+          'hidden h-12 shrink-0 items-center justify-between border-b border-outline-variant/40 md:flex',
+          collapsed ? 'px-2' : 'px-3'
+        )}
+      >
+        {!collapsed && (
+          <span className="font-headline text-sm font-bold text-primary">MapU</span>
+        )}
+        <button
+          onClick={toggleCollapsed}
+          className={cn(
+            'rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface',
+            collapsed && 'mx-auto'
+          )}
+          title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+          aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+        >
+          <PanelLeft size={18} className={cn('transition-transform', collapsed && 'rotate-180')} />
+        </button>
+      </div>
+
       <div className="flex justify-end px-3 py-2 md:hidden">
         <button
           onClick={() => setOpen(false)}
@@ -90,7 +145,12 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+      <nav
+        className={cn(
+          'flex-1 overflow-y-auto space-y-1',
+          collapsed ? 'p-2' : 'p-3'
+        )}
+      >
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`)
           return (
@@ -99,15 +159,16 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
               href={href}
               onClick={() => setOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                navLinkClasses,
                 active
                   ? 'bg-primary/10 text-primary'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               )}
+              title={collapsed ? label : undefined}
             >
-              <Icon size={18} />
-              {label}
-              {href === '/favoritos' && favCount > 0 && (
+              <Icon size={18} className="shrink-0" />
+              {!collapsed && label}
+              {!collapsed && href === '/favoritos' && favCount > 0 && (
                 <span className="ml-auto text-xs rounded-full px-1.5 py-px bg-accent text-white">
                   {favCount}
                 </span>
@@ -122,44 +183,62 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
               href="/dashboard"
               onClick={() => setOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                navLinkClasses,
                 pathname === '/dashboard'
                   ? 'bg-primary/10 text-primary'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               )}
+              title={collapsed ? 'Mi panel personal' : undefined}
             >
-              <LayoutDashboard size={18} />
-              Mi panel personal
+              <LayoutDashboard size={18} className="shrink-0" />
+              {!collapsed && 'Mi panel personal'}
             </Link>
           </>
         )}
       </nav>
 
-      <div className="p-3 border-t border-outline-variant/40">
+      <div
+        className={cn(
+          'border-t border-outline-variant/40',
+          collapsed ? 'p-2' : 'p-3'
+        )}
+      >
         {isAuthenticated && user ? (
-          <div className="space-y-2">
+          <div className={cn('space-y-2', collapsed && 'space-y-3')}>
             <Link
               href="/perfil"
-              className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container transition-colors"
+              onClick={() => setOpen(false)}
+              className={cn(
+                'flex items-center rounded-xl transition-colors hover:bg-surface-container',
+                collapsed ? 'justify-center px-2 py-2' : 'gap-3 px-2 py-2'
+              )}
+              title={collapsed ? user.name : undefined}
             >
-              <Avatar className="h-9 w-9">
+              <Avatar className="h-9 w-9 shrink-0">
                 {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-on-surface truncate">{user.name}</p>
-                <p className="text-xs text-on-surface-variant truncate">
-                  {role === 'superadmin' ? 'Superadmin' : user.email}
-                </p>
-              </div>
+              {!collapsed && (
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-on-surface truncate">{user.name}</p>
+                  <p className="text-xs text-on-surface-variant truncate">
+                    {role === 'superadmin' ? 'Superadmin' : user.email}
+                  </p>
+                </div>
+              )}
             </Link>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-on-surface-variant"
+              className={cn(
+                'text-on-surface-variant',
+                collapsed ? 'justify-center px-2' : 'w-full justify-start'
+              )}
               onClick={handleLogout}
+              title={collapsed ? 'Cerrar sesión' : undefined}
             >
-              <LogOut size={16} /> Cerrar sesión
+              <LogOut size={16} />
+              {!collapsed && 'Cerrar sesión'}
             </Button>
           </div>
         ) : (
@@ -171,10 +250,26 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     </div>
   )
 
+  // Anonymous visitors keep the current full-bleed layout (no sidebar).
+  if (!isAuthenticated) {
+    return (
+      <div className="h-full">
+        <div className="h-full min-h-0 overflow-hidden">{children}</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="h-full flex">
+    <div className="flex h-full">
       {/* Desktop sidebar */}
-      <aside className="hidden md:block w-64 shrink-0 h-full">{sidebar}</aside>
+      <aside
+        className={cn(
+          'hidden h-full shrink-0 transition-[width] duration-200 ease-in-out md:block',
+          collapsed ? 'w-[72px]' : 'w-56'
+        )}
+      >
+        {sidebar}
+      </aside>
 
       {/* Mobile drawer */}
       {open && (
@@ -185,18 +280,18 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Content */}
-      <div className="flex-1 min-w-0 h-full flex flex-col">
-        <div className="md:hidden flex items-center gap-2 px-3 h-12 border-b border-outline-variant/40 shrink-0">
+      <div className="flex h-full min-w-0 flex-1 flex-col">
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-outline-variant/40 px-3 md:hidden">
           <button
             onClick={() => setOpen(true)}
-            className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
+            className="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container"
             aria-label="Abrir menú"
           >
             <Menu size={20} />
           </button>
           <span className="font-headline font-bold text-primary">MapU</span>
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
+        <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       </div>
     </div>
   )

@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Bell,
-  Camera,
   ChevronRight,
   Globe,
   Lock,
@@ -13,11 +12,14 @@ import {
   Mail,
   Phone,
   Shield,
-  Star,
+  UserRound,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { StatCard } from '@/components/ui/StatCard'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Reviews } from '@/components/reviews/Reviews'
 import { SubscriptionType, UserType } from '@/types/enums'
 
@@ -34,15 +36,16 @@ export default function PerfilPage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
-        <Lock size={48} className="text-on-surface-variant/40 mb-4" />
-        <h2 className="font-headline text-xl font-bold text-on-surface">No has iniciado sesión</h2>
-        <Link
-          href="/login"
-          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
-        >
-          Iniciar sesión
-        </Link>
+      <div className="flex h-full flex-col items-center justify-center bg-background p-8">
+        <EmptyState
+          icon={<Lock size={22} />}
+          title="No has iniciado sesión"
+          action={
+            <Link href="/login" className="block">
+              <Button>Iniciar sesión</Button>
+            </Link>
+          }
+        />
       </div>
     )
   }
@@ -55,77 +58,35 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-20">
+    <div className="h-full overflow-y-auto bg-background pb-16">
       {/* Header */}
-      <div className="relative bg-surface-container-low border-b border-outline-variant/40 px-4 pt-8 pb-6 overflow-hidden">
-        <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[90px] pointer-events-none" />
-        <div className="relative flex flex-col items-center text-center">
-          <div className="relative mb-3">
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-20 h-20 rounded-full object-cover border-4 border-primary/30"
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-primary/20 text-primary flex items-center justify-center text-3xl font-bold border-4 border-primary/30">
-                {user.name.charAt(0)}
-              </div>
-            )}
-            <button className="absolute bottom-0 right-0 bg-primary text-on-primary rounded-full p-1.5 shadow-soft">
-              <Camera size={12} />
-            </button>
-          </div>
-          <h1 className="font-headline font-bold text-2xl text-on-surface">{user.name}</h1>
-          <p className="text-on-surface-variant text-sm">{user.email}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant={isPremium ? 'premium' : 'gray'} size="sm">
-              {isPremium ? '★ Premium' : 'Plan gratuito'}
-            </Badge>
-            <span className="text-on-surface-variant/50 text-xs">•</span>
-            <span className="text-on-surface-variant text-xs">
-              {USER_TYPE_LABELS[user.userType]}
-            </span>
-          </div>
+      <PageHeader
+        icon={<UserRound size={20} />}
+        title={user.name}
+        badge={
+          <Badge variant={isPremium ? 'premium' : 'gray'} size="sm">
+            {isPremium ? '★ Premium' : 'Plan gratuito'}
+          </Badge>
+        }
+        description={`${user.email} · ${USER_TYPE_LABELS[user.userType]}`}
+      />
+
+      <div className="mx-auto w-full max-w-2xl space-y-4 px-6 py-6">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <StatCard label="Publicaciones" value={user.stats.totalListings} />
+          <StatCard label="Vistas" value={user.stats.totalViews} />
+          <StatCard
+            label="Calificación"
+            value={user.stats.rating ? user.stats.rating : undefined}
+            hint={
+              user.stats.rating
+                ? `${user.stats.reviewCount} reseñas`
+                : 'Sin reseñas'
+            }
+          />
         </div>
 
-        {/* Stats row */}
-        <div className="relative grid grid-cols-3 gap-3 mt-6 max-w-md mx-auto">
-          <div className="text-center">
-            <div className="font-headline font-bold text-2xl text-primary">
-              {user.stats.totalListings}
-            </div>
-            <div className="text-xs text-on-surface-variant">Publicaciones</div>
-          </div>
-          <div className="text-center">
-            <div className="font-headline font-bold text-2xl text-primary">
-              {user.stats.totalViews.toLocaleString()}
-            </div>
-            <div className="text-xs text-on-surface-variant">Vistas</div>
-          </div>
-          <div className="text-center">
-            {user.stats.rating ? (
-              <>
-                <div className="font-headline font-bold text-2xl flex items-center justify-center gap-1 text-primary">
-                  <Star size={16} className="fill-primary text-primary" />
-                  {user.stats.rating}
-                </div>
-                <div className="text-xs text-on-surface-variant">
-                  {user.stats.reviewCount} reseñas
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="font-headline font-bold text-2xl text-on-surface">—</div>
-                <div className="text-xs text-on-surface-variant">Sin reseñas</div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-4 max-w-2xl mx-auto">
-        {/* Account info */}
         <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 overflow-hidden">
           <h2 className="px-4 pt-4 pb-2 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
             Mi cuenta
