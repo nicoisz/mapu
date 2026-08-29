@@ -9,6 +9,7 @@ import DynamicMapView from '@/components/map/DynamicMapView'
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
 import { SearchBar } from '@/components/search/SearchBar'
 import { FilterPanel } from '@/components/search/FilterPanel'
+import { ExchangeIndicators } from '@/components/layout/ExchangeIndicators'
 import { useSearch } from '@/hooks/useSearch'
 import { Property } from '@/types/property'
 import { cn } from '@/lib/utils'
@@ -203,6 +204,7 @@ function SearchContent() {
         </span>
         {searchError && <span className="text-error">· {searchError}</span>}
         <div className="ml-auto flex items-center gap-3">
+          <ExchangeIndicators className="hidden lg:flex" />
           {activeFilterCount > 0 && (
             <button onClick={clearFilters} className="text-accent hover:underline">
               Limpiar filtros
