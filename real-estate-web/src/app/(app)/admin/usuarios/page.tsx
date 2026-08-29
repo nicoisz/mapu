@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Mail, Phone, Search } from 'lucide-react'
+import { Eye, Mail, Phone } from 'lucide-react'
 import { adminService, AdminUserRow } from '@/services/adminService'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { PlatformRole } from '@/types/enums'
 import { formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -69,18 +72,16 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-surface-container-lowest rounded-lg border border-outline-variant/60 px-3 py-2">
-          <Search size={16} className="text-on-surface-variant shrink-0" />
-          <input
+        <div className="flex-1">
+          <SearchInput
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
               load(e.target.value)
             }}
             placeholder="Buscar por email o nombre…"
-            className="flex-1 bg-transparent text-sm focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
           />
         </div>
         <Button variant="outline" size="sm" onClick={() => load('')}>
@@ -93,14 +94,16 @@ export default function AdminUsersPage() {
       {loading && users.length === 0 ? (
         <div className="text-center py-8 text-on-surface-variant text-sm">Cargando usuarios…</div>
       ) : results.length === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant text-sm">Sin resultados</div>
+        <Card>
+          <EmptyState
+            title="Sin resultados"
+            description="No se encontraron usuarios para la búsqueda."
+          />
+        </Card>
       ) : (
         <div className="space-y-2">
           {results.map((u) => (
-            <div
-              key={u.id}
-              className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4"
-            >
+            <Card key={u.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -171,7 +174,7 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

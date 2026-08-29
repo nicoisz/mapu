@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Building, Plus, Search, X } from 'lucide-react'
+import { Building, Plus, X } from 'lucide-react'
 import { adminService, AdminUserRow, OrganizationRow } from '@/services/adminService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Card } from '@/components/ui/Card'
+import { SearchInput } from '@/components/ui/SearchInput'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function AdminCompaniesPage() {
   const [orgs, setOrgs] = useState<OrganizationRow[]>([])
@@ -68,18 +71,16 @@ export default function AdminCompaniesPage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-surface-container-lowest rounded-lg border border-outline-variant/60 px-3 py-2">
-          <Search size={16} className="text-on-surface-variant shrink-0" />
-          <input
+        <div className="flex-1">
+          <SearchInput
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
               load(e.target.value)
             }}
             placeholder="Buscar empresa…"
-            className="flex-1 bg-transparent text-sm focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
           />
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
@@ -92,14 +93,17 @@ export default function AdminCompaniesPage() {
       {loading ? (
         <div className="text-center py-8 text-on-surface-variant text-sm">Cargando empresas…</div>
       ) : orgs.length === 0 ? (
-        <div className="text-center py-8 text-on-surface-variant text-sm">Sin empresas</div>
+        <Card>
+          <EmptyState
+            icon={<Building size={22} />}
+            title="Sin empresas"
+            description="Crea la primera empresa de la plataforma."
+          />
+        </Card>
       ) : (
         <div className="space-y-2">
           {orgs.map((org) => (
-            <div
-              key={org.id}
-              className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4"
-            >
+            <Card key={org.id} className="p-4">
               <button
                 className="w-full flex items-center justify-between gap-3 text-left"
                 onClick={() => setExpanded(expanded === org.id ? null : org.id)}
@@ -150,7 +154,7 @@ export default function AdminCompaniesPage() {
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}

@@ -7,6 +7,11 @@ import { useAuthContext } from '@/contexts/AuthContext'
 import { metricsService, MemberMetrics, computeTotals } from '@/services/metricsService'
 import { Sparkline } from '@/components/charts/Sparkline'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { StatCard } from '@/components/ui/StatCard'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Property } from '@/types/property'
 import { PROPERTY_TYPE_LABELS, STATUS_LABELS } from '@/constants'
 
@@ -14,15 +19,6 @@ const SCOPE_LABELS: Record<string, string> = {
   global: 'Toda la plataforma',
   org: 'Tu empresa',
   self: 'Tus propiedades',
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-surface-container-low rounded-xl p-4 text-center border border-outline-variant/40">
-      <div className="font-headline font-bold text-2xl text-primary">{value.toLocaleString('es-CL')}</div>
-      <div className="text-xs text-on-surface-variant mt-0.5">{label}</div>
-    </div>
-  )
 }
 
 export default function MetricasPage() {
@@ -72,65 +68,63 @@ export default function MetricasPage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
-        <Lock size={48} className="text-on-surface-variant/40 mb-4" />
-        <h2 className="font-headline text-xl font-bold text-on-surface">Necesitas iniciar sesión</h2>
-        <p className="text-on-surface-variant text-sm mt-2">
-          Para ver métricas debes tener una cuenta.
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
-        >
-          Iniciar sesión
-        </Link>
+      <div className="flex h-full flex-col items-center justify-center bg-background p-8">
+        <EmptyState
+          icon={<Lock size={22} />}
+          title="Necesitas iniciar sesión"
+          description="Para ver métricas debes tener una cuenta."
+          action={
+            <Link href="/login" className="block">
+              <Button>Iniciar sesión</Button>
+            </Link>
+          }
+        />
       </div>
     )
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-20">
-      <div className="relative bg-surface-container-low border-b border-outline-variant/40 px-4 pt-7 pb-5 overflow-hidden">
-        <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-[90px] pointer-events-none" />
-        <div className="relative flex items-center gap-2">
-          <BarChart3 size={20} className="text-primary" />
-          <h1 className="font-headline text-2xl font-bold text-on-surface">Métricas</h1>
+    <div className="h-full overflow-y-auto bg-background pb-16">
+      <PageHeader
+        icon={<BarChart3 size={20} />}
+        title="Métricas"
+        badge={
           <Badge variant="gray" size="sm">
             {SCOPE_LABELS[scope] ?? 'Tus propiedades'}
           </Badge>
-        </div>
-        <p className="text-on-surface-variant text-sm mt-1">
-          Visitas, favoritos y contactos de las publicaciones bajo tu alcance.
-        </p>
-      </div>
+        }
+        description="Visitas, favoritos y contactos de las publicaciones bajo tu alcance."
+      />
 
-      <div className="p-4 space-y-4 max-w-5xl mx-auto">
+      <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-6">
         {error && <p className="text-error text-sm">{error}</p>}
 
         {loading ? (
           <div className="text-center py-8 text-on-surface-variant text-sm">Cargando métricas…</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <StatCard label="Publicaciones" value={totals.listings} />
-              <StatCard label="Visitas" value={totals.views} />
-              <StatCard label="Favoritos" value={totals.favorites} />
-              <StatCard label="Contactos" value={totals.contacts} />
+              <StatCard label="Visitas" value={totals.views} icon={<Eye size={16} />} />
+              <StatCard label="Favoritos" value={totals.favorites} icon={<Heart size={16} />} />
+              <StatCard label="Contactos" value={totals.contacts} icon={<MessageSquare size={16} />} />
             </div>
 
-            <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-              <h2 className="font-headline font-semibold text-on-surface text-sm mb-2">
-                Visitas (últimos 30 días)
-              </h2>
-              <Sparkline data={series} />
-            </section>
+            <Card>
+              <CardHeader>
+                <CardTitle>Visitas · últimos 30 días</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Sparkline data={series} />
+              </CardContent>
+            </Card>
 
             {scope === 'org' && members.length > 0 && (
-              <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-                <h2 className="font-headline font-semibold text-on-surface text-sm mb-3">
-                  Desglose por agente
-                </h2>
-                <div className="space-y-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Desglose por agente</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
                   {members.map((m) => (
                     <div
                       key={m.userId}
@@ -148,16 +142,16 @@ export default function MetricasPage() {
                       <p className="text-sm font-bold text-primary">{m.views.toLocaleString('es-CL')} vistas</p>
                     </div>
                   ))}
-                </div>
-              </section>
+                </CardContent>
+              </Card>
             )}
 
             {totals.listings > 0 && (
-              <section className="bg-surface-container-low rounded-xl border border-outline-variant/40 p-4">
-                <h2 className="font-headline font-semibold text-on-surface text-sm mb-3">
-                  Top por visitas
-                </h2>
-                <div className="space-y-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top por visitas</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
                   {topByViews.map((p, i) => (
                     <div
                       key={p.id}
@@ -191,18 +185,18 @@ export default function MetricasPage() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </section>
+                </CardContent>
+              </Card>
             )}
 
             {!loading && totals.listings === 0 && (
-              <div className="text-center py-12 text-on-surface-variant">
-                <p className="text-4xl mb-3">📊</p>
-                <p className="font-medium text-on-surface">
-                  Aún no hay publicaciones en este alcance
-                </p>
-                <p className="text-sm mt-1">Publica propiedades para ver sus métricas aquí.</p>
-              </div>
+              <Card>
+                <EmptyState
+                  icon={<BarChart3 size={22} />}
+                  title="Aún no hay publicaciones en este alcance"
+                  description="Publica propiedades para ver sus métricas aquí."
+                />
+              </Card>
             )}
           </>
         )}
