@@ -129,23 +129,17 @@ export const adminService = {
     if (memberError) throw new Error(memberError.message)
   },
 
-  /** Añade/quita un miembro y ajusta su rol. */
+  /** Añade/quita un miembro y ajusta su rol (via RPC jerárquico). */
   async setMemberRole(
     orgId: string,
     userId: string,
     role: 'owner' | 'admin' | 'agent' | null
   ): Promise<void> {
-    const supabase = getSupabase()
-    const { error } =
-      role === null
-        ? await supabase
-            .from('organization_members')
-            .delete()
-            .eq('org_id', orgId)
-            .eq('user_id', userId)
-        : await supabase
-            .from('organization_members')
-            .upsert({ org_id: orgId, user_id: userId, role, status: 'active' })
+    const { error } = await getSupabase().rpc('set_member_role', {
+      org_id: orgId,
+      target_user_id: userId,
+      new_role: role,
+    })
     if (error) throw new Error(error.message)
   },
 

@@ -90,11 +90,12 @@ begin
 end;
 $$;
 
--- Revocar permisos directos de escritura en members para forzar el RPC
--- (sin policy de delete/insert/update directo, RLS lo niega).
-revoke insert, update, delete on public.organization_members from authenticated;
+-- La jerarquía se impone vía el RPC set_member_role (SECURITY DEFINER: omite
+-- RLS y corre como dueño, por eso puede gestionar sin policy de delete). El
+-- panel admin (superadmin) y la página de equipo usan ese RPC. No hay policy
+-- de delete directo: un miembro no puede borrar filas por su cuenta.
+revoke execute on function public.set_member_role(org_id uuid, target_user_id uuid, new_role text) from public;
 grant execute on function public.set_member_role(org_id uuid, target_user_id uuid, new_role text) to authenticated;
-revoke execute on function public.set_member_role(org_id uuid, target_user_id uuid, new_role text) from anon;
 
 -- ---------- 2) Visibilidad de properties por rol ----------
 drop policy if exists "org admin read org properties" on public.properties;
