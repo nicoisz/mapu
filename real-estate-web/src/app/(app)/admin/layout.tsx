@@ -1,15 +1,25 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
-import { PlatformRole } from '@/types/enums'
+import { adminAccessStatus } from '@/lib/access'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, isLoading } = useAuthContext()
-  const isAdmin = user?.platformRole === PlatformRole.SUPERADMIN
+  const router = useRouter()
+  const { user, isLoading } = useAuthContext()
+  const status = adminAccessStatus({ isLoading, user })
 
-  if (isLoading) {
+  // No autenticado → redirigir al login (guard client-side; el control de
+  // acceso real va en la DB via RLS).
+  const redirecting = status === 'redirect'
+  useEffect(() => {
+    if (redirecting) router.replace('/login?next=/admin')
+  }, [redirecting, router])
+
+  if (status === 'loading' || status === 'redirect') {
     return (
       <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
         Cargando…
@@ -17,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (!isAuthenticated || !user || !isAdmin) {
+  if (status === 'blocked') {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
