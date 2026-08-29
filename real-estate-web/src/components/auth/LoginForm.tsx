@@ -8,14 +8,7 @@ import { useAuthContext } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { APP_CONFIG } from '@/constants'
-
-/** Destino tras login. Solo permite rutas internas (evita open-redirect). */
-function getNextPath(): string {
-  if (typeof window === 'undefined') return '/'
-  const raw = new URLSearchParams(window.location.search).get('next')
-  if (raw && raw.startsWith('/') && !raw.startsWith('//')) return raw
-  return '/'
-}
+import { safeRedirectPath } from '@/lib/redirect'
 
 export function LoginForm() {
   const router = useRouter()
@@ -23,7 +16,13 @@ export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const next = useMemo(getNextPath, [])
+  const next = useMemo(
+    () =>
+      safeRedirectPath(
+        typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('next')
+      ),
+    []
+  )
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

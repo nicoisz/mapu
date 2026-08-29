@@ -5,21 +5,21 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
-import { PlatformRole } from '@/types/enums'
+import { adminAccessStatus } from '@/lib/access'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, isAuthenticated, isLoading } = useAuthContext()
-  const isAdmin = user?.platformRole === PlatformRole.SUPERADMIN
+  const { user, isLoading } = useAuthContext()
+  const status = adminAccessStatus({ isLoading, user })
 
   // No autenticado → redirigir al login (guard client-side; el control de
-  // acceso real lo impone la RLS de la DB en adminService).
-  const isLoggedOut = !isLoading && (!isAuthenticated || !user)
+  // acceso real va en la DB via RLS).
+  const redirecting = status === 'redirect'
   useEffect(() => {
-    if (isLoggedOut) router.replace('/login?next=/admin')
-  }, [isLoggedOut, router])
+    if (redirecting) router.replace('/login?next=/admin')
+  }, [redirecting, router])
 
-  if (isLoading) {
+  if (status === 'loading' || status === 'redirect') {
     return (
       <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
         Cargando…
@@ -27,15 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (isLoggedOut) {
-    return (
-      <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
-        Cargando…
-      </div>
-    )
-  }
-
-  if (!isAdmin) {
+  if (status === 'blocked') {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
