@@ -19,7 +19,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { cn } from '@/lib/utils'
-import { SubscriptionType } from '@/types/enums'
+import { PlatformRole, SubscriptionType } from '@/types/enums'
 
 type PlanId = 'free' | 'premium' | 'business'
 type Step = 'plan' | 'checkout' | 'success'
@@ -135,6 +135,24 @@ export default function MejorarPage() {
           action={
             <Link href="/login" className="block">
               <Button>Iniciar sesión</Button>
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
+
+  // Modo prueba: el flujo de cambio de plan solo lo ve el superadmin.
+  if (user.platformRole !== PlatformRole.SUPERADMIN) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-background p-8">
+        <EmptyState
+          icon={<Lock size={22} />}
+          title="En desarrollo"
+          description="El cambio de plan está en modo prueba y solo está disponible para el administrador."
+          action={
+            <Link href="/dashboard" className="block">
+              <Button>Volver al panel</Button>
             </Link>
           }
         />
