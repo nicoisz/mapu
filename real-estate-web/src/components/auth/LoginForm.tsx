@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
@@ -9,17 +9,26 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { APP_CONFIG } from '@/constants'
 
+/** Destino tras login. Solo permite rutas internas (evita open-redirect). */
+function getNextPath(): string {
+  if (typeof window === 'undefined') return '/'
+  const raw = new URLSearchParams(window.location.search).get('next')
+  if (raw && raw.startsWith('/') && !raw.startsWith('//')) return raw
+  return '/'
+}
+
 export function LoginForm() {
   const router = useRouter()
   const { login, loginWithSocial, isLoading, error } = useAuthContext()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const next = useMemo(getNextPath, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const result = await login(email, password)
-    if (result.success) router.push('/')
+    if (result.success) router.push(next)
   }
 
   async function handleSocial(provider: 'google' | 'apple' | 'facebook') {

@@ -1,13 +1,23 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { PlatformRole } from '@/types/enums'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const { user, isAuthenticated, isLoading } = useAuthContext()
   const isAdmin = user?.platformRole === PlatformRole.SUPERADMIN
+
+  // No autenticado → redirigir al login (guard client-side; el control de
+  // acceso real lo impone la RLS de la DB en adminService).
+  const isLoggedOut = !isLoading && (!isAuthenticated || !user)
+  useEffect(() => {
+    if (isLoggedOut) router.replace('/login?next=/admin')
+  }, [isLoggedOut, router])
 
   if (isLoading) {
     return (
@@ -17,7 +27,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (!isAuthenticated || !user || !isAdmin) {
+  if (isLoggedOut) {
+    return (
+      <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
+        Cargando…
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
