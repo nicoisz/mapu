@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Property } from '@/types/property'
-import { canManageOrg } from '@/lib/roles'
+import { canManageOrg, canManageRole, OrgRole } from '@/lib/roles'
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Dueño',
@@ -32,8 +32,10 @@ export default function EquipoPage() {
   const [inviteLoading, setInviteLoading] = useState(false)
 
   const orgId = user?.organizationId
-  const orgRole = user?.organizationRole
+  const orgRole = user?.organizationRole as OrgRole | undefined
   const canManage = canManageOrg(user)
+  // Un admin solo puede invitar agentes; el owner puede invitar admin/agent.
+  const canInviteAdmin = orgRole === 'owner'
 
   const load = () => {
     if (!orgId) return
@@ -171,7 +173,7 @@ export default function EquipoPage() {
                 className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-3 py-2 text-sm focus:outline-none"
               >
                 <option value="agent">Agente</option>
-                <option value="admin">Admin</option>
+                {canInviteAdmin && <option value="admin">Admin</option>}
               </select>
               <Button type="submit" size="sm" loading={inviteLoading}>
                 <UserPlus size={14} /> Agregar
@@ -196,14 +198,14 @@ export default function EquipoPage() {
                     <Badge variant="premium" size="sm">
                       Dueño
                     </Badge>
-                  ) : (
+                  ) : canManageRole(orgRole, m.role as OrgRole) ? (
                     <>
                       <select
                         value={m.role}
                         onChange={(e) => handleRoleChange(m.id, e.target.value as 'admin' | 'agent')}
                         className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
                       >
-                        <option value="admin">Admin</option>
+                        {canInviteAdmin && <option value="admin">Admin</option>}
                         <option value="agent">Agente</option>
                       </select>
                       <button
@@ -214,6 +216,10 @@ export default function EquipoPage() {
                         <Trash2 size={14} />
                       </button>
                     </>
+                  ) : (
+                    <Badge variant="gray" size="sm">
+                      {ROLE_LABELS[m.role] ?? m.role}
+                    </Badge>
                   )}
                 </div>
               ))}

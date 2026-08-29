@@ -39,6 +39,21 @@ export function isOrgMember(user: User | null): boolean {
   return !!user?.organizationId
 }
 
+/** Roles dentro de una corredora, con su jerarquía (mayor = más privilegio). */
+export type OrgRole = 'owner' | 'admin' | 'agent'
+
+const ORG_RANK: Record<OrgRole, number> = { agent: 1, admin: 2, owner: 3 }
+
+/**
+ * ¿El actor puede gestionar al target (cambiar su rol o removerlo)?
+ * owner gestiona admin/agent; admin gestiona solo agent; agent a nadie.
+ * La misma regla la impone el RPC set_member_role en la DB.
+ */
+export function canManageRole(actor: OrgRole | undefined, target: OrgRole): boolean {
+  if (!actor) return false
+  return ORG_RANK[actor] > ORG_RANK[target]
+}
+
 /** Alcance de las métricas que cada rol puede ver (RLS del lado DB lo respalda). */
 export type MetricsScope = 'self' | 'org' | 'global'
 

@@ -78,23 +78,20 @@ export const organizationService = {
     return data[0] as { id: string; name: string; email: string }
   },
 
-  /** Agrega/quita miembro y ajusta su rol (solo owner/admin por RLS). */
+  /**
+   * Agrega/quita miembro y ajusta su rol. La jerarquía (owner>admin>agent,
+   * protección del dueño) la impone el RPC SECURITY DEFINER set_member_role.
+   */
   async setMemberRole(
     orgId: string,
     userId: string,
     role: 'owner' | 'admin' | 'agent' | null
   ): Promise<void> {
-    const supabase = getSupabase()
-    const { error } =
-      role === null
-        ? await supabase
-            .from('organization_members')
-            .delete()
-            .eq('org_id', orgId)
-            .eq('user_id', userId)
-        : await supabase
-            .from('organization_members')
-            .upsert({ org_id: orgId, user_id: userId, role, status: 'active' })
+    const { error } = await getSupabase().rpc('set_member_role', {
+      org_id: orgId,
+      target_user_id: userId,
+      new_role: role,
+    })
     if (error) throw new Error(error.message)
   },
 }
