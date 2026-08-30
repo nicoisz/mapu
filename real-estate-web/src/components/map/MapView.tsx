@@ -5,7 +5,7 @@ import maplibregl, { StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
+import { CHILE_BOUNDS, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
 import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
 import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
@@ -557,10 +557,32 @@ export default function MapView({
   useEffect(() => {
     const map = mapRef.current
     if (!map || !fitToken || properties.length === 0) return
-    const bbox = new maplibregl.LngLatBounds()
-    properties.forEach((p) => bbox.extend([p.location.longitude, p.location.latitude]))
+    const [sw, ne] = CHILE_BOUNDS
+    // Expand from the property coords, but clamp each edge to mainland Chile so
+    // a stray/bad coordinate can never fly the map out of the country.
+    let west = Infinity
+    let south = Infinity
+    let east = -Infinity
+    let north = -Infinity
+    properties.forEach((p) => {
+      const { longitude: lng, latitude: lat } = p.location
+      if (lng < west) west = lng
+      if (lat < south) south = lat
+      if (lng > east) east = lng
+      if (lat > north) north = lat
+    })
+    west = Math.max(west, sw[0])
+    south = Math.max(south, sw[1])
+    east = Math.min(east, ne[0])
+    north = Math.min(north, ne[1])
     // maxZoom caps so a tight cluster doesn't zoom in too far ("no exagerar").
-    map.fitBounds(bbox, { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true })
+    map.fitBounds(
+      [
+        [west, south],
+        [east, north],
+      ],
+      { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true }
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitToken])
 
