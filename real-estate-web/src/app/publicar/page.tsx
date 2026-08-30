@@ -12,6 +12,7 @@ import {
   validateImageFile,
   deletePropertyImages,
 } from '@/services/storageService'
+import { compressImage } from '@/lib/imageCompression'
 import { geocodeAddress, searchAddress, reverseGeocode, GeocodeSuggestion } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -272,21 +273,24 @@ export default function PublicarPage() {
   const canPublish = hasRemainingListings()
   const isEditing = !!editId
 
-  function addFiles(list: FileList | null) {
+  async function addFiles(list: FileList | null) {
     if (!list) return
     const errorsFound: string[] = []
-    const accepted: PendingImage[] = []
-    Array.from(list).forEach((file) => {
+    // Compresión client-side antes de subir (reduce ancho de banda/storage).
+    for (const file of Array.from(list)) {
       const problem = validateImageFile(file)
-      if (problem) errorsFound.push(problem)
-      else accepted.push({ file, previewUrl: URL.createObjectURL(file) })
-    })
-    setImages((prev) => {
-      const merged = [...prev, ...accepted]
-      // Revoke previews of files dropped past the limit.
-      merged.slice(MAX_IMAGES).forEach((img) => URL.revokeObjectURL(img.previewUrl))
-      return merged.slice(0, MAX_IMAGES)
-    })
+      if (problem) {
+        errorsFound.push(problem)
+        continue
+      }
+      const processed = await compressImage(file)
+      setImages((prev) => {
+        const next = [...prev, { file: processed, previewUrl: URL.createObjectURL(processed) }]
+        // Revoke previews of files dropped past the limit.
+        next.slice(MAX_IMAGES).forEach((img) => URL.revokeObjectURL(img.previewUrl))
+        return next.slice(0, MAX_IMAGES)
+      })
+    }
     setErrors((e) => ({ ...e, images: errorsFound.length ? errorsFound.join(' · ') : undefined }))
   }
 
