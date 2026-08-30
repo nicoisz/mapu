@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Bell,
   ChevronRight,
+  CreditCard,
   Globe,
   Lock,
   LogOut,
@@ -21,7 +22,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Reviews } from '@/components/reviews/Reviews'
-import { SubscriptionType, UserType } from '@/types/enums'
+import { PlatformRole, SubscriptionType, UserType } from '@/types/enums'
 
 const USER_TYPE_LABELS: Record<UserType, string> = {
   individual: 'Particular',
@@ -154,6 +155,19 @@ export default function PerfilPage() {
                 </Link>
               )}
             </div>
+
+            {user.platformRole === PlatformRole.SUPERADMIN && (
+              <Link
+                href="/mejorar"
+                className="mt-3 flex items-center justify-between rounded-xl border border-outline-variant/60 px-3 py-2.5 text-sm hover:bg-surface-container transition-colors"
+              >
+                <span className="flex items-center gap-2 font-medium text-on-surface">
+                  <CreditCard size={15} className="text-on-surface-variant" />
+                  Gestionar plan y tarjetas
+                </span>
+                <ChevronRight size={15} className="text-on-surface-variant" />
+              </Link>
+            )}
           </div>
         </section>
 
