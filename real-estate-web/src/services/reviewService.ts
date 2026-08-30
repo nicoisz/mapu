@@ -72,6 +72,8 @@ export const reviewService = {
   },
 
   async canReview(authorId: string, subjectId: string, propertyId?: string): Promise<boolean> {
+    // 1 reseña por (author, subject, property): se permite re-reseñar al mismo
+    // sujeto en OTRA propiedad, pero no dos veces en la misma.
     const { data, error } = await getSupabase()
       .from('reviews')
       .select('id')
