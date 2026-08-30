@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Bath, Bed, Heart, MapPin, Move } from 'lucide-react'
+import { ArrowRight, Bath, Bed, Heart, MapPin, Move, X } from 'lucide-react'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { Badge } from '@/components/ui/Badge'
@@ -16,9 +16,19 @@ interface PropertyCardProps {
   isSelected?: boolean
   compact?: boolean
   onClick?: () => void
+  /** Floating detail-card layout: X over the image, heart next to the title. */
+  detail?: boolean
+  onClose?: () => void
 }
 
-export function PropertyCard({ property, isSelected, compact, onClick }: PropertyCardProps) {
+export function PropertyCard({
+  property,
+  isSelected,
+  compact,
+  onClick,
+  detail,
+  onClose,
+}: PropertyCardProps) {
   const { isFavorite, toggle } = useFavoritesContext()
   const fav = isFavorite(property.id)
   const { amount, suffix } = getDisplayPrice(property)
@@ -40,7 +50,8 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
       <div
         className={cn(
           'relative overflow-hidden shrink-0',
-          compact ? 'w-full h-40 sm:w-32 sm:h-auto sm:self-stretch sm:min-h-[9rem]' : 'h-60'
+          compact ? 'w-full h-40 sm:w-32 sm:h-auto sm:self-stretch sm:min-h-[9rem]' : 'h-60',
+          detail ? 'rounded-t-2xl' : ''
         )}
       >
         {mainImage ? (
@@ -75,23 +86,36 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
             className="absolute top-2.5 left-1/2 -translate-x-1/2"
           />
         )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            toggle(property)
-          }}
-          className={cn(
-            'absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition-all',
-            fav ? 'bg-primary text-on-primary' : 'bg-black/35 text-white hover:bg-black/55'
-          )}
-          aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-        >
-          <Heart
-            size={15}
-            fill={fav ? 'currentColor' : 'none'}
-            className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''}
-          />
-        </button>
+        {detail && onClose ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose()
+            }}
+            aria-label="Cerrar detalle"
+            className="absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md bg-black/45 text-white hover:bg-black/60 transition-all"
+          >
+            <X size={15} />
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggle(property)
+            }}
+            className={cn(
+              'absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition-all',
+              fav ? 'bg-primary text-on-primary' : 'bg-black/35 text-white hover:bg-black/55'
+            )}
+            aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+          >
+            <Heart
+              size={15}
+              fill={fav ? 'currentColor' : 'none'}
+              className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''}
+            />
+          </button>
+        )}
       </div>
 
       <div className={cn('min-w-0', compact ? 'p-3 flex-1 flex flex-col' : 'p-5')}>
@@ -114,14 +138,35 @@ export function PropertyCard({ property, isSelected, compact, onClick }: Propert
           )}
         </div>
 
-        <h3
-          className={cn(
-            'font-medium text-on-surface leading-tight mt-1.5',
-            compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
+        <div className="flex items-start justify-between gap-2 mt-1.5">
+          <h3
+            className={cn(
+              'font-medium text-on-surface leading-tight min-w-0',
+              compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
+            )}
+          >
+            {property.title}
+          </h3>
+          {detail && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toggle(property)
+              }}
+              aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+              className={cn(
+                'shrink-0 -mt-0.5 p-1 rounded-full transition-colors',
+                fav ? 'text-primary' : 'text-on-surface-variant hover:text-primary'
+              )}
+            >
+              <Heart
+                size={18}
+                fill={fav ? 'currentColor' : 'none'}
+                className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''}
+              />
+            </button>
           )}
-        >
-          {property.title}
-        </h3>
+        </div>
 
         <div className="flex items-center gap-1 mt-1.5 text-on-surface-variant">
           <MapPin size={12} className="shrink-0" />

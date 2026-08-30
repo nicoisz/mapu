@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
-import { Building2, KeyRound, List, Map as MapIcon, Tag, X } from 'lucide-react'
+import { Building2, KeyRound, List, Map as MapIcon, Tag } from 'lucide-react'
 import { PropertyOperation } from '@/types/enums'
 import DynamicMapView from '@/components/map/DynamicMapView'
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
@@ -244,24 +244,15 @@ function SearchContent() {
             fitToken={fitToken}
           />
 
-          {/* Floating detail card over the map (the list collapses behind it).
-              The X button lives OUTSIDE the scroll container so overflow-y-auto
-              doesn't clip it. */}
+          {/* Floating detail card over the map (the list collapses behind it). */}
           {selected && (
             <div
               ref={cardRef}
               className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] z-20"
             >
               <div className="h-full overflow-y-auto rounded-2xl">
-                <PropertyCard property={selected} isSelected />
+                <PropertyCard property={selected} isSelected detail onClose={closeDetail} />
               </div>
-              <button
-                onClick={closeDetail}
-                aria-label="Cerrar detalle"
-                className="absolute -top-3 -right-3 bg-surface-container-highest rounded-full w-8 h-8 flex items-center justify-center shadow-soft border border-outline-variant/40 text-on-surface-variant hover:text-error hover:border-error transition-colors"
-              >
-                <X size={16} />
-              </button>
             </div>
           )}
         </div>
