@@ -175,6 +175,7 @@ function SearchContent() {
           <button
             onClick={() => {
               setViewMode('list')
+              setSelected(null)
               setFitToken((t) => t + 1)
             }}
             className={cn(
@@ -244,13 +245,17 @@ function SearchContent() {
             operation={filters.operation ?? null}
           />
 
-          {/* Floating detail card over the map (the list collapses behind it). */}
+          {/* Floating detail card over the map (the list collapses behind it).
+              The X button lives OUTSIDE the scroll container so overflow-y-auto
+              doesn't clip it. */}
           {selected && (
             <div
               ref={cardRef}
-              className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] overflow-y-auto z-20 rounded-2xl"
+              className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] z-20"
             >
-              <PropertyCard property={selected} isSelected />
+              <div className="h-full overflow-y-auto rounded-2xl">
+                <PropertyCard property={selected} isSelected />
+              </div>
               <button
                 onClick={closeDetail}
                 aria-label="Cerrar detalle"
