@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatRut, validateRut } from '@/lib/rut'
 
 export default function AdminCompaniesPage() {
   const [orgs, setOrgs] = useState<OrganizationRow[]>([])
@@ -15,6 +16,7 @@ export default function AdminCompaniesPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
 
@@ -22,7 +24,6 @@ export default function AdminCompaniesPage() {
     name: '',
     type: 'company',
     ownerId: '',
-    licenseNumber: '',
     rut: '',
   })
 
@@ -41,17 +42,21 @@ export default function AdminCompaniesPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
+    setFormError(null)
     if (!form.name.trim() || !form.ownerId) return
+    if (!validateRut(form.rut)) {
+      setFormError('RUT inválido. Usa el formato 12.345.678-9 (o -K).')
+      return
+    }
     try {
       await adminService.createOrganization({
         name: form.name.trim(),
         type: form.type as 'brokerage' | 'company',
         ownerId: form.ownerId,
-        licenseNumber: form.licenseNumber || undefined,
-        rut: form.rut || undefined,
+        rut: form.rut,
       })
       setShowCreate(false)
-      setForm({ name: '', type: 'company', ownerId: '', licenseNumber: '', rut: '' })
+      setForm({ name: '', type: 'company', ownerId: '', rut: '' })
       load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al crear empresa')
@@ -215,15 +220,13 @@ export default function AdminCompaniesPage() {
               </select>
             </div>
             <Input
-              label="Licencia (corredora)"
-              value={form.licenseNumber}
-              onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })}
-            />
-            <Input
               label="RUT (empresa)"
               value={form.rut}
-              onChange={(e) => setForm({ ...form, rut: e.target.value })}
+              onChange={(e) => setForm({ ...form, rut: formatRut(e.target.value) })}
+              placeholder="12.345.678-9"
+              required
             />
+            {formError && <p className="text-error text-xs">{formError}</p>}
 
             <div className="flex gap-3 pt-1">
               <Button

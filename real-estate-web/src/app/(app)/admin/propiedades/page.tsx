@@ -10,6 +10,7 @@ import { Property } from '@/types/property'
 import { STATUS_LABELS } from '@/constants'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export default function AdminPropertiesPage() {
   const [rows, setRows] = useState<Property[]>([])
@@ -18,6 +19,7 @@ export default function AdminPropertiesPage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Property | null>(null)
 
   const load = (s = status, term = search) => {
     setLoading(true)
@@ -32,17 +34,12 @@ export default function AdminPropertiesPage() {
     load()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleDelete(property: Property) {
-    if (
-      !window.confirm(
-        `¿Eliminar definitivamente "${property.title}"? Esta acción no se puede deshacer.`
-      )
-    )
-      return
+  async function performDelete(property: Property) {
     setBusyId(property.id)
     try {
       await propertyService.deleteProperty(property.id)
       setRows((prev) => prev.filter((p) => p.id !== property.id))
+      setConfirmDelete(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al eliminar')
     } finally {
@@ -117,11 +114,12 @@ export default function AdminPropertiesPage() {
                   onClick={() => handleRenew(property)}
                   disabled={busyId === property.id}
                   className="text-xs text-accent hover:text-primary font-medium disabled:opacity-50"
+                  title="Extiende la publicación 30 días"
                 >
                   Renovar
                 </button>
                 <button
-                  onClick={() => handleDelete(property)}
+                  onClick={() => setConfirmDelete(property)}
                   disabled={busyId === property.id}
                   className="text-xs text-error hover:text-error/80 font-medium disabled:opacity-50"
                 >
@@ -132,6 +130,20 @@ export default function AdminPropertiesPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="¿Eliminar propiedad?"
+        description={
+          confirmDelete
+            ? `"${confirmDelete.title}" se eliminará definitivamente. Esta acción no se puede deshacer.`
+            : undefined
+        }
+        confirmLabel="Eliminar"
+        busy={busyId === confirmDelete?.id}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && performDelete(confirmDelete)}
+      />
     </div>
   )
 }
