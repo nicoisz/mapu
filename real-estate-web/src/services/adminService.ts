@@ -1,4 +1,5 @@
 import { getSupabase } from '@/lib/supabase'
+import { rethrowUserError } from '@/lib/userMessages'
 import { PlatformRole } from '@/types/enums'
 import { PropertyRow } from '@/lib/propertyMapper'
 
@@ -44,7 +45,7 @@ export const adminService = {
     const { data, error } = await getSupabase().rpc('admin_list_users', {
       search_term: search?.trim() ?? '',
     })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data ?? []) as AdminUserRow[]
   },
 
@@ -54,7 +55,7 @@ export const adminService = {
       target_user_id: userId,
       new_role: role,
     })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
   },
 
   /** Marca email/licencia como verificado. */
@@ -68,7 +69,7 @@ export const adminService = {
       field,
       value,
     })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
   },
 
   /** Todas las propiedades (superadmin), opcionalmente por status/título. */
@@ -81,7 +82,7 @@ export const adminService = {
     if (status && status !== 'all') q = q.eq('status', status)
     if (search?.trim()) q = q.ilike('title', `%${search.trim()}%`)
     const { data, error } = await q
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data ?? []) as PropertyRow[]
   },
 
@@ -94,7 +95,7 @@ export const adminService = {
       .limit(200)
     if (search?.trim()) q = q.ilike('name', `%${search.trim()}%`)
     const { data, error } = await q
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data ?? []) as OrganizationRow[]
   },
 
@@ -118,7 +119,7 @@ export const adminService = {
       })
       .select('id')
       .single()
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     const { error: memberError } = await supabase
       .from('organization_members')
       .insert({ org_id: org.id, user_id: input.ownerId, role: 'owner', status: 'active' })
@@ -136,7 +137,7 @@ export const adminService = {
       target_user_id: userId,
       new_role: role,
     })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
   },
 
   /** Log de errores client-side (solo superadmin puede leer por RLS). */
@@ -151,7 +152,7 @@ export const adminService = {
       q = q.or(`message.ilike.%${term}%,email.ilike.%${term}%,route.ilike.%${term}%`)
     }
     const { data, error } = await q
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data ?? []) as ErrorLogRow[]
   },
 

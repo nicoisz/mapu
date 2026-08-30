@@ -3,6 +3,7 @@ import { PropertyOperation, PropertyStatus } from '@/types/enums'
 import { PropertySearchQuery } from '@/types/search'
 import { LISTING_EXPIRATION_DAYS } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
+import { rethrowUserError } from '@/lib/userMessages'
 import { deletePropertyImages } from '@/services/storageService'
 import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
 
@@ -22,7 +23,7 @@ export const propertyService = {
       .eq('status', PropertyStatus.ACTIVE)
       .or(activeExpiryFilter())
       .order('published_at', { ascending: false })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
@@ -35,7 +36,7 @@ export const propertyService = {
       .or('is_featured.eq.true,is_premium.eq.true')
       .order('published_at', { ascending: false })
       .limit(limit)
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
@@ -53,7 +54,7 @@ export const propertyService = {
   async getByIds(ids: string[]): Promise<Property[]> {
     if (!ids.length) return []
     const { data, error } = await getSupabase().from('properties').select(ROW_COLUMNS).in('id', ids)
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
@@ -63,7 +64,7 @@ export const propertyService = {
       .select(ROW_COLUMNS)
       .eq('owner_id', userId)
       .order('published_at', { ascending: false })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
@@ -102,7 +103,7 @@ export const propertyService = {
     if (query.limit) q = q.range(offset, offset + query.limit - 1)
 
     const { data, error } = await q
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
@@ -122,7 +123,7 @@ export const propertyService = {
       .insert(row)
       .select(ROW_COLUMNS)
       .single()
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return rowToProperty(inserted as PropertyRow)
   },
 
