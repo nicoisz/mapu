@@ -130,6 +130,29 @@ export const propertyService = {
     return rowToProperty(inserted as PropertyRow)
   },
 
+  /**
+   * Publica una propiedad de forma server-side (POST /api/publish). La ruta
+   * valida el JWT, re-chequea la membresía de la org y hace el insert con la
+   * key service_role. El id del dueño lo impone el servidor, no el cliente.
+   */
+  async createPropertyServer(
+    data: Partial<Property>,
+    organizationId?: string
+  ): Promise<{ id: string }> {
+    const { data: sessionRes } = await getSupabase().auth.getSession()
+    const token = sessionRes.session?.access_token
+    if (!token) throw new Error('No autenticado')
+
+    const res = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ...data, organizationId: organizationId ?? null }),
+    })
+    const json = (await res.json().catch(() => ({}))) as { error?: string; id?: string }
+    if (!res.ok) throw new Error(json.error ?? 'No se pudo publicar la propiedad')
+    return { id: json.id ?? '' }
+  },
+
   async updateProperty(id: string, updates: Partial<Property>): Promise<Property | null> {
     const row = { ...propertyToRow(updates), updated_at: new Date().toISOString() }
     const { data, error } = await getSupabase()
