@@ -91,6 +91,8 @@ interface MapViewProps {
   onBoundsChange?: (bounds: maplibregl.LngLatBounds) => void
   center?: { lat: number; lng: number }
   zoom?: number
+  /** Increment this to fly/fit the view to all properties (e.g. list view). */
+  fitToken?: number
 }
 
 /** Each property as a GeoJSON point feature for supercluster. */
@@ -199,6 +201,7 @@ export default function MapView({
   onBoundsChange,
   center,
   zoom,
+  fitToken,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -549,6 +552,17 @@ export default function MapView({
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
+
+  // ── Fit bounds to all properties on request (list view) ──────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !fitToken || properties.length === 0) return
+    const bbox = new maplibregl.LngLatBounds()
+    properties.forEach((p) => bbox.extend([p.location.longitude, p.location.latitude]))
+    // maxZoom caps so a tight cluster doesn't zoom in too far ("no exagerar").
+    map.fitBounds(bbox, { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitToken])
 
   // ── Recenter when the center prop changes ────────────────────────
   useEffect(() => {
