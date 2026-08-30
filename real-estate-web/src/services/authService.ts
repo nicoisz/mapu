@@ -4,6 +4,7 @@ import { User } from '@/types/user'
 import { SubscriptionType, UserType, ContactMethod, PlatformRole } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
+import { translateError as sharedTranslateError } from '@/lib/userMessages'
 import { propertyService } from '@/services/propertyService'
 
 /** Row in public.profiles — schema shared with the mobile app. */
@@ -39,15 +40,8 @@ interface ProfileRow {
 
 /** Maps common Supabase auth errors to user-facing Spanish messages. */
 function translateError(message: string): string {
-  const m = message.toLowerCase()
-  if (m.includes('invalid login credentials')) return 'Credenciales incorrectas'
-  if (m.includes('email not confirmed')) return 'Debes confirmar tu correo antes de iniciar sesión'
-  if (m.includes('already registered')) return 'Ya existe una cuenta con ese email'
-  if (m.includes('password should be at least'))
-    return 'Contraseña demasiado corta (mínimo 6 caracteres)'
-  if (m.includes('rate limit')) return 'Demasiados intentos, espera un momento'
-  if (m.includes('fetch')) return 'No se pudo conectar con el servidor'
-  return message
+  // Reglas compartidas en lib/userMessages.
+  return sharedTranslateError(message)
 }
 
 /**

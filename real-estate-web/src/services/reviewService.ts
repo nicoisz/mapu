@@ -1,4 +1,5 @@
 import { getSupabase } from '@/lib/supabase'
+import { rethrowUserError } from '@/lib/userMessages'
 
 export interface Review {
   id: string
@@ -37,7 +38,7 @@ export const reviewService = {
       .eq('subject_id', subjectId)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data ?? []).map((r: ReviewJoinRow) => ({
       id: r.id,
       author_id: r.author_id,
@@ -68,7 +69,7 @@ export const reviewService = {
         rating: input.rating,
         comment: input.comment,
       })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
   },
 
   async canReview(authorId: string, subjectId: string, propertyId?: string): Promise<boolean> {
@@ -89,7 +90,7 @@ export const reviewService = {
       .select('*, profiles!reviews_author_id_fkey(name), properties(title)')
       .order('created_at', { ascending: false })
       .limit(100)
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data ?? []).map((r: ReviewJoinRow) => ({
       id: r.id,
       author_id: r.author_id,
@@ -112,6 +113,6 @@ export const reviewService = {
       review_id: id,
       new_status: status,
     })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
   },
 }

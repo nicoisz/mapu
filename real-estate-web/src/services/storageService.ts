@@ -1,4 +1,5 @@
 import { getSupabase, PROPERTY_IMAGES_BUCKET } from '@/lib/supabase'
+import { translateError } from '@/lib/userMessages'
 import { PropertyImage } from '@/types/property'
 
 const MAX_FILE_MB = 8
@@ -28,7 +29,7 @@ export async function uploadPropertyImages(
       cacheControl: '31536000',
       contentType: file.type,
     })
-    if (error) throw new Error(`Error subiendo ${file.name}: ${error.message}`)
+    if (error) throw new Error(`No se pudo subir ${file.name}: ${translateError(error.message)}`)
     const { data } = supabase.storage.from(PROPERTY_IMAGES_BUCKET).getPublicUrl(path)
     return { id: path, url: data.publicUrl, order: i, isMain: i === 0 } satisfies PropertyImage
   })

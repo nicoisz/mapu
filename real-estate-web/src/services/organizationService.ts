@@ -1,4 +1,5 @@
 import { getSupabase } from '@/lib/supabase'
+import { rethrowUserError } from '@/lib/userMessages'
 import { rowToProperty, PropertyRow } from '@/lib/propertyMapper'
 import { Property } from '@/types/property'
 
@@ -35,7 +36,7 @@ export const organizationService = {
       .select('*')
       .eq('organization_id', orgId)
       .order('published_at', { ascending: false })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
@@ -45,7 +46,7 @@ export const organizationService = {
   ): Promise<{ id: string; name: string; email: string; role: string }[]> {
     // security-004: email se entrega vía RPC solo a quien gestiona la org.
     const { data, error } = await getSupabase().rpc('get_org_members', { org_id: orgId })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
     const rows = (data ?? []) as {
       user_id: string
       name: string | null
@@ -88,6 +89,6 @@ export const organizationService = {
       target_user_id: userId,
       new_role: role,
     })
-    if (error) throw new Error(error.message)
+    if (error) rethrowUserError(error)
   },
 }
