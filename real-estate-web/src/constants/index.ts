@@ -15,6 +15,13 @@ export const DEFAULT_MAP_CENTER = {
 
 export const DEFAULT_MAP_ZOOM = 12
 
+// Rough mainland Chile bounding box [[west, south], [east, north]] used to keep
+// the map from panning out of the country when fitting to a property set.
+export const CHILE_BOUNDS: [[number, number], [number, number]] = [
+  [-76.5, -56.0],
+  [-66.9, -17.5],
+]
+
 export const MAJOR_CITIES = [
   'Santiago',
   'Valparaíso',

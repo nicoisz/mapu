@@ -302,7 +302,11 @@ function SearchContent() {
                     <PropertyCard
                       property={property}
                       isSelected={selected?.id === property.id}
-                      onClick={() => router.push(`/propiedad/${property.id}`)}
+                      onClick={() =>
+                        viewMode === 'list'
+                          ? router.push(`/propiedad/${property.id}`)
+                          : setSelected(property)
+                      }
                     />
                   </div>
                 ))}
