@@ -5,7 +5,7 @@ import maplibregl, { StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
-import { CHILE_BOUNDS, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, LIST_VIEW_CENTER, LIST_VIEW_RADIUS_KM } from '@/constants'
 import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
 import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
@@ -565,32 +565,17 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
 
-  // ── Fit bounds to all properties on request (list view) ──────────
+  // ── Zoom to the fixed list-view target on request (list view) ────
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !fitToken || properties.length === 0) return
-    const [sw, ne] = CHILE_BOUNDS
-    // Expand from the property coords, but clamp each edge to mainland Chile so
-    // a stray/bad coordinate can never fly the map out of the country.
-    let west = Infinity
-    let south = Infinity
-    let east = -Infinity
-    let north = -Infinity
-    properties.forEach((p) => {
-      const { longitude: lng, latitude: lat } = p.location
-      if (lng < west) west = lng
-      if (lat < south) south = lat
-      if (lng > east) east = lng
-      if (lat > north) north = lat
-    })
-    west = Math.max(west, sw[0])
-    south = Math.max(south, sw[1])
-    east = Math.min(east, ne[0])
-    north = Math.min(north, ne[1])
-    // maxZoom caps so a tight cluster doesn't zoom in too far ("no exagerar").
+    if (!map || !fitToken) return
+    // Center on the configured point and cover a LIST_VIEW_RADIUS_KM radius.
+    const { latitude, longitude } = LIST_VIEW_CENTER
+    const dLat = LIST_VIEW_RADIUS_KM / 111.32
+    const dLng = LIST_VIEW_RADIUS_KM / (111.32 * Math.cos((latitude * Math.PI) / 180))
     const target: [[number, number], [number, number]] = [
-      [west, south],
-      [east, north],
+      [longitude - dLng, latitude - dLat],
+      [longitude + dLng, latitude + dLat],
     ]
     const opts = { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true }
     // The list column animates to a narrower width right as this fires, so fit
