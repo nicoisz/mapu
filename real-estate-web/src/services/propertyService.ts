@@ -1,7 +1,7 @@
 import { Property } from '@/types/property'
 import { PropertyOperation, PropertyStatus } from '@/types/enums'
 import { PropertySearchQuery } from '@/types/search'
-import { LISTING_EXPIRATION_DAYS } from '@/constants'
+import { LISTING_EXPIRATION_DAYS, MAX_QUERY_RESULTS } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
 import { rethrowUserError } from '@/lib/userMessages'
 import { deletePropertyImages } from '@/services/storageService'
@@ -23,6 +23,7 @@ export const propertyService = {
       .eq('status', PropertyStatus.ACTIVE)
       .or(activeExpiryFilter())
       .order('published_at', { ascending: false })
+      .limit(MAX_QUERY_RESULTS)
     if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
@@ -100,7 +101,9 @@ export const propertyService = {
     else q = q.order('published_at', { ascending: query.sortOrder === 'asc' })
 
     const offset = query.offset ?? 0
+    // Sin paginación explícita, acota para no cargar la DB completa.
     if (query.limit) q = q.range(offset, offset + query.limit - 1)
+    else q = q.range(offset, offset + MAX_QUERY_RESULTS - 1)
 
     const { data, error } = await q
     if (error) rethrowUserError(error)

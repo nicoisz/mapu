@@ -8,6 +8,13 @@ export const FREE_PLAN_LISTINGS_LIMIT = 3
 export const LISTING_EXPIRATION_DAYS = 30
 export const DEFAULT_SEARCH_RADIUS_KM = 5
 
+/** Límite de resultados por consulta de catálogo (mapa/búsqueda) para evitar
+ *  cargas sin cota en DB grandes. La lista del mapa pagina sobre este set. */
+export const MAX_QUERY_RESULTS = 1000
+
+/** Intervalo mínimo entre llamadas al geocoder (cumple política de uso). */
+export const GEOCODING_MIN_INTERVAL_MS = 1100
+
 export const DEFAULT_MAP_CENTER = {
   latitude: -33.4489,
   longitude: -70.6693,
