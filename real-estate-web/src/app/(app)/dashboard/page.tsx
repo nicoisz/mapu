@@ -30,6 +30,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { GlowLoader } from '@/components/ui/GlowLoader'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
 import { Property } from '@/types/property'
 import { SubscriptionType, PlatformRole } from '@/types/enums'
@@ -43,6 +44,7 @@ export default function DashboardPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Property | null>(null)
   const [asUser, setAsUser] = useState<{ id: string; name: string; email: string } | null>(null)
   const [viewsSeries, setViewsSeries] = useState<{ day: string; count: number }[]>([])
 
@@ -153,13 +155,12 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleDelete(id: string, title: string) {
+  async function handleDelete(id: string) {
     if (impersonating) return
-    if (!window.confirm(`¿Eliminar definitivamente "${title}"? Esta acción no se puede deshacer.`))
-      return
     setBusyId(id)
     const ok = await propertyService.deleteProperty(id)
     setBusyId(null)
+    setConfirmDelete(null)
     if (ok) {
       await loadProperties()
       void refreshUser()
@@ -348,7 +349,7 @@ export default function DashboardPage() {
                             Editar
                           </Link>
                           <button
-                            onClick={() => handleDelete(property.id, property.title)}
+                            onClick={() => setConfirmDelete(property)}
                             disabled={busyId === property.id}
                             className="flex items-center gap-1 text-error/80 hover:text-error transition-colors disabled:opacity-50"
                           >
@@ -401,7 +402,7 @@ export default function DashboardPage() {
                           Renovar 30 días
                         </button>
                         <button
-                          onClick={() => handleDelete(property.id, property.title)}
+                          onClick={() => setConfirmDelete(property)}
                           disabled={busyId === property.id}
                           className="flex items-center gap-1 text-xs text-error border border-error/40 rounded-lg px-2.5 py-1.5 hover:bg-error hover:text-on-error transition-colors disabled:opacity-50"
                         >
@@ -427,6 +428,20 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="¿Eliminar propiedad?"
+        description={
+          confirmDelete
+            ? `"${confirmDelete.title}" se eliminará definitivamente. Esta acción no se puede deshacer.`
+            : undefined
+        }
+        confirmLabel="Eliminar"
+        busy={busyId === confirmDelete?.id}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete.id)}
+      />
     </div>
   )
 }

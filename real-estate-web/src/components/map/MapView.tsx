@@ -581,8 +581,11 @@ export default function MapView({
     // The list column animates to a narrower width right as this fires, so fit
     // against the *current* container size and re-fit on each resize until the
     // animation settles — keeps the properties centered in the compressed map.
+    // map.resize() BEFORE subscribing: emite 'resize', pero aún no hay listener,
+    // así que no se re-entra. El handler de resize solo re-fit (sin resize),
+    // evitando el loop resize → resize que reventaba el stack.
+    map.resize()
     const doFit = () => {
-      map.resize()
       map.fitBounds(target, opts)
     }
     doFit()

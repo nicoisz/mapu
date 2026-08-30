@@ -30,6 +30,7 @@ import { propertyService } from '@/services/propertyService'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { MiniMap } from '@/components/map/MiniMap'
+import { Reviews } from '@/components/reviews/Reviews'
 import { contactService } from '@/services/contactService'
 import { shareService } from '@/services/shareService'
 import { cn, formatArea, formatDate, getDisplayPrice } from '@/lib/utils'
@@ -423,6 +424,15 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Reseñas del agente/empresa que publica esta propiedad */}
+      <div className="mt-10">
+        <Reviews
+          subjectId={property.ownerId}
+          organizationId={property.organizationId}
+          propertyId={property.id}
+        />
       </div>
 
       {/* Map modal — compact, map fills the whole card */}
