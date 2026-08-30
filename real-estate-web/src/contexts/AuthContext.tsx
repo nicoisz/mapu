@@ -7,6 +7,7 @@ import { AuthResult } from '@/types/results'
 import { SubscriptionType, UserType } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
+import { organizationService } from '@/services/organizationService'
 
 interface AuthState {
   user: User | null
@@ -79,13 +80,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     setState((s) => ({ ...s, isLoading: true, error: null }))
     const result = await authService.login(email, password)
-    setState((s) => ({
-      ...s,
-      isLoading: false,
-      user: result.user ?? null,
-      isAuthenticated: result.success && !!result.user,
-      error: result.error ?? null,
-    }))
+    if (!result.success) {
+      setState((s) => ({
+        ...s,
+        isLoading: false,
+        user: null,
+        isAuthenticated: false,
+        error: result.error ?? null,
+      }))
+      return result
+    }
+    // Auto-unir invitaciones pendientes de corredora y refrescar membresía.
+    try {
+      await organizationService.acceptPendingInvites()
+    } catch {
+      /* non-fatal */
+    }
+    const fresh = await authService.getCurrentUser()
+    setState({ user: fresh, isAuthenticated: !!fresh, isLoading: false, error: null })
     return result
   }, [])
 
@@ -128,6 +140,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshUser = useCallback(async () => {
+    try {
+      await organizationService.acceptPendingInvites()
+    } catch {
+      /* non-fatal */
+    }
     const user = await authService.getCurrentUser()
     setState((s) => ({ ...s, user, isAuthenticated: !!user }))
   }, [])

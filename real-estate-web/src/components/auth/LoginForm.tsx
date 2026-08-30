@@ -93,6 +93,12 @@ export function LoginForm() {
         </Button>
       </form>
 
+      <div className="text-right mt-2">
+        <Link href="/forgot" className="text-xs text-on-surface-variant hover:text-primary hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
+
       <div className="my-6 flex items-center gap-3">
         <div className="flex-1 h-px bg-border" />
         <span className="text-xs text-on-surface-variant">o continúa con</span>

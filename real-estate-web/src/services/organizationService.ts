@@ -94,4 +94,21 @@ export const organizationService = {
     })
     if (error) throw new Error(error.message)
   },
+
+  /** Crea una invitación pendiente para un email (RPC con jerarquía). Devuelve el token. */
+  async createInvite(orgId: string, email: string, role: 'admin' | 'agent'): Promise<string> {
+    const { data, error } = await getSupabase().rpc('create_org_invite', {
+      inv_org_id: orgId,
+      inv_email: email,
+      inv_role: role,
+    })
+    if (error) throw new Error(error.message)
+    return data as string
+  },
+
+  /** Auto-acepta las invitaciones pendientes del email del usuario (RPC). */
+  async acceptPendingInvites(): Promise<void> {
+    const { error } = await getSupabase().rpc('accept_pending_invites')
+    if (error) throw new Error(error.message)
+  },
 }

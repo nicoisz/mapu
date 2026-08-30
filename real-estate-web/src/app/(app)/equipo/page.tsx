@@ -34,6 +34,7 @@ export default function EquipoPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'agent' | 'admin'>('agent')
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
   const [inviteLoading, setInviteLoading] = useState(false)
 
   const orgId = user?.organizationId
@@ -67,14 +68,28 @@ export default function EquipoPage() {
     e.preventDefault()
     if (!orgId || !inviteEmail.trim()) return
     setInviteError(null)
+    setInviteSuccess(null)
     setInviteLoading(true)
     try {
       const found = await organizationService.findUserByEmail(inviteEmail)
-      if (!found) {
-        setInviteError('No se encontró ningún usuario con ese email.')
-        return
+      if (found) {
+        // Ya tiene cuenta → se agrega directo.
+        await organizationService.setMemberRole(orgId, found.id, inviteRole)
+        setInviteSuccess(`${found.name || found.email} agregado a la corredora.`)
+      } else {
+        // No registrado → invitación por email (Resend).
+        const token = await organizationService.createInvite(orgId, inviteEmail, inviteRole)
+        const res = await fetch('/api/invite/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: inviteEmail, orgName: org?.name ?? 'la corredora', token }),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body?.error ?? 'No se pudo enviar la invitación')
+        }
+        setInviteSuccess(`Invitación enviada por correo a ${inviteEmail}.`)
       }
-      await organizationService.setMemberRole(orgId, found.id, inviteRole)
       setInviteEmail('')
       load()
     } catch (err) {
@@ -164,6 +179,9 @@ export default function EquipoPage() {
               </Button>
             </form>
             {inviteError && <p className="text-error text-sm mb-2">{inviteError}</p>}
+            {inviteSuccess && (
+              <p className="text-accent text-sm mb-2 font-medium">{inviteSuccess}</p>
+            )}
 
             <div className="space-y-2">
               {members.map((m) => (
