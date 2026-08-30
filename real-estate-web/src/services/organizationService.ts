@@ -43,25 +43,21 @@ export const organizationService = {
   async getOrgMembers(
     orgId: string
   ): Promise<{ id: string; name: string; email: string; role: string }[]> {
-    const { data, error } = await getSupabase()
-      .from('organization_members')
-      .select('user_id, role, profiles(name, email)')
-      .eq('org_id', orgId)
-      .eq('status', 'active')
+    // security-004: email se entrega vía RPC solo a quien gestiona la org.
+    const { data, error } = await getSupabase().rpc('get_org_members', { org_id: orgId })
     if (error) throw new Error(error.message)
-    return (data ?? []).map((m) => {
-      const row = m as unknown as {
-        user_id: string
-        role: string
-        profiles?: { name: string | null; email: string | null } | null
-      }
-      return {
-        id: row.user_id,
-        name: row.profiles?.name ?? '—',
-        email: row.profiles?.email ?? '',
-        role: row.role,
-      }
-    })
+    const rows = (data ?? []) as {
+      user_id: string
+      name: string | null
+      email: string | null
+      role: string
+    }[]
+    return rows.map((row) => ({
+      id: row.user_id,
+      name: row.name ?? '—',
+      email: row.email ?? '',
+      role: row.role,
+    }))
   },
 
   /**

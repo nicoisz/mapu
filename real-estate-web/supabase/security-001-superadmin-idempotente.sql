@@ -47,6 +47,13 @@ begin
 end $$;
 
 -- 4) Marca al dueño como superadmin. AJUSTA el email a tu cuenta.
+--    Guardado: solo promueve si el perfil existe (no crea filas) y es
+--    idempotente (promover a quien ya es superadmin no hace nada).
 update public.profiles
-set platform_role = 'superadmin'
-where email = 'nicolasignacio.sz@gmail.com';
+set platform_role = 'superadmin',
+    updated_at = now()
+where email = 'nicolasignacio.sz@gmail.com'
+  and exists (
+    select 1 from public.profiles p
+    where p.email = 'nicolasignacio.sz@gmail.com'
+  );

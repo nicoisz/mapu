@@ -106,7 +106,12 @@ export const reviewService = {
   },
 
   async setStatus(id: string, status: 'published' | 'flagged' | 'removed'): Promise<void> {
-    const { error } = await getSupabase().from('reviews').update({ status }).eq('id', id)
+    // security-007: moderación solo vía RPC de superadmin (grants por columna
+    // impiden que el autor cambie status).
+    const { error } = await getSupabase().rpc('admin_set_review_status', {
+      review_id: id,
+      new_status: status,
+    })
     if (error) throw new Error(error.message)
   },
 }

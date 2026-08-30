@@ -39,26 +39,21 @@ export const adminService = {
   },
 
   async listUsers(search?: string): Promise<AdminUserRow[]> {
-    let q = getSupabase()
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200)
-    if (search?.trim()) {
-      const term = search.trim()
-      q = q.or(`email.ilike.%${term}%,name.ilike.%${term}%`)
-    }
-    const { data, error } = await q
+    // security-004: los datos completos se leen vía RPC de superadmin (los
+    // grants por columna no exponen email/telefono al cliente).
+    const { data, error } = await getSupabase().rpc('admin_list_users', {
+      search_term: search?.trim() ?? '',
+    })
     if (error) throw new Error(error.message)
     return (data ?? []) as AdminUserRow[]
   },
 
   /** Cambia el rol de plataforma (user/superadmin). */
   async setPlatformRole(userId: string, role: PlatformRole): Promise<void> {
-    const { error } = await getSupabase()
-      .from('profiles')
-      .update({ platform_role: role })
-      .eq('id', userId)
+    const { error } = await getSupabase().rpc('admin_set_platform_role', {
+      target_user_id: userId,
+      new_role: role,
+    })
     if (error) throw new Error(error.message)
   },
 
@@ -68,10 +63,11 @@ export const adminService = {
     field: 'is_email_verified' | 'is_phone_verified',
     value: boolean
   ): Promise<void> {
-    const { error } = await getSupabase()
-      .from('profiles')
-      .update({ [field]: value })
-      .eq('id', userId)
+    const { error } = await getSupabase().rpc('admin_toggle_verified', {
+      target_user_id: userId,
+      field,
+      value,
+    })
     if (error) throw new Error(error.message)
   },
 
