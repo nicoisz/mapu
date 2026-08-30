@@ -23,6 +23,7 @@ drop policy if exists "notifications_own" on public.notifications;
 drop policy if exists "payments_own" on public.payments;
 drop policy if exists "price_alerts_own" on public.price_alerts;
 drop policy if exists "profiles_own_write" on public.profiles;
+drop policy if exists "profiles_system_insert" on public.profiles;
 drop policy if exists "properties_own_insert" on public.properties;
 drop policy if exists "properties_own_update" on public.properties;
 drop policy if exists "properties_own_delete" on public.properties;
