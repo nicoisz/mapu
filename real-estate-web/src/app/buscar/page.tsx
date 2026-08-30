@@ -241,6 +241,7 @@ function SearchContent() {
             onMapClick={closeDetail}
             onBoundsChange={setBounds}
             fitToken={fitToken}
+            operation={filters.operation ?? null}
           />
 
           {/* Floating detail card over the map (the list collapses behind it). */}

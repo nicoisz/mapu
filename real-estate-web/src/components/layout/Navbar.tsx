@@ -125,42 +125,44 @@ export function Navbar() {
         <div className={pill ? 'w-2' : 'flex-1'} />
 
         <div className="hidden md:flex items-center gap-1">
-          {commonLinks.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
-                  pill
-                    ? isActive
-                      ? 'text-[#FF4D1C] font-bold'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
-                    : isActive
-                      ? 'text-primary font-bold'
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
-                )}
-              >
-                <Icon size={16} />
-                {label === 'Favoritos' && favCount > 0 ? (
-                  <span className="flex items-center gap-1">
-                    {label}
-                    <span
-                      className={cn(
-                        'text-xs rounded-full px-1.5 py-px text-white',
-                        pill ? 'bg-[#FF4D1C]' : 'bg-accent'
-                      )}
-                    >
-                      {favCount}
+          {commonLinks
+            .filter(({ href }) => !(href === '/buscar' && pathname === '/buscar'))
+            .map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
+                    pill
+                      ? isActive
+                        ? 'text-[#FF4D1C] font-bold'
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                      : isActive
+                        ? 'text-primary font-bold'
+                        : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                  )}
+                >
+                  <Icon size={16} />
+                  {label === 'Favoritos' && favCount > 0 ? (
+                    <span className="flex items-center gap-1">
+                      {label}
+                      <span
+                        className={cn(
+                          'text-xs rounded-full px-1.5 py-px text-white',
+                          pill ? 'bg-[#FF4D1C]' : 'bg-accent'
+                        )}
+                      >
+                        {favCount}
+                      </span>
                     </span>
-                  </span>
-                ) : (
-                  label
-                )}
-              </Link>
-            )
-          })}
+                  ) : (
+                    label
+                  )}
+                </Link>
+              )
+            })}
         </div>
 
         <div className="flex items-center gap-2">

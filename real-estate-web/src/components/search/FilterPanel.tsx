@@ -64,7 +64,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-[fadeIn_.2s_ease]">
-      <div className="bg-surface-container-low w-full max-w-md rounded-2xl shadow-elevated border border-outline-variant/40 max-h-[85vh] flex flex-col">
+      <div className="bg-surface-container-low w-full max-w-xl rounded-2xl shadow-elevated border border-outline-variant/40 max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/40">
           <h2 className="font-headline font-semibold text-lg text-on-surface">Filtros</h2>
           <div className="flex items-center gap-3">
