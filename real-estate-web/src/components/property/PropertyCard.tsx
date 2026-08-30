@@ -19,6 +19,9 @@ interface PropertyCardProps {
   /** Floating detail-card layout: X over the image, heart next to the title. */
   detail?: boolean
   onClose?: () => void
+  /** Price-zone color + label (shown as a diamond in detail mode). */
+  zoneColor?: string | null
+  zoneLabel?: string | null
 }
 
 export function PropertyCard({
@@ -28,6 +31,8 @@ export function PropertyCard({
   onClick,
   detail,
   onClose,
+  zoneColor,
+  zoneLabel,
 }: PropertyCardProps) {
   const { isFavorite, toggle } = useFavoritesContext()
   const fav = isFavorite(property.id)
@@ -40,7 +45,7 @@ export function PropertyCard({
       className={cn(
         'bg-surface-container-low rounded-2xl overflow-hidden group transition-all duration-300',
         isSelected
-          ? 'ring-2 ring-primary border border-primary/50'
+          ? 'border-2 border-primary'
           : 'border border-outline-variant/25 hover:-translate-y-1.5 hover:shadow-elevated',
         compact ? 'flex flex-col sm:flex-row gap-3 items-stretch' : '',
         onClick ? 'cursor-pointer' : ''
@@ -130,6 +135,19 @@ export function PropertyCard({
               {amount}
             </span>
             {suffix && <span className="text-on-surface-variant text-sm">{suffix}</span>}
+            {detail && zoneColor && (
+              <span className="ml-2 inline-flex items-center gap-1.5 align-middle">
+                <span
+                  className="inline-block w-[7px] h-[7px] rotate-45 rounded-[1px]"
+                  style={{ background: zoneColor, border: '1px solid rgba(255,255,255,0.85)' }}
+                />
+                {zoneLabel && (
+                  <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">
+                    {zoneLabel}
+                  </span>
+                )}
+              </span>
+            )}
           </div>
           {!compact && (
             <span className="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant font-semibold shrink-0">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Building2, KeyRound, List, Map as MapIcon, Tag } from 'lucide-react'
 import { PropertyOperation } from '@/types/enums'
+import { computePriceZones, findZone, getZoneColor, ZoneBucket } from '@/lib/priceZones'
 import DynamicMapView from '@/components/map/DynamicMapView'
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
 import { SearchBar } from '@/components/search/SearchBar'
@@ -146,6 +147,23 @@ function SearchContent() {
     [visible]
   )
 
+  // Price-zone of the selected property, matching the map's legend (diamond).
+  const zoneMode: 'sale' | 'rent' =
+    filters.operation === PropertyOperation.RENT ? 'rent' : 'sale'
+  const ZONE_LABELS: Record<ZoneBucket, string> = {
+    economic: 'Económica',
+    mid: 'Media',
+    premium: 'Premium',
+  }
+  const selectedZone = useMemo(() => {
+    if (!selected || results.length === 0) return null
+    const { cells } = computePriceZones(results, zoneMode)
+    const bucket = findZone(cells, selected.location.latitude, selected.location.longitude)?.bucket
+    return bucket
+      ? { color: getZoneColor(bucket), label: ZONE_LABELS[bucket] }
+      : null
+  }, [selected, results, zoneMode])
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Search header */}
@@ -252,7 +270,14 @@ function SearchContent() {
               className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] z-20"
             >
               <div className="h-full overflow-y-auto rounded-2xl">
-                <PropertyCard property={selected} isSelected detail onClose={closeDetail} />
+                <PropertyCard
+                  property={selected}
+                  isSelected
+                  detail
+                  onClose={closeDetail}
+                  zoneColor={selectedZone?.color}
+                  zoneLabel={selectedZone?.label}
+                />
               </div>
             </div>
           )}
