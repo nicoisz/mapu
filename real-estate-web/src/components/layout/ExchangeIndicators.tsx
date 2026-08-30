@@ -13,7 +13,7 @@ const fmt = new Intl.NumberFormat('es-CL', {
   maximumFractionDigits: 2,
 })
 
-/** Último valor desde la API pública mindicador.cl (serie[0] = hoy). */
+/** Último valor desde una API pública de indicadores (serie[0] = hoy). */
 async function fetchLatest(url: string): Promise<Point | null> {
   try {
     const res = await fetch(url, { cache: 'no-store' })
@@ -26,6 +26,12 @@ async function fetchLatest(url: string): Promise<Point | null> {
   }
 }
 
+/** APIs de indicadores, en orden de preferencia (fallback si una cae). */
+const API_SOURCES: Record<'uf' | 'dolar', string[]> = {
+  uf: ['https://findic.cl/api/uf', 'https://api.mindicador.cl/api/uf'],
+  dolar: ['https://findic.cl/api/dolar', 'https://api.mindicador.cl/api/dolar'],
+}
+
 /** Indicadores de mercado (UF y Dólar de Chile) — barra de búsqueda y sidebar. */
 export function ExchangeIndicators({ className }: { className?: string }) {
   const [uf, setUf] = useState<Point | null>(null)
@@ -33,8 +39,18 @@ export function ExchangeIndicators({ className }: { className?: string }) {
 
   useEffect(() => {
     let active = true
-    fetchLatest('https://api.mindicador.cl/api/uf').then((v) => active && setUf(v))
-    fetchLatest('https://api.mindicador.cl/api/dolar').then((v) => active && setUsd(v))
+    const load = async (key: 'uf' | 'dolar') => {
+      for (const url of API_SOURCES[key]) {
+        const v = await fetchLatest(url)
+        if (active && v) {
+          if (key === 'uf') setUf(v)
+          else setUsd(v)
+          return
+        }
+      }
+    }
+    void load('uf')
+    void load('dolar')
     return () => {
       active = false
     }
