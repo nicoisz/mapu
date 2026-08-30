@@ -50,19 +50,20 @@ function translateError(message: string): string {
   return message
 }
 
-/** Loads the profile row, creating it if missing (no DB trigger guaranteed). */
+/**
+ * Loads the profile row, creating it if missing (no DB trigger guaranteed).
+ * Los grants por columna (security-004) no exponen los datos sensibles del
+ * propio perfil al cliente; se leen completos vía RPC get_own_profile
+ * (SECURITY DEFINER, id = auth.uid()).
+ */
 async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow | null> {
   const supabase = getSupabase()
-  const { data: existing } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', authUser.id)
-    .maybeSingle<ProfileRow>()
+  const { data: existing } = await supabase.rpc('get_own_profile').maybeSingle<ProfileRow>()
   if (existing) return existing
 
   const fallbackName =
     (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
-  const { data: created } = await supabase
+  const { error: insertError } = await supabase
     .from('profiles')
     .insert({
       id: authUser.id,
@@ -70,9 +71,10 @@ async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow |
       name: fallbackName,
       user_type: (authUser.user_metadata?.user_type as string) ?? 'individual',
     })
-    .select('*')
-    .maybeSingle<ProfileRow>()
-  return created
+  if (insertError) return null
+  // El insert solo devuelve columnas públicas; relee el perfil completo vía RPC.
+  const { data: refreshed } = await supabase.rpc('get_own_profile').maybeSingle<ProfileRow>()
+  return refreshed ?? null
 }
 
 /** Builds the app User from the Supabase session user + profile + listing counts. */

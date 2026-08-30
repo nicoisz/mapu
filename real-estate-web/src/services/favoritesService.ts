@@ -68,7 +68,10 @@ export const favoritesService = {
       await supabase.from('favorites').delete().eq('user_id', userId).eq('property_id', property.id)
       return false
     }
-    await supabase.from('favorites').insert({ user_id: userId, property_id: property.id })
+    // security-005: unique (user_id, property_id); upsert evita errores por race.
+    await supabase
+      .from('favorites')
+      .upsert({ user_id: userId, property_id: property.id }, { onConflict: 'user_id,property_id' })
     return true
   },
 
