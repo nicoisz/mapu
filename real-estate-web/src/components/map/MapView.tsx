@@ -93,6 +93,8 @@ interface MapViewProps {
   zoom?: number
   /** Increment this to fly/fit the view to all properties (e.g. list view). */
   fitToken?: number
+  /** Active operation filter from /buscar — syncs the price-zones button. */
+  operation?: PropertyOperation | null
 }
 
 /** Each property as a GeoJSON point feature for supercluster. */
@@ -202,6 +204,7 @@ export default function MapView({
   center,
   zoom,
   fitToken,
+  operation,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -228,6 +231,8 @@ export default function MapView({
   zonesOnRef.current = zonesOn
   const activeBucketRef = useRef<ZoneBucket | null>(activeBucket)
   activeBucketRef.current = activeBucket
+  const operationRef = useRef(operation)
+  operationRef.current = operation
 
   // Keep latest props in refs so the map's event handlers (created once) never
   // act on stale data — e.g. properties arriving from Supabase before 'load'.
@@ -532,6 +537,13 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, activeBucket, zoneMode, zonesOn])
 
+  // Sync the price-zones button (and its mode) with the operation filter chosen
+  // in /buscar, without touching any other map logic.
+  useEffect(() => {
+    if (!operation) return
+    setZoneMode(operation === PropertyOperation.RENT ? 'rent' : 'sale')
+  }, [operation])
+
   // Redraw (restyle pins) when the selection changes.
   useEffect(() => {
     renderClusters()
@@ -647,7 +659,7 @@ export default function MapView({
       </div>
 
       {/* Price zones control + legend */}
-      <div className="absolute bottom-24 left-3 z-10 flex flex-col gap-2 items-start">
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 items-start">
         <div className="flex rounded-full overflow-hidden border border-outline-variant/40 shadow-elevated bg-surface-container-low">
           <button
             onClick={() => setZonesOn((v) => !v)}
