@@ -576,13 +576,26 @@ export default function MapView({
     east = Math.min(east, ne[0])
     north = Math.min(north, ne[1])
     // maxZoom caps so a tight cluster doesn't zoom in too far ("no exagerar").
-    map.fitBounds(
-      [
-        [west, south],
-        [east, north],
-      ],
-      { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true }
-    )
+    const target: [[number, number], [number, number]] = [
+      [west, south],
+      [east, north],
+    ]
+    const opts = { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true }
+    // The list column animates to a narrower width right as this fires, so fit
+    // against the *current* container size and re-fit on each resize until the
+    // animation settles — keeps the properties centered in the compressed map.
+    const doFit = () => {
+      map.resize()
+      map.fitBounds(target, opts)
+    }
+    doFit()
+    const onResize = () => doFit()
+    map.on('resize', onResize)
+    const settle = setTimeout(() => map.off('resize', onResize), 800)
+    return () => {
+      map.off('resize', onResize)
+      clearTimeout(settle)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitToken])
 
