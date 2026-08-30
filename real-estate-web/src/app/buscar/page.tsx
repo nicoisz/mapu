@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Building2, KeyRound, List, Map as MapIcon, Tag, X } from 'lucide-react'
 import { PropertyOperation } from '@/types/enums'
@@ -23,12 +23,14 @@ interface Bounds {
 }
 
 function SearchContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
   const [showFilters, setShowFilters] = useState(false)
   const [selected, setSelected] = useState<Property | null>(null)
   const [bounds, setBounds] = useState<Bounds | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
+  const [fitToken, setFitToken] = useState(0)
   const listColRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -171,7 +173,10 @@ function SearchContent() {
             <MapIcon size={14} /> Mapa
           </button>
           <button
-            onClick={() => setViewMode('list')}
+            onClick={() => {
+              setViewMode('list')
+              setFitToken((t) => t + 1)
+            }}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all',
               viewMode === 'list'
@@ -235,6 +240,7 @@ function SearchContent() {
             onPropertySelect={setSelected}
             onMapClick={closeDetail}
             onBoundsChange={setBounds}
+            fitToken={fitToken}
           />
 
           {/* Floating detail card over the map (the list collapses behind it). */}
@@ -296,7 +302,7 @@ function SearchContent() {
                     <PropertyCard
                       property={property}
                       isSelected={selected?.id === property.id}
-                      onClick={() => setSelected(property)}
+                      onClick={() => router.push(`/propiedad/${property.id}`)}
                     />
                   </div>
                 ))}
