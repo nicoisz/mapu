@@ -406,7 +406,8 @@ export default function PublicarPage() {
           ).catch(() => {})
         }
       } else {
-        await propertyService.createProperty(user.id, data, user.organizationId)
+        // Create vía ruta server-side (valida JWT + org en el servidor).
+        await propertyService.createPropertyServer(data, user.organizationId)
       }
       void refreshUser()
       router.push('/dashboard')
