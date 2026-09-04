@@ -133,6 +133,9 @@ export default function PublicarPage() {
   const [submitting, setSubmitting] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const originalPathsRef = useRef<string[]>([])
+  // Idempotency key: se genera una vez por intento de publicación y se reutiliza
+  // en reintentos del MISMO submit para que un doble clic/retry no duplique.
+  const clientRequestIdRef = useRef<string | null>(null)
   const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }))
 
   // ── Ubicación: geocoder + pin ───────────────────────────────────
@@ -406,8 +409,10 @@ export default function PublicarPage() {
           ).catch(() => {})
         }
       } else {
-        // Create vía ruta server-side (valida JWT + org en el servidor).
-        await propertyService.createPropertyServer(data, user.organizationId)
+        // Create vía ruta server-side (valida JWT + org + cuota en el servidor).
+        const clientRequestId = (clientRequestIdRef.current ??= crypto.randomUUID())
+        await propertyService.createPropertyServer(data, user.organizationId, clientRequestId)
+        clientRequestIdRef.current = null
       }
       void refreshUser()
       router.push('/dashboard')

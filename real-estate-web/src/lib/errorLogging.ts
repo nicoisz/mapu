@@ -32,10 +32,11 @@ function flush(): void {
       .insert(batch)
       .then(
         () => {},
-        () => {}
+        (err) => console.error('errorLogging: no se pudo enviar el batch', err)
       )
   } catch {
-    // Sin credenciales Supabase u otro fallo: no propagar.
+    // Sin credenciales Supabase u otro fallo: no propagar, pero dejar rastro.
+    console.error('errorLogging: no se pudo iniciar el envío (sin credenciales?)')
   }
 }
 

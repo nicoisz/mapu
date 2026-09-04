@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   description: 'Encuentra tu propiedad ideal en Chile',
 }
 
-export const FREE_PLAN_LISTINGS_LIMIT = 3
+export const FREE_PLAN_LISTINGS_LIMIT = 1
 export const LISTING_EXPIRATION_DAYS = 30
 export const DEFAULT_SEARCH_RADIUS_KM = 5
 
