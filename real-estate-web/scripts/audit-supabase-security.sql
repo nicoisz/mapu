@@ -111,13 +111,13 @@ order by grantee, table_name, column_name, privilege_type;
 
 select
   grantee,
-  sequence_schema                                  as schema,
-  sequence_name,
+  object_schema                                    as schema,
+  object_name,
+  object_type,
   privilege_type
 from information_schema.role_usage_grants
 where grantee in ('anon', 'authenticated', 'service_role')
-  and object_type = 'SEQUENCE'
-order by grantee, sequence_name;
+order by grantee, object_name, object_type;
 
 -- Grants EXPLICITOS de EXECUTE sobre funciones (via aclexplode)
 -- Nota: proacl NULL = privilegios por defecto (PUBLIC EXECUTE). Se lista aparte.
