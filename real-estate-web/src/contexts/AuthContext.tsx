@@ -6,7 +6,7 @@ import { User } from '@/types/user'
 import { AuthResult } from '@/types/results'
 import { SubscriptionType, UserType } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 
 interface AuthState {
   user: User | null
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active) setState((s) => ({ ...s, isLoading: false }))
       })
 
-    const { data: sub } = getSupabase().auth.onAuthStateChange((event, session) => {
+    const { data: sub } = getSupabaseBrowser().auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setState({ user: null, isAuthenticated: false, isLoading: false, error: null })
       } else if (event === 'SIGNED_IN' && session?.user) {

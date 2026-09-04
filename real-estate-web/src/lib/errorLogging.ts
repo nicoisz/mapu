@@ -1,4 +1,5 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
+import type { Database } from '@/types/database.generated'
 
 /**
  * Captura de errores client-side para el log del admin.
@@ -27,9 +28,9 @@ function flush(): void {
   queue = []
   timer = null
   try {
-    getSupabase()
+    getSupabaseBrowser()
       .from('error_logs')
-      .insert(batch)
+      .insert(batch as Database['public']['Tables']['error_logs']['Insert'][])
       .then(
         () => {},
         (err) => console.error('errorLogging: no se pudo enviar el batch', err)

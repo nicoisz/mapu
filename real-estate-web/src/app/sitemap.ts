@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { propertyService } from '@/services/propertyService'
+import { getAllActiveProperties } from '@/lib/server/propertyQueries'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -14,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Property pages — tolerate the DB being unreachable at build time.
   try {
-    const properties = await propertyService.getAll()
+    const properties = await getAllActiveProperties()
     const propertyRoutes: MetadataRoute.Sitemap = properties.map((p) => ({
       url: `${BASE_URL}/propiedad/${p.id}`,
       lastModified: p.listing.lastUpdated,

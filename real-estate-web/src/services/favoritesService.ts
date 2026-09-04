@@ -2,7 +2,7 @@ import { Property } from '@/types/property'
 import { FavoritesStats } from '@/types/results'
 import { propertyService } from './propertyService'
 import { STORAGE_KEYS } from '@/constants'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 
 // Anonymous visitors keep favorites in localStorage; signed-in users use the
 // `favorites` table. On login the local list is merged into the account.
@@ -33,7 +33,7 @@ export const favoritesService = {
   /** Favorite ids for the current visitor (account table or local fallback). */
   async getFavoriteIds(userId: string | null): Promise<string[]> {
     if (!userId) return loadLocalIds()
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('favorites')
       .select('property_id')
       .eq('user_id', userId)
@@ -57,7 +57,7 @@ export const favoritesService = {
       return true
     }
 
-    const supabase = getSupabase()
+    const supabase = getSupabaseBrowser()
     const { count } = await supabase
       .from('favorites')
       .select('property_id', { count: 'exact', head: true })
@@ -79,7 +79,7 @@ export const favoritesService = {
   async mergeLocalToAccount(userId: string): Promise<void> {
     const localIds = loadLocalIds()
     if (!localIds.length) return
-    const supabase = getSupabase()
+    const supabase = getSupabaseBrowser()
     // No unique constraint on (user_id, property_id) in this schema, so check
     // first and insert one by one, tolerating stale/non-existent ids.
     const { data: existing } = await supabase

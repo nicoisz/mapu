@@ -1,5 +1,6 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { rethrowUserError } from '@/lib/userMessages'
+import type { Database } from '@/types/database.generated'
 
 export interface Review {
   id: string
@@ -32,7 +33,7 @@ interface ReviewJoinRow {
 
 export const reviewService = {
   async listForSubject(subjectId: string): Promise<Review[]> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('reviews')
       .select('*, profiles!reviews_author_id_fkey(name), properties(title)')
       .eq('subject_id', subjectId)
@@ -60,34 +61,36 @@ export const reviewService = {
     propertyId?: string
     organizationId?: string
   }): Promise<void> {
-    const { error } = await getSupabase()
+    const { error } = await getSupabaseBrowser()
       .from('reviews')
+      // TODO(bug pre-existente): no se setea author_id (= auth.uid()); el insert
+      // falla por RLS. Se preserva comportamiento actual; corregir en task aparte.
       .insert({
         subject_id: input.subjectId,
         organization_id: input.organizationId ?? null,
         property_id: input.propertyId ?? null,
         rating: input.rating,
         comment: input.comment,
-      })
+      } as unknown as Database['public']['Tables']['reviews']['Insert'])
     if (error) rethrowUserError(error)
   },
 
   async canReview(authorId: string, subjectId: string, propertyId?: string): Promise<boolean> {
     // 1 reseña por (author, subject, property): se permite re-reseñar al mismo
     // sujeto en OTRA propiedad, pero no dos veces en la misma.
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('reviews')
       .select('id')
       .eq('author_id', authorId)
       .eq('subject_id', subjectId)
-      .eq('property_id', propertyId ?? null)
+      .eq('property_id', (propertyId ?? null) as string)
       .maybeSingle()
     if (error) return false
     return !data
   },
 
   async listAll(): Promise<Review[]> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('reviews')
       .select('*, profiles!reviews_author_id_fkey(name), properties(title)')
       .order('created_at', { ascending: false })
@@ -111,7 +114,7 @@ export const reviewService = {
   async setStatus(id: string, status: 'published' | 'flagged' | 'removed'): Promise<void> {
     // security-007: moderación solo vía RPC de superadmin (grants por columna
     // impiden que el autor cambie status).
-    const { error } = await getSupabase().rpc('admin_set_review_status', {
+    const { error } = await getSupabaseBrowser().rpc('admin_set_review_status', {
       review_id: id,
       new_status: status,
     })
