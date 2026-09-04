@@ -75,7 +75,8 @@ async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow |
 async function buildUser(authUser: SupabaseUser): Promise<User> {
   const [profile, activeListings, membership] = await Promise.all([
     loadOrCreateProfile(authUser),
-    propertyService.countActiveListings(authUser.id),
+    // Solo display (remainingListings); la cuota real se impone en /api/publish.
+    propertyService.countActiveListings(authUser.id).catch(() => 0),
     // Active org membership (multi-tenant): first org the user belongs to.
     getSupabase()
       .from('organization_members')

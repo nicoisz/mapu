@@ -6,12 +6,13 @@ import { getSupabase } from '@/lib/supabase'
 import { rethrowUserError } from '@/lib/userMessages'
 import { deletePropertyImages } from '@/services/storageService'
 import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
+import { captureError } from '@/lib/errorLogging'
 
 const ROW_COLUMNS = '*'
 
 /** Listings that are still published: status active AND not past expires_at.
  *  Null expires_at (some mobile-created rows) counts as never-expiring. */
-function activeExpiryFilter(): string {
+export function activeExpiryFilter(): string {
   return `expires_at.is.null,expires_at.gte.${new Date().toISOString()}`
 }
 
@@ -137,7 +138,8 @@ export const propertyService = {
    */
   async createPropertyServer(
     data: Partial<Property>,
-    organizationId?: string
+    organizationId?: string,
+    clientRequestId?: string
   ): Promise<{ id: string }> {
     const { data: sessionRes } = await getSupabase().auth.getSession()
     const token = sessionRes.session?.access_token
@@ -146,7 +148,11 @@ export const propertyService = {
     const res = await fetch('/api/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ...data, organizationId: organizationId ?? null }),
+      body: JSON.stringify({
+        ...data,
+        organizationId: organizationId ?? null,
+        clientRequestId: clientRequestId ?? null,
+      }),
     })
     const json = (await res.json().catch(() => ({}))) as { error?: string; id?: string }
     if (!res.ok) throw new Error(json.error ?? 'No se pudo publicar la propiedad')
@@ -198,28 +204,25 @@ export const propertyService = {
   /**
    * Fire-and-forget view log. Must be called from a client effect (not during
    * a server render) so prefetches/builds don't inflate the counter. Uses the
-   * increment_property_views RPC shared with the mobile app — the RPC keeps the
-   * counter on public.properties and logs the row in property_views. If the RPC
-   * is missing (not yet created in the project), fall back to a raw insert.
+   * increment_property_views RPC (SECURITY DEFINER, creado en security-014) que
+   * incrementa properties.views y registra la fila en property_views.
    */
   registerView(id: string): void {
     if (typeof window === 'undefined') return
     const supabase = getSupabase()
     void supabase.rpc('increment_property_views', { property_id: id }).then(
       () => {},
-      () => {
-        void supabase
-          .from('property_views')
-          .insert({ property_id: id })
-          .then(
-            () => {},
-            () => {}
-          )
+      (err) => {
+        captureError({
+          message: 'No se pudo registrar la vista de la propiedad',
+          context: { propertyId: id, cause: err instanceof Error ? err.message : String(err) },
+        })
       }
     )
   },
 
-  /** Count of ACTIVE listings a user has (free-plan limit checks). */
+  /** Count of ACTIVE listings a user has (free-plan limit checks). Lanza error
+   *  ante fallo de DB (no devuelve 0 silencioso, que aparentaría éxito). */
   async countActiveListings(userId: string): Promise<number> {
     const { count, error } = await getSupabase()
       .from('properties')
@@ -227,7 +230,7 @@ export const propertyService = {
       .eq('owner_id', userId)
       .eq('status', PropertyStatus.ACTIVE)
       .or(activeExpiryFilter())
-    if (error) return 0
+    if (error) rethrowUserError(error)
     return count ?? 0
   },
 
