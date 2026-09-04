@@ -126,11 +126,17 @@ policies RLS por tabla. El inventario ejecutable y read-only está en
 
 ## 7. Workflows de GitHub Actions
 
-- Ubicación real: `.github/workflows/ci.yml` (única ruta descubrible por GitHub).
-- Nombre: `CI`. Dispara en `pull_request` y `push` a `main`.
-- Job `quality`: `npm ci` → typecheck → lint → test → build (Node 20).
-- No hay workflows en rutas heredadas (`/.github` vs `/.github/workflows` es
-  correcto; GitHub solo descubre `/.github/workflows/*.yml`).
+El repo `nicoisz/mapu` es un **monorepo** (`real-estate-web/`, `real-estate-app/`).
+GitHub Actions solo descubre workflows en `.github/workflows/` de la RAÍZ.
+
+| Ruta | Descubierto por GitHub | Estado |
+|------|------------------------|--------|
+| `.github/workflows/deploy.yml` (raíz) | ✅ sí | "Deploy a Cloudflare": test → deploy de `real-estate-web` (Node 22, `working-directory: real-estate-web`) |
+| `real-estate-web/.github/workflows/ci.yml` | ❌ no | Huérfano: anidado en subdir, GitHub lo ignora. Jobs lint/typecheck/test/build |
+| `real-estate-web/.github/workflows/deploy-migrations.yml` | ❌ no (corregido) | Movido a `.github/workflows/deploy-migrations.yml` (raíz) en PR de fix |
+
+> El CI real que corre en `main` es el job `test` de `deploy.yml`, NO el
+> `ci.yml` anidado (que nunca se ejecuta).
 
 ## 8. Bloqueos / limitaciones
 

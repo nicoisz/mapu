@@ -5,11 +5,18 @@
 
 ## Cómo funciona
 
-- Las migraciones viven en `supabase/migrations/` (nombradas `NNNNNNNNNNNN_descripcion.sql`).
-- `.github/workflows/deploy-migrations.yml` ejecuta `supabase db push --linked`
-  al hacer push a `main` cuando cambian archivos en `supabase/migrations/`.
+- Las migraciones viven en `real-estate-web/supabase/migrations/` (nombradas
+  `NNNNNNNNNNNN_descripcion.sql`). El repo es un monorepo, así que el path real
+  incluye el prefijo `real-estate-web/`.
+- `.github/workflows/deploy-migrations.yml` (RAÍZ del monorepo, no en
+  `real-estate-web/`) ejecuta `supabase db push --linked` con
+  `working-directory: real-estate-web`, al hacer push a `main` cuando cambian
+  archivos en `real-estate-web/supabase/migrations/**`.
 - `supabase db push` aplica **solo** las migraciones nuevas (no registradas en
   `supabase_migrations.schema_migrations`) y las registra. Idempotente.
+
+> GitHub Actions solo descubre workflows en `.github/workflows/` de la RAÍZ del
+> repo. Un workflow en `real-estate-web/.github/workflows/` NO se ejecuta.
 
 ## Setup único (una sola vez, requiere acceso a la DB)
 
@@ -48,16 +55,16 @@ npx supabase db reset        # aplica las migraciones sobre una DB vacía
 
 ## Flujo diario (posterior al baseline)
 
-1. Crear `supabase/migrations/<timestamp>_descripcion.sql`.
+1. Crear `real-estate-web/supabase/migrations/<timestamp>_descripcion.sql`.
 2. Commit + PR.
 3. Al mergear a `main`, `deploy-migrations.yml` aplica la migración a la DB.
 
 ## Transición de scripts sueltos
 
-Los scripts en `supabase/*.sql` (aplicados a mano) quedan como **referencia
-histórica**. Tras el baseline, todo cambio nuevo va como migración en
-`supabase/migrations/`, no como script suelto. Los scripts legacy pueden
-eliminarse en una tarea de limpieza posterior.
+Los scripts en `real-estate-web/supabase/*.sql` (aplicados a mano) quedan como
+**referencia histórica**. Tras el baseline, todo cambio nuevo va como migración
+en `real-estate-web/supabase/migrations/`, no como script suelto. Los scripts
+legacy pueden eliminarse en una tarea de limpieza posterior.
 
 ## Validación recomendada por PR
 
