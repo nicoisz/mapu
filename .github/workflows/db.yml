@@ -1,0 +1,43 @@
+name: DB
+
+on:
+  pull_request:
+    paths:
+      - 'real-estate-web/supabase/**'
+      - 'real-estate-web/src/types/database.generated.ts'
+  push:
+    branches: [main]
+    paths:
+      - 'real-estate-web/supabase/**'
+      - 'real-estate-web/src/types/database.generated.ts'
+
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: real-estate-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Postgres
+        run: supabase db start
+
+      - name: Apply migrations + seed
+        run: supabase db reset
+
+      - name: Smoke tests (pgTAP)
+        run: supabase test db
+
+      - name: Check generated types are up to date
+        run: |
+          supabase gen types typescript --local > /tmp/database.generated.ts 2>/dev/null
+          diff /tmp/database.generated.ts src/types/database.generated.ts
