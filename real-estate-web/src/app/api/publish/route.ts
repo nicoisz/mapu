@@ -19,7 +19,12 @@ import { hasReachedListingLimit, isPremiumAccount } from '@/lib/listingQuota'
  *   · es idempotente vía client_request_id (doble clic/retry no duplica).
  */
 
-const imageSchema = z.object({ id: z.string(), url: z.string(), order: z.number().optional(), isMain: z.boolean().optional() })
+const imageSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  order: z.number().optional(),
+  isMain: z.boolean().optional(),
+})
 
 // Invariantes críticos. El body completo es un Partial<Property> (el cliente lo
 // tipa así); estos campos son los que no pueden relajarse.
@@ -105,7 +110,10 @@ export async function POST(req: NextRequest) {
       .eq('status', PropertyStatus.ACTIVE)
       .or(activeExpiryFilter())
     if (countError) {
-      return NextResponse.json({ error: 'No se pudo verificar el límite de publicaciones' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'No se pudo verificar el límite de publicaciones' },
+        { status: 500 }
+      )
     }
     if (hasReachedListingLimit(count ?? 0, false)) {
       return NextResponse.json(
@@ -123,11 +131,7 @@ export async function POST(req: NextRequest) {
     client_request_id: d.clientRequestId ?? null,
   }
 
-  const { data: inserted, error } = await admin
-    .from('properties')
-    .insert(row)
-    .select('id')
-    .single()
+  const { data: inserted, error } = await admin.from('properties').insert(row).select('id').single()
   if (error) {
     // Idempotencia (R-02): doble clic/retry con el mismo client_request_id → ya existe.
     if (d.clientRequestId && error.code === '23505') {

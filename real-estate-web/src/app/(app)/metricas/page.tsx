@@ -107,7 +107,11 @@ export default function MetricasPage() {
               <StatCard label="Publicaciones" value={totals.listings} />
               <StatCard label="Visitas" value={totals.views} icon={<Eye size={16} />} />
               <StatCard label="Favoritos" value={totals.favorites} icon={<Heart size={16} />} />
-              <StatCard label="Contactos" value={totals.contacts} icon={<MessageSquare size={16} />} />
+              <StatCard
+                label="Contactos"
+                value={totals.contacts}
+                icon={<MessageSquare size={16} />}
+              />
             </div>
 
             <Card>
@@ -139,7 +143,9 @@ export default function MetricasPage() {
                           {m.listings} publicaciones · {m.favorites} favs · {m.contacts} contactos
                         </p>
                       </div>
-                      <p className="text-sm font-bold text-primary">{m.views.toLocaleString('es-CL')} vistas</p>
+                      <p className="text-sm font-bold text-primary">
+                        {m.views.toLocaleString('es-CL')} vistas
+                      </p>
                     </div>
                   ))}
                 </CardContent>

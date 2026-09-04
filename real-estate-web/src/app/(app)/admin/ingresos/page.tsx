@@ -49,9 +49,9 @@ export default function AdminRevenuePage() {
       <div className="flex items-start gap-2 rounded-2xl border border-outline-variant/50 bg-surface-container-low p-4 text-xs text-on-surface-variant">
         <Info size={14} className="shrink-0 mt-0.5 text-primary" />
         <p>
-          Ingresos calculados sobre pagos con estado <span className="font-medium">paid</span>.
-          La integración con Mercado Pago aún no está conectada, por lo que es probable que los
-          pagos figuren como pendientes y las cifras sean bajas.
+          Ingresos calculados sobre pagos con estado <span className="font-medium">paid</span>. La
+          integración con Mercado Pago aún no está conectada, por lo que es probable que los pagos
+          figuren como pendientes y las cifras sean bajas.
         </p>
       </div>
 
@@ -67,9 +67,7 @@ export default function AdminRevenuePage() {
                 className="flex items-center justify-between border-b border-outline-variant/40 pb-2 last:border-0 last:pb-0"
               >
                 <div>
-                  <p className="text-sm font-medium text-on-surface">
-                    {PLAN_LABELS[plan] ?? plan}
-                  </p>
+                  <p className="text-sm font-medium text-on-surface">{PLAN_LABELS[plan] ?? plan}</p>
                   <p className="text-xs text-on-surface-variant">{count} pagos</p>
                 </div>
                 <p className="text-sm font-bold text-primary">{clp(total)}</p>
@@ -134,10 +132,7 @@ export default function AdminRevenuePage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-sm font-bold text-on-surface">{clp(p.amount)}</span>
-                    <Badge
-                      size="sm"
-                      variant={p.status === 'paid' ? 'success' : 'gray'}
-                    >
+                    <Badge size="sm" variant={p.status === 'paid' ? 'success' : 'gray'}>
                       {p.status}
                     </Badge>
                   </div>

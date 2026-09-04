@@ -5,7 +5,12 @@ import maplibregl, { StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, LIST_VIEW_CENTER, LIST_VIEW_RADIUS_KM } from '@/constants'
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  LIST_VIEW_CENTER,
+  LIST_VIEW_RADIUS_KM,
+} from '@/constants'
 import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
 import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
@@ -304,7 +309,12 @@ export default function MapView({
     const bucket = activeBucketRef.current
     const cells = globalCellsRef.current
     // Filter to the active zone bucket (pins), using the zone classification.
-    const visible = bucket && cells ? data.filter((p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket) : data
+    const visible =
+      bucket && cells
+        ? data.filter(
+            (p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket
+          )
+        : data
     const byId = new Map<string, Property>()
     const points: Supercluster.PointFeature<PointProps>[] = visible.map((p) => {
       byId.set(p.id, p)
@@ -499,7 +509,9 @@ export default function MapView({
     const bucket = activeBucketRef.current
     // One hexagon per property, centered on its pin. Filter to the active bucket.
     const visible = bucket
-      ? data.filter((p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket)
+      ? data.filter(
+          (p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket
+        )
       : data
     zoneGeoRef.current = propertyHexesToGeoJSON(visible, cells)
     source.setData(zoneGeoRef.current)
@@ -508,8 +520,11 @@ export default function MapView({
   // Zone color for a property's pin (diamond), or null when zones are hidden.
   function bucketColorFor(p: Property): string | null {
     if (!zonesOnRef.current || !globalCellsRef.current) return null
-    const bucket = findZone(globalCellsRef.current, p.location.latitude, p.location.longitude)
-      ?.bucket
+    const bucket = findZone(
+      globalCellsRef.current,
+      p.location.latitude,
+      p.location.longitude
+    )?.bucket
     return bucket ? getZoneColor(bucket) : null
   }
 

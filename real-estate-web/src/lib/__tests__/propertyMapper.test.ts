@@ -1,31 +1,32 @@
 import { describe, it, expect } from 'vitest'
 import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
 
-const baseRow = (over: Partial<PropertyRow> = {}): PropertyRow => ({
-  id: 'p1',
-  owner_id: 'u1',
-  organization_id: null,
-  title: 'Casa en Ñuñoa',
-  description: '',
-  type: 'house',
-  operation: 'sale',
-  status: 'active',
-  latitude: -33.45,
-  longitude: -70.6,
-  address_street: 'Av. Irarrázaval',
-  address_number: '1234',
-  address_commune: 'Ñuñoa',
-  address_city: 'Santiago',
-  address_region: 'Metropolitana',
-  price: 200000000,
-  currency: 'CLP',
-  area: 120,
-  bedrooms: 3,
-  images: [],
-  created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z',
-  ...over,
-} as PropertyRow)
+const baseRow = (over: Partial<PropertyRow> = {}): PropertyRow =>
+  ({
+    id: 'p1',
+    owner_id: 'u1',
+    organization_id: null,
+    title: 'Casa en Ñuñoa',
+    description: '',
+    type: 'house',
+    operation: 'sale',
+    status: 'active',
+    latitude: -33.45,
+    longitude: -70.6,
+    address_street: 'Av. Irarrázaval',
+    address_number: '1234',
+    address_commune: 'Ñuñoa',
+    address_city: 'Santiago',
+    address_region: 'Metropolitana',
+    price: 200000000,
+    currency: 'CLP',
+    area: 120,
+    bedrooms: 3,
+    images: [],
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    ...over,
+  }) as PropertyRow
 
 describe('parseImages', () => {
   it('tolera array de strings (esquema móvil)', () => {

@@ -120,9 +120,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           collapsed ? 'px-2' : 'px-3'
         )}
       >
-        {!collapsed && (
-          <span className="font-headline text-sm font-bold text-primary">MapU</span>
-        )}
+        {!collapsed && <span className="font-headline text-sm font-bold text-primary">MapU</span>}
         <button
           onClick={toggleCollapsed}
           className={cn(
@@ -146,12 +144,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      <nav
-        className={cn(
-          'flex-1 overflow-y-auto space-y-1',
-          collapsed ? 'p-2' : 'p-3'
-        )}
-      >
+      <nav className={cn('flex-1 overflow-y-auto space-y-1', collapsed ? 'p-2' : 'p-3')}>
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`)
           return (
@@ -198,12 +191,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         )}
       </nav>
 
-      <div
-        className={cn(
-          'border-t border-outline-variant/40',
-          collapsed ? 'p-2' : 'p-3'
-        )}
-      >
+      <div className={cn('border-t border-outline-variant/40', collapsed ? 'p-2' : 'p-3')}>
         {!collapsed && <ExchangeIndicators className="justify-center mb-3" />}
         {isAuthenticated && user ? (
           <div className={cn('space-y-2', collapsed && 'space-y-3')}>

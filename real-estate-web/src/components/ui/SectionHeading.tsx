@@ -20,10 +20,7 @@ export function SectionHeading({
   ...props
 }: SectionHeadingProps) {
   return (
-    <div
-      className={cn('flex items-center justify-between gap-3', className)}
-      {...props}
-    >
+    <div className={cn('flex items-center justify-between gap-3', className)} {...props}>
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <h2 className="font-headline text-sm font-semibold uppercase tracking-wide text-on-surface">

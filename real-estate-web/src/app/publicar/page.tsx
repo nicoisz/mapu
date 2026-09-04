@@ -13,7 +13,12 @@ import {
   deletePropertyImages,
 } from '@/services/storageService'
 import { compressImage } from '@/lib/imageCompression'
-import { geocodeAddress, searchAddress, reverseGeocode, GeocodeSuggestion } from '@/services/geocodingService'
+import {
+  geocodeAddress,
+  searchAddress,
+  reverseGeocode,
+  GeocodeSuggestion,
+} from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { LocationPicker } from '@/components/map/LocationPicker'
@@ -27,12 +32,7 @@ import {
 } from '@/data/chileanLocations'
 import { formatPriceShort } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
-import {
-  ContactMethod,
-  Currency,
-  PropertyOperation,
-  PropertyType,
-} from '@/types/enums'
+import { ContactMethod, Currency, PropertyOperation, PropertyType } from '@/types/enums'
 import type { Property, PropertyImage } from '@/types/property'
 
 const TYPES = [
@@ -207,7 +207,8 @@ export default function PublicarPage() {
           region: REGIONS.includes(property.location.address.region)
             ? property.location.address.region
             : DEFAULT_REGION,
-          area: String(property.features.area),          bedrooms: property.features.bedrooms != null ? String(property.features.bedrooms) : '',
+          area: String(property.features.area),
+          bedrooms: property.features.bedrooms != null ? String(property.features.bedrooms) : '',
           bathrooms: property.features.bathrooms != null ? String(property.features.bathrooms) : '',
           parkingSpots:
             property.features.parkingSpots != null ? String(property.features.parkingSpots) : '',
@@ -469,376 +470,381 @@ export default function PublicarPage() {
         <form id="publicar-form" onSubmit={handleSubmit} className="space-y-5">
           <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
             <div className="space-y-5 min-w-0">
-          <Section step={1} title="Lo básico" desc="Define qué estás publicando">
-            {/* Operation */}
-            <div>
-              <span className={labelCls}>Operación</span>
-              <div className="flex gap-2">
-                {[PropertyOperation.SALE, PropertyOperation.RENT].map((op) => (
-                  <button
-                    key={op}
-                    type="button"
-                    onClick={() => setOperation(op)}
-                    className={`flex-1 py-2.5 text-sm font-medium rounded-lg border transition-all ${operation === op ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'}`}
-                  >
-                    {OPERATION_LABELS[op]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Type */}
-            <div>
-              <label className={labelCls} htmlFor="type">
-                Tipo de propiedad
-              </label>
-              <select
-                id="type"
-                value={type}
-                onChange={(e) => setType(e.target.value as PropertyType)}
-                className={selectCls}
-              >
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {PROPERTY_TYPE_LABELS[t]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Input
-                label="Título"
-                placeholder="Ej: Casa luminosa con jardín en Ñuñoa"
-                value={form.title}
-                onChange={(e) => set('title', e.target.value)}
-                required
-              />
-              {errors.title && <p className={errorCls}>{errors.title}</p>}
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="desc">
-                Descripción
-              </label>
-              <textarea
-                id="desc"
-                value={form.description}
-                onChange={(e) => set('description', e.target.value)}
-                rows={4}
-                placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
-                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {errors.description && <p className={errorCls}>{errors.description}</p>}
-            </div>
-          </Section>
-
-          <Section step={2} title="Ubicación">
-            <div>
-              <label className={labelCls} htmlFor="region">
-                Región
-              </label>
-              <select
-                id="region"
-                value={form.region}
-                onChange={(e) => {
-                  set('region', e.target.value)
-                  set('commune', '')
-                  set('city', '')
-                  setCoords(null)
-                }}
-                className={selectCls}
-              >
-                {REGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="commune">
-                Comuna
-              </label>
-              <select
-                id="commune"
-                value={form.commune}
-                onChange={(e) => {
-                  set('commune', e.target.value)
-                  set('city', '')
-                  setCoords(null)
-                }}
-                className={selectCls}
-              >
-                <option value="">Selecciona una comuna</option>
-                {communesForRegion(form.region).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="city">
-                Ciudad / Localidad
-              </label>
-              <select
-                id="city"
-                value={form.city}
-                onChange={(e) => {
-                  set('city', e.target.value)
-                  setCoords(null)
-                }}
-                className={selectCls}
-              >
-                <option value="">Selecciona una ciudad</option>
-                {localitiesForCommune(form.commune).map((c) => (
-                  <option key={c} value={c}>
-                    {titleCase(c)}
-                  </option>
-                ))}
-              </select>
-              {errors.commune && <p className={errorCls}>{errors.commune}</p>}
-            </div>
-
-            {/* Address geocoder */}
-            <div className="relative">
-              <label className={labelCls} htmlFor="street">
-                Calle y número
-              </label>
-              <Input
-                id="street"
-                placeholder="Escribe la dirección… (ej: Av. Irarrázaval 1234)"
-                value={form.street}
-                onChange={(e) => handleStreetChange(e.target.value)}
-              />
-              {suggestions.length > 0 && (
-                <ul className="absolute z-20 mt-1 w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-elevated max-h-56 overflow-y-auto">
-                  {suggestions.map((s) => (
-                    <li key={s.label}>
+              <Section step={1} title="Lo básico" desc="Define qué estás publicando">
+                {/* Operation */}
+                <div>
+                  <span className={labelCls}>Operación</span>
+                  <div className="flex gap-2">
+                    {[PropertyOperation.SALE, PropertyOperation.RENT].map((op) => (
                       <button
+                        key={op}
                         type="button"
-                        onClick={() => applyCoords(s.latitude, s.longitude)}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-surface-container-highest"
+                        onClick={() => setOperation(op)}
+                        className={`flex-1 py-2.5 text-sm font-medium rounded-lg border transition-all ${operation === op ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'}`}
                       >
-                        {s.label}
+                        {OPERATION_LABELS[op]}
                       </button>
-                    </li>
-                  ))}
-                </ul>
+                    ))}
+                  </div>
+                </div>
+                {/* Type */}
+                <div>
+                  <label className={labelCls} htmlFor="type">
+                    Tipo de propiedad
+                  </label>
+                  <select
+                    id="type"
+                    value={type}
+                    onChange={(e) => setType(e.target.value as PropertyType)}
+                    className={selectCls}
+                  >
+                    {TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {PROPERTY_TYPE_LABELS[t]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Input
+                    label="Título"
+                    placeholder="Ej: Casa luminosa con jardín en Ñuñoa"
+                    value={form.title}
+                    onChange={(e) => set('title', e.target.value)}
+                    required
+                  />
+                  {errors.title && <p className={errorCls}>{errors.title}</p>}
+                </div>
+                <div>
+                  <label className={labelCls} htmlFor="desc">
+                    Descripción
+                  </label>
+                  <textarea
+                    id="desc"
+                    value={form.description}
+                    onChange={(e) => set('description', e.target.value)}
+                    rows={4}
+                    placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  {errors.description && <p className={errorCls}>{errors.description}</p>}
+                </div>
+              </Section>
+
+              <Section step={2} title="Ubicación">
+                <div>
+                  <label className={labelCls} htmlFor="region">
+                    Región
+                  </label>
+                  <select
+                    id="region"
+                    value={form.region}
+                    onChange={(e) => {
+                      set('region', e.target.value)
+                      set('commune', '')
+                      set('city', '')
+                      setCoords(null)
+                    }}
+                    className={selectCls}
+                  >
+                    {REGIONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls} htmlFor="commune">
+                    Comuna
+                  </label>
+                  <select
+                    id="commune"
+                    value={form.commune}
+                    onChange={(e) => {
+                      set('commune', e.target.value)
+                      set('city', '')
+                      setCoords(null)
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="">Selecciona una comuna</option>
+                    {communesForRegion(form.region).map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls} htmlFor="city">
+                    Ciudad / Localidad
+                  </label>
+                  <select
+                    id="city"
+                    value={form.city}
+                    onChange={(e) => {
+                      set('city', e.target.value)
+                      setCoords(null)
+                    }}
+                    className={selectCls}
+                  >
+                    <option value="">Selecciona una ciudad</option>
+                    {localitiesForCommune(form.commune).map((c) => (
+                      <option key={c} value={c}>
+                        {titleCase(c)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.commune && <p className={errorCls}>{errors.commune}</p>}
+                </div>
+
+                {/* Address geocoder */}
+                <div className="relative">
+                  <label className={labelCls} htmlFor="street">
+                    Calle y número
+                  </label>
+                  <Input
+                    id="street"
+                    placeholder="Escribe la dirección… (ej: Av. Irarrázaval 1234)"
+                    value={form.street}
+                    onChange={(e) => handleStreetChange(e.target.value)}
+                  />
+                  {suggestions.length > 0 && (
+                    <ul className="absolute z-20 mt-1 w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-elevated max-h-56 overflow-y-auto">
+                      {suggestions.map((s) => (
+                        <li key={s.label}>
+                          <button
+                            type="button"
+                            onClick={() => applyCoords(s.latitude, s.longitude)}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-container-highest"
+                          >
+                            {s.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Map with draggable pin */}
+                {coords && (
+                  <div>
+                    <span className={labelCls}>Pin de ubicación</span>
+                    <LocationPicker
+                      latitude={coords.lat}
+                      longitude={coords.lng}
+                      onChange={handleMapPick}
+                    />
+                    <p className="text-xs text-on-surface-variant mt-1.5">
+                      Arrastra el pin para ajustar la ubicación exacta.
+                    </p>
+                  </div>
+                )}
+              </Section>
+
+              <Section step={3} title="Características">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Input
+                      label="Superficie (m²)"
+                      type="number"
+                      min="0"
+                      placeholder="120"
+                      value={form.area}
+                      onChange={(e) => set('area', e.target.value)}
+                      required
+                    />
+                    {errors.area && <p className={errorCls}>{errors.area}</p>}
+                  </div>
+                  <Input
+                    label="Estacionamientos"
+                    type="number"
+                    min="0"
+                    placeholder="2"
+                    value={form.parkingSpots}
+                    onChange={(e) => set('parkingSpots', e.target.value)}
+                  />
+                  <Input
+                    label="Dormitorios"
+                    type="number"
+                    min="0"
+                    placeholder="3"
+                    value={form.bedrooms}
+                    onChange={(e) => set('bedrooms', e.target.value)}
+                  />
+                  <Input
+                    label="Baños"
+                    type="number"
+                    min="0"
+                    placeholder="2"
+                    value={form.bathrooms}
+                    onChange={(e) => set('bathrooms', e.target.value)}
+                  />
+                </div>
+              </Section>
+
+              <Section step={4} title="Precio">
+                <div>
+                  <Input
+                    label={
+                      operation === PropertyOperation.RENT
+                        ? 'Arriendo mensual (CLP)'
+                        : 'Precio (CLP)'
+                    }
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={form.price}
+                    onChange={(e) => set('price', e.target.value)}
+                    required
+                  />
+                  {errors.price && <p className={errorCls}>{errors.price}</p>}
+                </div>
+                <label className="flex items-center gap-2 text-sm text-on-surface cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.negotiable}
+                    onChange={(e) => set('negotiable', e.target.checked)}
+                    className="w-4 h-4 accent-[rgb(var(--primary))]"
+                  />
+                  Precio negociable
+                </label>
+              </Section>
+
+              <Section
+                step={5}
+                title="Fotos"
+                desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    addFiles(e.target.files)
+                    e.target.value = ''
+                  }}
+                />
+
+                {images.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {images.map((img, i) => (
+                      <div
+                        key={img.previewUrl}
+                        className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.previewUrl}
+                          alt={`Foto ${i + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {i === 0 ? (
+                          <span className="absolute bottom-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                            <Star size={9} /> Principal
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => makeMain(i)}
+                            className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            Hacer principal
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          aria-label={`Quitar foto ${i + 1}`}
+                          className="absolute top-1 right-1 bg-black/55 text-white rounded-full p-1 hover:bg-error transition-colors"
+                        >
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {images.length < MAX_IMAGES && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <ImagePlus size={22} />
+                    <span className="text-sm font-medium">
+                      {images.length ? 'Agregar más fotos' : 'Seleccionar fotos'}
+                    </span>
+                    <span className="text-xs">
+                      {images.length}/{MAX_IMAGES}
+                    </span>
+                  </button>
+                )}
+                {errors.images && <p className={errorCls}>{errors.images}</p>}
+              </Section>
+
+              {submitError && (
+                <div className="bg-error/10 border border-error/40 rounded-xl p-3 text-error text-sm">
+                  {submitError}
+                </div>
               )}
             </div>
 
-            {/* Map with draggable pin */}
-            {coords && (
-              <div>
-                <span className={labelCls}>Pin de ubicación</span>
-                <LocationPicker
-                  latitude={coords.lat}
-                  longitude={coords.lng}
-                  onChange={handleMapPick}
-                />
-                <p className="text-xs text-on-surface-variant mt-1.5">
-                  Arrastra el pin para ajustar la ubicación exacta.
+            {/* Sticky rail (desktop): resumen + acción */}
+            <aside className="hidden lg:block lg:sticky lg:top-6">
+              <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-5 space-y-4">
+                <p className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">
+                  Resumen
                 </p>
-              </div>
-            )}
-          </Section>
-
-          <Section step={3} title="Características">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Input
-                  label="Superficie (m²)"
-                  type="number"
-                  min="0"
-                  placeholder="120"
-                  value={form.area}
-                  onChange={(e) => set('area', e.target.value)}
-                  required
-                />
-                {errors.area && <p className={errorCls}>{errors.area}</p>}
-              </div>
-              <Input
-                label="Estacionamientos"
-                type="number"
-                min="0"
-                placeholder="2"
-                value={form.parkingSpots}
-                onChange={(e) => set('parkingSpots', e.target.value)}
-              />
-              <Input
-                label="Dormitorios"
-                type="number"
-                min="0"
-                placeholder="3"
-                value={form.bedrooms}
-                onChange={(e) => set('bedrooms', e.target.value)}
-              />
-              <Input
-                label="Baños"
-                type="number"
-                min="0"
-                placeholder="2"
-                value={form.bathrooms}
-                onChange={(e) => set('bathrooms', e.target.value)}
-              />
-            </div>
-          </Section>
-
-          <Section step={4} title="Precio">
-            <div>
-              <Input
-                label={
-                  operation === PropertyOperation.RENT ? 'Arriendo mensual (CLP)' : 'Precio (CLP)'
-                }
-                type="number"
-                min="0"
-                placeholder="0"
-                value={form.price}
-                onChange={(e) => set('price', e.target.value)}
-                required
-              />
-              {errors.price && <p className={errorCls}>{errors.price}</p>}
-            </div>
-            <label className="flex items-center gap-2 text-sm text-on-surface cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.negotiable}
-                onChange={(e) => set('negotiable', e.target.checked)}
-                className="w-4 h-4 accent-[rgb(var(--primary))]"
-              />
-              Precio negociable
-            </label>
-          </Section>
-
-          <Section step={5} title="Fotos"
-            desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/avif"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                addFiles(e.target.files)
-                e.target.value = ''
-              }}
-            />
-
-            {images.length > 0 && (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {images.map((img, i) => (
-                  <div
-                    key={img.previewUrl}
-                    className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40"
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      operation === PropertyOperation.RENT
+                        ? 'bg-rent/10 text-rent'
+                        : 'bg-primary/10 text-primary'
+                    }`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.previewUrl}
-                      alt={`Foto ${i + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    {i === 0 ? (
-                      <span className="absolute bottom-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                        <Star size={9} /> Principal
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => makeMain(i)}
-                        className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Hacer principal
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      aria-label={`Quitar foto ${i + 1}`}
-                      className="absolute top-1 right-1 bg-black/55 text-white rounded-full p-1 hover:bg-error transition-colors"
-                    >
-                      <X size={11} />
-                    </button>
-                  </div>
-                ))}
+                    {OPERATION_LABELS[operation]}
+                  </span>
+                  <span className="font-headline font-bold text-on-surface text-lg truncate">
+                    {form.price ? formatPriceShort(Number(form.price), Currency.CLP) : '—'}
+                  </span>
+                </div>
+                <p className="text-sm text-on-surface-variant line-clamp-2">
+                  {form.title || 'Sin título'}
+                </p>
+                <p className="text-xs text-on-surface-variant">
+                  {[form.commune, form.city, form.region].filter(Boolean).join(' · ') ||
+                    'Sin ubicación'}
+                </p>
+                <div className="pt-2 space-y-2 border-t border-outline-variant/30">
+                  <Button
+                    type="submit"
+                    loading={submitting}
+                    disabled={!canPublish && !isEditing}
+                    fullWidth
+                  >
+                    <Check size={16} />{' '}
+                    {submitting
+                      ? 'Subiendo fotos…'
+                      : isEditing
+                        ? 'Guardar cambios'
+                        : 'Publicar propiedad'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/dashboard')}
+                    fullWidth
+                  >
+                    Cancelar
+                  </Button>
+                </div>
               </div>
-            )}
-
-            {images.length < MAX_IMAGES && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
-              >
-                <ImagePlus size={22} />
-                <span className="text-sm font-medium">
-                  {images.length ? 'Agregar más fotos' : 'Seleccionar fotos'}
-                </span>
-                <span className="text-xs">
-                  {images.length}/{MAX_IMAGES}
-                </span>
-              </button>
-            )}
-            {errors.images && <p className={errorCls}>{errors.images}</p>}
-          </Section>
-
-          {submitError && (
-            <div className="bg-error/10 border border-error/40 rounded-xl p-3 text-error text-sm">
-              {submitError}
-            </div>
-          )}
-          </div>
-
-          {/* Sticky rail (desktop): resumen + acción */}
-          <aside className="hidden lg:block lg:sticky lg:top-6">
-            <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-5 space-y-4">
-              <p className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">
-                Resumen
-              </p>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    operation === PropertyOperation.RENT
-                      ? 'bg-rent/10 text-rent'
-                      : 'bg-primary/10 text-primary'
-                  }`}
-                >
-                  {OPERATION_LABELS[operation]}
-                </span>
-                <span className="font-headline font-bold text-on-surface text-lg truncate">
-                  {form.price ? formatPriceShort(Number(form.price), Currency.CLP) : '—'}
-                </span>
-              </div>
-              <p className="text-sm text-on-surface-variant line-clamp-2">
-                {form.title || 'Sin título'}
-              </p>
-              <p className="text-xs text-on-surface-variant">
-                {[form.commune, form.city, form.region].filter(Boolean).join(' · ') || 'Sin ubicación'}
-              </p>
-              <div className="pt-2 space-y-2 border-t border-outline-variant/30">
-                <Button
-                  type="submit"
-                  loading={submitting}
-                  disabled={!canPublish && !isEditing}
-                  fullWidth
-                >
-                  <Check size={16} />{' '}
-                  {submitting
-                    ? 'Subiendo fotos…'
-                    : isEditing
-                      ? 'Guardar cambios'
-                      : 'Publicar propiedad'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push('/dashboard')}
-                  fullWidth
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </aside>
+            </aside>
           </div>
         </form>
 
@@ -868,11 +874,7 @@ export default function PublicarPage() {
 
       {submitting && (
         <div className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center p-6">
-          <GlowLoader
-            fill
-            label="Publicando tu propiedad…"
-            className="max-w-sm w-full h-auto"
-          />
+          <GlowLoader fill label="Publicando tu propiedad…" className="max-w-sm w-full h-auto" />
         </div>
       )}
     </div>

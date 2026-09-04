@@ -11,23 +11,50 @@ const RULES: Array<{ re: RegExp; message: string }> = [
   { re: /invalid login credentials/i, message: 'Credenciales incorrectas' },
   { re: /email not confirmed/i, message: 'Debes confirmar tu correo antes de iniciar sesión' },
   { re: /already registered/i, message: 'Ya existe una cuenta con ese email' },
-  { re: /password should be at least/i, message: 'Contraseña demasiado corta (mínimo 6 caracteres)' },
-  { re: /jwt.*expired|token.*expired|invalid api key|apikey.*invalid/i, message: 'Tu sesión expiró, vuelve a iniciar sesión' },
-  { re: /rate limit|too many requests|over_email_send_rate_limit/i, message: 'Demasiados intentos, espera un momento' },
+  {
+    re: /password should be at least/i,
+    message: 'Contraseña demasiado corta (mínimo 6 caracteres)',
+  },
+  {
+    re: /jwt.*expired|token.*expired|invalid api key|apikey.*invalid/i,
+    message: 'Tu sesión expiró, vuelve a iniciar sesión',
+  },
+  {
+    re: /rate limit|too many requests|over_email_send_rate_limit/i,
+    message: 'Demasiados intentos, espera un momento',
+  },
 
   // PostgREST / DB
-  { re: /row.?level security policy|permission denied for table|permission denied for function/i, message: 'No tienes permisos para realizar esta acción' },
+  {
+    re: /row.?level security policy|permission denied for table|permission denied for function/i,
+    message: 'No tienes permisos para realizar esta acción',
+  },
   { re: /new row violates row.?level security/i, message: 'No tienes permisos para guardar esto' },
-  { re: /duplicate key value violates unique constraint|conflicts with the unique constraint/i, message: 'Ya existe un registro con esos datos' },
+  {
+    re: /duplicate key value violates unique constraint|conflicts with the unique constraint/i,
+    message: 'Ya existe un registro con esos datos',
+  },
   { re: /invalid input syntax for type uuid/i, message: 'Identificador inválido' },
-  { re: /relation .* does not exist|could not find the function/i, message: 'El servicio no está configurado' },
-  { re: /database connection limit|too many clients|connection.*refused|server.*(down|unavailable)/i, message: 'El servicio está saturado, inténtalo de nuevo' },
+  {
+    re: /relation .* does not exist|could not find the function/i,
+    message: 'El servicio no está configurado',
+  },
+  {
+    re: /database connection limit|too many clients|connection.*refused|server.*(down|unavailable)/i,
+    message: 'El servicio está saturado, inténtalo de nuevo',
+  },
   { re: /no rows/i, message: 'No se encontró el registro' },
-  { re: /foreign key violation|violates foreign key/i, message: 'Registro en uso por otra parte del sistema' },
+  {
+    re: /foreign key violation|violates foreign key/i,
+    message: 'Registro en uso por otra parte del sistema',
+  },
   { re: /storage object already exists/i, message: 'Ya existe un archivo con ese nombre' },
 
   // Red
-  { re: /fetch failed|failed to fetch|networkerror|load failed|abort/i, message: 'No se pudo conectar con el servidor. Revisa tu conexión' },
+  {
+    re: /fetch failed|failed to fetch|networkerror|load failed|abort/i,
+    message: 'No se pudo conectar con el servidor. Revisa tu conexión',
+  },
   { re: /timeout|timed out/i, message: 'La operación tardó demasiado, inténtalo de nuevo' },
 
   // Parse

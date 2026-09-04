@@ -44,8 +44,7 @@ export const metricsService = {
 
   async getScopeProperties(user: User): Promise<Property[]> {
     const scope = metricsScopeFor(user)
-    if (scope === 'global')
-      return (await adminService.listProperties('all')).map(rowToProperty)
+    if (scope === 'global') return (await adminService.listProperties('all')).map(rowToProperty)
     if (scope === 'org' && user.organizationId)
       return organizationService.getOrgProperties(user.organizationId)
     return propertyService.getUserProperties(user.id)
@@ -84,10 +83,7 @@ export const metricsService = {
     const ownerIds = [...byOwner.keys()]
     const names = new Map<string, string>()
     if (ownerIds.length) {
-      const { data } = await getSupabase()
-        .from('profiles')
-        .select('id, name')
-        .in('id', ownerIds)
+      const { data } = await getSupabase().from('profiles').select('id, name').in('id', ownerIds)
       for (const row of (data ?? []) as { id: string; name: string }[]) names.set(row.id, row.name)
     }
 
