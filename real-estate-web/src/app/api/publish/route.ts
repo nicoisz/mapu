@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { getSupabaseAdmin } from '@/lib/server/supabaseAdmin'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { propertyToRow } from '@/lib/propertyMapper'
 import { PropertyStatus } from '@/types/enums'
 import { Property } from '@/types/property'
 import { FREE_PLAN_LISTINGS_LIMIT, LISTING_EXPIRATION_DAYS } from '@/constants'
-import { activeExpiryFilter } from '@/services/propertyService'
+import { activeExpiryFilter } from '@/lib/propertyFilters'
 import { hasReachedListingLimit, isPremiumAccount } from '@/lib/listingQuota'
+import { apiError, apiErrorDetail, apiSuccess } from '@/lib/server/api'
+import type { Database } from '@/types/database.generated'
 
 /**
  * POST /api/publish
@@ -51,12 +53,12 @@ export const runtime = 'nodejs'
 export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization')
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
-  if (!token) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  if (!token) return apiError('UNAUTHORIZED')
 
   const admin = getSupabaseAdmin()
   const { data: user, error: authError } = await admin.auth.getUser(token)
   if (authError || !user.user) {
-    return NextResponse.json({ error: 'Sesión inválida' }, { status: 401 })
+    return apiError('INVALID_SESSION')
   }
   const userId = user.user.id
 
@@ -64,13 +66,13 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
+    return apiError('INVALID_JSON')
   }
 
   const parsed = publishSchema.safeParse(body)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
-    return NextResponse.json({ error: first?.message ?? 'Datos inválidos' }, { status: 400 })
+    return apiErrorDetail(400, 'INVALID_BODY', first?.message ?? 'Datos inválidos')
   }
 
   // Frontera JSON: `body` llega como unknown; el cliente envía un Partial<Property>
@@ -88,7 +90,7 @@ export async function POST(req: NextRequest) {
       .eq('status', 'active')
       .maybeSingle()
     if (memberError || !member) {
-      return NextResponse.json({ error: 'No eres miembro de esta organización' }, { status: 403 })
+      return apiError('NOT_MEMBER')
     }
   }
 
@@ -99,7 +101,7 @@ export async function POST(req: NextRequest) {
     .eq('id', userId)
     .maybeSingle()
   if (profileError) {
-    return NextResponse.json({ error: 'No se pudo verificar tu cuenta' }, { status: 500 })
+    return apiError('INTERNAL')
   }
   const premium = isPremiumAccount(profile?.subscription_type, profile?.trial_expires_at)
   if (!premium) {
@@ -110,16 +112,10 @@ export async function POST(req: NextRequest) {
       .eq('status', PropertyStatus.ACTIVE)
       .or(activeExpiryFilter())
     if (countError) {
-      return NextResponse.json(
-        { error: 'No se pudo verificar el límite de publicaciones' },
-        { status: 500 }
-      )
+      return apiError('INTERNAL')
     }
     if (hasReachedListingLimit(count ?? 0, false)) {
-      return NextResponse.json(
-        { error: 'Alcanzaste el límite de publicaciones del plan gratis' },
-        { status: 402 }
-      )
+      return apiError('LISTING_LIMIT_REACHED')
     }
   }
 
@@ -131,7 +127,11 @@ export async function POST(req: NextRequest) {
     client_request_id: d.clientRequestId ?? null,
   }
 
-  const { data: inserted, error } = await admin.from('properties').insert(row).select('id').single()
+  const { data: inserted, error } = await admin
+    .from('properties')
+    .insert(row as Database['public']['Tables']['properties']['Insert'])
+    .select('id')
+    .single()
   if (error) {
     // Idempotencia (R-02): doble clic/retry con el mismo client_request_id → ya existe.
     if (d.clientRequestId && error.code === '23505') {
@@ -140,10 +140,12 @@ export async function POST(req: NextRequest) {
         .select('id')
         .eq('client_request_id', d.clientRequestId)
         .maybeSingle()
-      if (existing) return NextResponse.json({ id: existing.id }, { status: 200 })
+      if (existing) return apiSuccess({ id: existing.id }, 200)
     }
-    return NextResponse.json({ error: 'No se pudo guardar la propiedad' }, { status: 500 })
+    // Log operacional (causa interna) — no se expone al cliente.
+    console.error('publish: insert falló', error.code, error.message)
+    return apiError('INTERNAL')
   }
 
-  return NextResponse.json({ id: inserted.id }, { status: 201 })
+  return apiSuccess({ id: inserted.id }, 201)
 }

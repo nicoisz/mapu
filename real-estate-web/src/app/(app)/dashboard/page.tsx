@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { propertyService } from '@/services/propertyService'
 import { Sparkline } from '@/components/charts/Sparkline'
 import { Button } from '@/components/ui/Button'
@@ -55,7 +55,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!impersonating || !asId) return
     let active = true
-    getSupabase()
+    getSupabaseBrowser()
       .from('profiles')
       .select('id, name, email')
       .eq('id', asId)

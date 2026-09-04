@@ -3,9 +3,10 @@ import { AuthResult } from '@/types/results'
 import { User } from '@/types/user'
 import { SubscriptionType, UserType, ContactMethod, PlatformRole } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { translateError as sharedTranslateError } from '@/lib/userMessages'
 import { propertyService } from '@/services/propertyService'
+import type { Database } from '@/types/database.generated'
 
 /** Row in public.profiles — schema shared with the mobile app. */
 interface ProfileRow {
@@ -51,7 +52,7 @@ function translateError(message: string): string {
  * (SECURITY DEFINER, id = auth.uid()).
  */
 async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow | null> {
-  const supabase = getSupabase()
+  const supabase = getSupabaseBrowser()
   const { data: existing } = await supabase.rpc('get_own_profile').maybeSingle<ProfileRow>()
   if (existing) return existing
 
@@ -61,7 +62,8 @@ async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow |
     id: authUser.id,
     email: authUser.email ?? '',
     name: fallbackName,
-    user_type: (authUser.user_metadata?.user_type as string) ?? 'individual',
+    user_type: ((authUser.user_metadata?.user_type as string) ??
+      'individual') as Database['public']['Enums']['user_type'],
   })
   if (insertError) return null
   // El insert solo devuelve columnas públicas; relee el perfil completo vía RPC.
@@ -76,7 +78,7 @@ async function buildUser(authUser: SupabaseUser): Promise<User> {
     // Solo display (remainingListings); la cuota real se impone en /api/publish.
     propertyService.countActiveListings(authUser.id).catch(() => 0),
     // Active org membership (multi-tenant): first org the user belongs to.
-    getSupabase()
+    getSupabaseBrowser()
       .from('organization_members')
       .select('org_id, role')
       .eq('user_id', authUser.id)
@@ -172,7 +174,7 @@ export const authService = {
   buildUser,
 
   async login(email: string, password: string): Promise<AuthResult> {
-    const { data, error } = await getSupabase().auth.signInWithPassword({ email, password })
+    const { data, error } = await getSupabaseBrowser().auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: translateError(error.message) }
     const user = await buildUser(data.user)
     return { success: true, user, token: data.session.access_token }
@@ -186,7 +188,7 @@ export const authService = {
   }): Promise<AuthResult> {
     if (!data.name || data.name.length < 2)
       return { success: false, error: 'Nombre demasiado corto (mínimo 2 caracteres)' }
-    const { data: res, error } = await getSupabase().auth.signUp({
+    const { data: res, error } = await getSupabaseBrowser().auth.signUp({
       email: data.email,
       password: data.password,
       options: { data: { name: data.name, user_type: data.userType ?? UserType.INDIVIDUAL } },
@@ -205,7 +207,7 @@ export const authService = {
   },
 
   async loginWithSocial(provider: 'google' | 'apple' | 'facebook'): Promise<AuthResult> {
-    const { error } = await getSupabase().auth.signInWithOAuth({
+    const { error } = await getSupabaseBrowser().auth.signInWithOAuth({
       provider,
       options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
     })
@@ -219,11 +221,11 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await getSupabase().auth.signOut()
+    await getSupabaseBrowser().auth.signOut()
   },
 
   async getCurrentUser(): Promise<User | null> {
-    const { data } = await getSupabase().auth.getSession()
+    const { data } = await getSupabaseBrowser().auth.getSession()
     if (!data.session?.user) return null
     return buildUser(data.session.user)
   },
@@ -235,7 +237,10 @@ export const authService = {
     if (updates.contactInfo?.phone !== undefined) row.phone = updates.contactInfo.phone
     if (updates.contactInfo?.whatsapp !== undefined) row.whatsapp = updates.contactInfo.whatsapp
 
-    const { error } = await getSupabase().from('profiles').update(row).eq('id', userId)
+    const { error } = await getSupabaseBrowser()
+      .from('profiles')
+      .update(row as Database['public']['Tables']['profiles']['Update'])
+      .eq('id', userId)
     if (error) return { success: false, error: translateError(error.message) }
 
     const user = await authService.getCurrentUser()

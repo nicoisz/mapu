@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 
 export const PREMIUM_PRICE = 9900
 
@@ -13,7 +13,7 @@ export const paymentService = {
   async createPreference(userId: string): Promise<{ preferenceId: string }> {
     const preferenceId = `pref_sim_${crypto.randomUUID()}`
     // Registro la intención de pago para el historial.
-    await getSupabase()
+    await getSupabaseBrowser()
       .from('payments')
       .insert({
         user_id: userId,
@@ -32,7 +32,7 @@ export const paymentService = {
   /** Marca la cuenta como premium (sin pago real — simulado). */
   async confirmPremium(userId: string): Promise<void> {
     const now = new Date().toISOString()
-    const { error } = await getSupabase()
+    const { error } = await getSupabaseBrowser()
       .from('profiles')
       .update({
         subscription_type: 'premium',
