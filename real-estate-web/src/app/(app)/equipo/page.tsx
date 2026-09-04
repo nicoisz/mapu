@@ -130,9 +130,7 @@ export default function EquipoPage() {
             </Badge>
           ) : undefined
         }
-        description={
-          `${org?.type === 'company' ? 'Empresa' : 'Corredora'} · ${members.length} miembros · tu rol: ${ROLE_LABELS[orgRole ?? ''] ?? orgRole ?? ''}`
-        }
+        description={`${org?.type === 'company' ? 'Empresa' : 'Corredora'} · ${members.length} miembros · tu rol: ${ROLE_LABELS[orgRole ?? ''] ?? orgRole ?? ''}`}
       />
 
       <div className="mx-auto w-full max-w-5xl space-y-8 px-6 py-6">
@@ -184,7 +182,9 @@ export default function EquipoPage() {
                       <>
                         <select
                           value={m.role}
-                          onChange={(e) => handleRoleChange(m.id, e.target.value as 'admin' | 'agent')}
+                          onChange={(e) =>
+                            handleRoleChange(m.id, e.target.value as 'admin' | 'agent')
+                          }
                           className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
                         >
                           {canInviteAdmin && <option value="admin">Admin</option>}

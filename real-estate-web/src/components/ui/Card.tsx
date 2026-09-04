@@ -40,10 +40,7 @@ export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivEleme
 export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        'flex items-center gap-2 px-5 pb-5 pt-0 [.p-5_&]:pt-5',
-        className
-      )}
+      className={cn('flex items-center gap-2 px-5 pb-5 pt-0 [.p-5_&]:pt-5', className)}
       {...props}
     />
   )

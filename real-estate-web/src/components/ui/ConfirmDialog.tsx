@@ -34,9 +34,7 @@ export function ConfirmDialog({
           <AlertTriangle size={22} />
         </div>
         <h3 className="font-headline font-semibold text-on-surface">{title}</h3>
-        {description && (
-          <p className="text-sm text-on-surface-variant mt-1.5">{description}</p>
-        )}
+        {description && <p className="text-sm text-on-surface-variant mt-1.5">{description}</p>}
         <div className="mt-5 flex gap-3">
           <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
             {cancelLabel}

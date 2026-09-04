@@ -88,7 +88,10 @@ const CARDS_KEY = 'mapu:saved-cards'
 
 const fmt = (n: number) => `$${n.toLocaleString('es-CL')}`
 
-function CardInput({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function CardInput({
+  label,
+  ...props
+}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-on-surface-variant">{label}</label>
@@ -160,9 +163,7 @@ export default function MejorarPage() {
     )
   }
 
-  const currentPlan: PlanId = hasSubscription(SubscriptionType.PREMIUM)
-    ? 'premium'
-    : 'free'
+  const currentPlan: PlanId = hasSubscription(SubscriptionType.PREMIUM) ? 'premium' : 'free'
 
   function saveCards(next: SavedCard[]) {
     setCards(next)
@@ -179,7 +180,8 @@ export default function MejorarPage() {
     const exp = cardForm.exp.trim()
     if (digits.length < 12) return setCardError('El número de tarjeta es inválido.')
     if (!cardForm.holder.trim()) return setCardError('Ingresa el nombre del titular.')
-    if (!/^\d{2}\s*\/\s*\d{2}$/.test(exp)) return setCardError('Fecha de expiración inválida (MM/AA).')
+    if (!/^\d{2}\s*\/\s*\d{2}$/.test(exp))
+      return setCardError('Fecha de expiración inválida (MM/AA).')
     if (cardForm.cvc.replace(/\D/g, '').length < 3) return setCardError('CVC inválido.')
 
     const brands: [RegExp, string][] = [
@@ -303,9 +305,7 @@ export default function MejorarPage() {
                   <span className="font-headline text-4xl font-bold text-on-surface">
                     {activePlan.price === 0 ? 'Gratis' : fmt(activePlan.price)}
                   </span>
-                  {activePlan.price > 0 && (
-                    <span className="text-on-surface-variant">/mes</span>
-                  )}
+                  {activePlan.price > 0 && <span className="text-on-surface-variant">/mes</span>}
                 </div>
                 <ul className="space-y-2">
                   {activePlan.features.map((f) => (
@@ -437,7 +437,9 @@ export default function MejorarPage() {
                 {cards.length > 0 && (
                   <div className="border-t border-outline-variant/40 pt-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-on-surface-variant">Plan {activePlan.name} (30 días)</span>
+                      <span className="text-on-surface-variant">
+                        Plan {activePlan.name} (30 días)
+                      </span>
                       <span className="font-semibold text-on-surface">{fmt(activePlan.price)}</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between border-t border-outline-variant/40 pt-3">

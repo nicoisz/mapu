@@ -23,10 +23,7 @@ const DEFAULT_QUALITY = 0.8
  * Si no se puede procesar (falla de API, imagen inválida) devuelve el archivo
  * original para no bloquear el upload.
  */
-export async function compressImage(
-  file: File,
-  opts: ImageCompressionOptions = {}
-): Promise<File> {
+export async function compressImage(file: File, opts: ImageCompressionOptions = {}): Promise<File> {
   const maxDimension = opts.maxDimension ?? DEFAULT_MAX_DIMENSION
   const quality = opts.quality ?? DEFAULT_QUALITY
 

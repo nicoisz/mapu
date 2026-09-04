@@ -51,5 +51,7 @@ export function localitiesForCommune(commune: string): string[] {
 
 /** "SAN MIGUEL" → "San Miguel". Solo para mostrar, no altera el dato crudo. */
 export function titleCase(s: string): string {
-  return s.toLowerCase().replace(/(^|[\s-])(\S)/g, (_, sep: string, ch: string) => sep + ch.toUpperCase())
+  return s
+    .toLowerCase()
+    .replace(/(^|[\s-])(\S)/g, (_, sep: string, ch: string) => sep + ch.toUpperCase())
 }

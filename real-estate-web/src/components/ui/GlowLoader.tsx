@@ -26,11 +26,7 @@ export function GlowLoader({ children, label, className, fill }: GlowLoaderProps
 
   return (
     <div
-      className={cn(
-        'glow-loader',
-        fill ? 'w-full h-full' : 'w-fit',
-        className
-      )}
+      className={cn('glow-loader', fill ? 'w-full h-full' : 'w-fit', className)}
       role="status"
       aria-live="polite"
     >

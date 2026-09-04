@@ -111,7 +111,9 @@ export default function MiniMapInner({
 
     if (map.getSource(ZONE_SOURCE)) {
       ;(map.getSource(ZONE_SOURCE) as maplibregl.GeoJSONSource).setData(
-        currentCells?.length ? zonesToGeoJSON(currentCells) : { type: 'FeatureCollection', features: [] }
+        currentCells?.length
+          ? zonesToGeoJSON(currentCells)
+          : { type: 'FeatureCollection', features: [] }
       )
     } else if (currentCells?.length) {
       map.addSource(ZONE_SOURCE, {
@@ -141,9 +143,7 @@ export default function MiniMapInner({
     }
 
     // Keep the highlight line layer in sync (add/update filter, or drop).
-    const hlId = currentCells?.some((c) => c.id === currentHighlight)
-      ? currentHighlight
-      : undefined
+    const hlId = currentCells?.some((c) => c.id === currentHighlight) ? currentHighlight : undefined
     if (map.getLayer('mini-zone-highlight')) {
       if (hlId) {
         map.setFilter('mini-zone-highlight', ['==', ['get', 'id'], hlId])

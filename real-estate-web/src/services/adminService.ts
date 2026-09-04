@@ -161,10 +161,7 @@ export const adminService = {
     const supabase = getSupabase()
     const [payments, sold, rented] = await Promise.all([
       supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(500),
-      supabase
-        .from('properties')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'sold'),
+      supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'sold'),
       supabase
         .from('properties')
         .select('id', { count: 'exact', head: true })

@@ -154,9 +154,7 @@ export default function MapaPage() {
         <div
           className={cn(
             'bg-surface-container-low border-l border-outline-variant/40 overflow-y-auto',
-            viewMode === 'list'
-              ? 'flex-1'
-              : 'hidden md:block w-[360px]',
+            viewMode === 'list' ? 'flex-1' : 'hidden md:block w-[360px]',
             viewMode === 'map' && !listOpen ? 'md:hidden' : ''
           )}
         >

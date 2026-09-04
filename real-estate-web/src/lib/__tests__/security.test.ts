@@ -4,7 +4,7 @@ import { adminAccessStatus, canAccessAdmin } from '@/lib/access'
 import { PlatformRole } from '@/types/enums'
 import { User } from '@/types/user'
 
-const user = (platformRole: PlatformRole): User => ({ platformRole } as User)
+const user = (platformRole: PlatformRole): User => ({ platformRole }) as User
 
 describe('safeRedirectPath', () => {
   it('devuelve / para null o vacío', () => {

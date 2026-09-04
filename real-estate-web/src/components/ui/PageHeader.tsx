@@ -13,7 +13,15 @@ interface PageHeaderProps extends HTMLAttributes<HTMLDivElement> {
 
 /** Encabezado de página consistente: ícono tonal, título display, subtítulo y
  *  acciones a la derecha. Sustituye los bloques duplicados por página. */
-export function PageHeader({ title, description, icon, actions, badge, className, ...props }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  icon,
+  actions,
+  badge,
+  className,
+  ...props
+}: PageHeaderProps) {
   return (
     <div
       className={cn(
@@ -35,9 +43,7 @@ export function PageHeader({ title, description, icon, actions, badge, className
             </h1>
             {badge}
           </div>
-          {description && (
-            <p className="mt-1 text-sm text-on-surface-variant">{description}</p>
-          )}
+          {description && <p className="mt-1 text-sm text-on-surface-variant">{description}</p>}
         </div>
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

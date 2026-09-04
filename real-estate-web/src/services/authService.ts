@@ -57,14 +57,12 @@ async function loadOrCreateProfile(authUser: SupabaseUser): Promise<ProfileRow |
 
   const fallbackName =
     (authUser.user_metadata?.name as string) || authUser.email?.split('@')[0] || 'Usuario'
-  const { error: insertError } = await supabase
-    .from('profiles')
-    .insert({
-      id: authUser.id,
-      email: authUser.email ?? '',
-      name: fallbackName,
-      user_type: (authUser.user_metadata?.user_type as string) ?? 'individual',
-    })
+  const { error: insertError } = await supabase.from('profiles').insert({
+    id: authUser.id,
+    email: authUser.email ?? '',
+    name: fallbackName,
+    user_type: (authUser.user_metadata?.user_type as string) ?? 'individual',
+  })
   if (insertError) return null
   // El insert solo devuelve columnas públicas; relee el perfil completo vía RPC.
   const { data: refreshed } = await supabase.rpc('get_own_profile').maybeSingle<ProfileRow>()

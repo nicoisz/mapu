@@ -20,7 +20,12 @@ export function AvatarImage({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>) {
-  return <AvatarPrimitive.Image className={cn('aspect-square h-full w-full object-cover', className)} {...props} />
+  return (
+    <AvatarPrimitive.Image
+      className={cn('aspect-square h-full w-full object-cover', className)}
+      {...props}
+    />
+  )
 }
 
 export function AvatarFallback({
@@ -29,7 +34,10 @@ export function AvatarFallback({
 }: React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>) {
   return (
     <AvatarPrimitive.Fallback
-      className={cn('flex h-full w-full items-center justify-center bg-primary/20 text-primary font-bold', className)}
+      className={cn(
+        'flex h-full w-full items-center justify-center bg-primary/20 text-primary font-bold',
+        className
+      )}
       {...props}
     />
   )

@@ -111,9 +111,9 @@ export async function searchAddress(
   const q = opts?.commune ? `${query}, ${opts.commune}` : query
   return cached(`sug:${q}`, () =>
     throttle(async () => {
-      const data = await fetchJson<
-        { lat: string; lon: string; display_name: string }[]
-      >(searchUrl(q, 6))
+      const data = await fetchJson<{ lat: string; lon: string; display_name: string }[]>(
+        searchUrl(q, 6)
+      )
       return (data ?? []).map((d) => ({
         latitude: parseFloat(d.lat),
         longitude: parseFloat(d.lon),

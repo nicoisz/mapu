@@ -30,10 +30,25 @@ export default function AdminPanelPage() {
   }, [])
 
   const quickLinks = [
-    { href: '/admin/usuarios', label: 'Usuarios', desc: 'Cuentas, roles y verificaciones', icon: Users },
-    { href: '/admin/empresas', label: 'Empresas', desc: 'Inmobiliarias y corredoras', icon: Building2 },
+    {
+      href: '/admin/usuarios',
+      label: 'Usuarios',
+      desc: 'Cuentas, roles y verificaciones',
+      icon: Users,
+    },
+    {
+      href: '/admin/empresas',
+      label: 'Empresas',
+      desc: 'Inmobiliarias y corredoras',
+      icon: Building2,
+    },
     { href: '/admin/ingresos', label: 'Ingresos', desc: 'Pagos y ventas', icon: TrendingUp },
-    { href: '/admin/errores', label: 'Log de errores', desc: 'Errores client-side de la app', icon: Bug },
+    {
+      href: '/admin/errores',
+      label: 'Log de errores',
+      desc: 'Errores client-side de la app',
+      icon: Bug,
+    },
   ]
 
   return (
@@ -59,7 +74,10 @@ export default function AdminPanelPage() {
               <p className="font-medium text-on-surface text-sm">{label}</p>
               <p className="text-xs text-on-surface-variant">{desc}</p>
             </div>
-            <ChevronRight size={16} className="text-on-surface-variant/50 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight
+              size={16}
+              className="text-on-surface-variant/50 transition-transform group-hover:translate-x-0.5"
+            />
           </Link>
         ))}
       </div>

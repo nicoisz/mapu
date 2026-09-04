@@ -80,11 +80,7 @@ export default function PerfilPage() {
           <StatCard
             label="Calificación"
             value={user.stats.rating ? user.stats.rating : undefined}
-            hint={
-              user.stats.rating
-                ? `${user.stats.reviewCount} reseñas`
-                : 'Sin reseñas'
-            }
+            hint={user.stats.rating ? `${user.stats.reviewCount} reseñas` : 'Sin reseñas'}
           />
         </div>
 

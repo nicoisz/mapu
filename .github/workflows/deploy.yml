@@ -3,31 +3,27 @@ name: Deploy a Cloudflare
 on:
   push:
     branches: [main]
+    paths:
+      - 'real-estate-web/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
-defaults:
-  run:
-    working-directory: real-estate-web
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: real-estate-web/package-lock.json
-
-      - run: npm ci
-      - run: npm test
+  # Reusable CI: lint/typecheck/test/build deben pasar antes de desplegar.
+  ci:
+    uses: ./.github/workflows/ci.yml
 
   deploy:
-    needs: test
+    needs: ci
     runs-on: ubuntu-latest
     environment: env
+    defaults:
+      run:
+        working-directory: real-estate-web
     steps:
       - uses: actions/checkout@v4
 
@@ -37,9 +33,11 @@ jobs:
           cache: npm
           cache-dependency-path: real-estate-web/package-lock.json
 
-      - run: npm ci
+      - name: Install
+        run: npm ci
 
-      - run: npm run deploy
+      - name: Deploy
+        run: npm run deploy
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}

@@ -148,8 +148,7 @@ function SearchContent() {
   )
 
   // Price-zone of the selected property, matching the map's legend (diamond).
-  const zoneMode: 'sale' | 'rent' =
-    filters.operation === PropertyOperation.RENT ? 'rent' : 'sale'
+  const zoneMode: 'sale' | 'rent' = filters.operation === PropertyOperation.RENT ? 'rent' : 'sale'
   const ZONE_LABELS: Record<ZoneBucket, string> = {
     economic: 'Económica',
     mid: 'Media',
@@ -159,9 +158,7 @@ function SearchContent() {
     if (!selected || results.length === 0) return null
     const { cells } = computePriceZones(results, zoneMode)
     const bucket = findZone(cells, selected.location.latitude, selected.location.longitude)?.bucket
-    return bucket
-      ? { color: getZoneColor(bucket), label: ZONE_LABELS[bucket] }
-      : null
+    return bucket ? { color: getZoneColor(bucket), label: ZONE_LABELS[bucket] } : null
   }, [selected, results, zoneMode])
 
   return (

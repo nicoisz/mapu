@@ -7,6 +7,10 @@ on:
       - 'real-estate-web/supabase/migrations/**'
   workflow_dispatch:
 
+concurrency:
+  group: migrate-${{ github.ref }}
+  cancel-in-progress: false
+
 defaults:
   run:
     working-directory: real-estate-web

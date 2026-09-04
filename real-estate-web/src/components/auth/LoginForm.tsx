@@ -21,7 +21,9 @@ export function LoginForm() {
   const next = useMemo(
     () =>
       safeRedirectPath(
-        typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('next')
+        typeof window === 'undefined'
+          ? null
+          : new URLSearchParams(window.location.search).get('next')
       ),
     []
   )

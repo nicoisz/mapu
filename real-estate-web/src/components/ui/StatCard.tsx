@@ -13,15 +13,7 @@ interface StatCardProps extends HTMLAttributes<HTMLDivElement> {
 
 /** Tarjeta de métrica alineada a la izquierda: label corto, valor grande y
  *  énfasis tipográfico. El icono opcional va en un tile tonal discreto. */
-export function StatCard({
-  label,
-  value,
-  suffix,
-  icon,
-  hint,
-  className,
-  ...props
-}: StatCardProps) {
+export function StatCard({ label, value, suffix, icon, hint, className, ...props }: StatCardProps) {
   return (
     <div
       className={cn(
