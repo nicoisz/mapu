@@ -39,3 +39,6 @@ next-env.d.ts
 
 .open-next
 .wrangler
+
+# Supabase CLI (temp de `supabase link`)
+.supabase
