@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { rethrowUserError } from '@/lib/userMessages'
 import { rowToProperty, PropertyRow } from '@/lib/propertyMapper'
 import { Property } from '@/types/property'
@@ -19,7 +19,7 @@ export const organizationService = {
   async getById(orgId: string): Promise<OrgInfo | null> {
     const cached = orgCache.get(orgId)
     if (cached) return cached
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('organizations')
       .select('id, name, logo_url, type, is_verified, rating')
       .eq('id', orgId)
@@ -31,7 +31,7 @@ export const organizationService = {
 
   /** All properties published under the org (team dashboard). */
   async getOrgProperties(orgId: string): Promise<Property[]> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .select('*')
       .eq('organization_id', orgId)
@@ -45,7 +45,7 @@ export const organizationService = {
     orgId: string
   ): Promise<{ id: string; name: string; email: string; role: string }[]> {
     // security-004: email se entrega vía RPC solo a quien gestiona la org.
-    const { data, error } = await getSupabase().rpc('get_org_members', { org_id: orgId })
+    const { data, error } = await getSupabaseBrowser().rpc('get_org_members', { org_id: orgId })
     if (error) rethrowUserError(error)
     const rows = (data ?? []) as {
       user_id: string
@@ -68,7 +68,7 @@ export const organizationService = {
   async findUserByEmail(
     email: string
   ): Promise<{ id: string; name: string; email: string } | null> {
-    const { data, error } = await getSupabase().rpc('find_user_for_org', {
+    const { data, error } = await getSupabaseBrowser().rpc('find_user_for_org', {
       search_email: email.trim(),
     })
     if (error || !data?.length) return null
@@ -84,10 +84,10 @@ export const organizationService = {
     userId: string,
     role: 'owner' | 'admin' | 'agent' | null
   ): Promise<void> {
-    const { error } = await getSupabase().rpc('set_member_role', {
+    const { error } = await getSupabaseBrowser().rpc('set_member_role', {
       org_id: orgId,
       target_user_id: userId,
-      new_role: role,
+      new_role: role as string,
     })
     if (error) rethrowUserError(error)
   },

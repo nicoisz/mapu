@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { Property } from '@/types/property'
 import { User } from '@/types/user'
 import { metricsScopeFor } from '@/lib/roles'
@@ -54,11 +54,11 @@ export const metricsService = {
   async getViewsSeries(user: User, days = 30): Promise<{ day: string; count: number }[]> {
     const scope = metricsScopeFor(user)
     if (scope === 'global') {
-      const { data, error } = await getSupabase().rpc('get_global_views', { days })
+      const { data, error } = await getSupabaseBrowser().rpc('get_global_views', { days })
       return error ? [] : ((data ?? []) as { day: string; count: number }[])
     }
     if (scope === 'org' && user.organizationId) {
-      const { data, error } = await getSupabase().rpc('get_org_views', {
+      const { data, error } = await getSupabaseBrowser().rpc('get_org_views', {
         org_id: user.organizationId,
         days,
       })
@@ -83,7 +83,10 @@ export const metricsService = {
     const ownerIds = [...byOwner.keys()]
     const names = new Map<string, string>()
     if (ownerIds.length) {
-      const { data } = await getSupabase().from('profiles').select('id, name').in('id', ownerIds)
+      const { data } = await getSupabaseBrowser()
+        .from('profiles')
+        .select('id, name')
+        .in('id', ownerIds)
       for (const row of (data ?? []) as { id: string; name: string }[]) names.set(row.id, row.name)
     }
 

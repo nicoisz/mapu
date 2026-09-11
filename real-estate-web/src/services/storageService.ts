@@ -1,4 +1,4 @@
-import { getSupabase, PROPERTY_IMAGES_BUCKET } from '@/lib/supabase'
+import { getSupabaseBrowser, PROPERTY_IMAGES_BUCKET } from '@/lib/supabase/browser'
 import { translateError } from '@/lib/userMessages'
 import { PropertyImage } from '@/types/property'
 
@@ -21,7 +21,7 @@ export async function uploadPropertyImages(
   userId: string,
   files: File[]
 ): Promise<PropertyImage[]> {
-  const supabase = getSupabase()
+  const supabase = getSupabaseBrowser()
   const uploads = files.map(async (file, i) => {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const path = `${userId}/${crypto.randomUUID()}.${ext}`
@@ -41,5 +41,5 @@ export async function uploadPropertyImages(
 export async function deletePropertyImages(images: PropertyImage[]): Promise<void> {
   const paths = images.map((img) => img.id).filter(Boolean)
   if (!paths.length) return
-  await getSupabase().storage.from(PROPERTY_IMAGES_BUCKET).remove(paths)
+  await getSupabaseBrowser().storage.from(PROPERTY_IMAGES_BUCKET).remove(paths)
 }

@@ -2,23 +2,19 @@ import { Property } from '@/types/property'
 import { PropertyOperation, PropertyStatus } from '@/types/enums'
 import { PropertySearchQuery } from '@/types/search'
 import { LISTING_EXPIRATION_DAYS, MAX_QUERY_RESULTS } from '@/constants'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { rethrowUserError } from '@/lib/userMessages'
 import { deletePropertyImages } from '@/services/storageService'
 import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
 import { captureError } from '@/lib/errorLogging'
+import { activeExpiryFilter } from '@/lib/propertyFilters'
+import type { Database } from '@/types/database.generated'
 
 const ROW_COLUMNS = '*'
 
-/** Listings that are still published: status active AND not past expires_at.
- *  Null expires_at (some mobile-created rows) counts as never-expiring. */
-export function activeExpiryFilter(): string {
-  return `expires_at.is.null,expires_at.gte.${new Date().toISOString()}`
-}
-
 export const propertyService = {
   async getAll(): Promise<Property[]> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('status', PropertyStatus.ACTIVE)
@@ -30,7 +26,7 @@ export const propertyService = {
   },
 
   async getFeatured(limit = 3): Promise<Property[]> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('status', PropertyStatus.ACTIVE)
@@ -43,7 +39,7 @@ export const propertyService = {
   },
 
   async getById(id: string): Promise<Property | null> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('id', id)
@@ -55,13 +51,16 @@ export const propertyService = {
 
   async getByIds(ids: string[]): Promise<Property[]> {
     if (!ids.length) return []
-    const { data, error } = await getSupabase().from('properties').select(ROW_COLUMNS).in('id', ids)
+    const { data, error } = await getSupabaseBrowser()
+      .from('properties')
+      .select(ROW_COLUMNS)
+      .in('id', ids)
     if (error) rethrowUserError(error)
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
   async getUserProperties(userId: string): Promise<Property[]> {
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('owner_id', userId)
@@ -71,7 +70,7 @@ export const propertyService = {
   },
 
   async searchProperties(query: PropertySearchQuery): Promise<Property[]> {
-    let q = getSupabase()
+    let q = getSupabaseBrowser()
       .from('properties')
       .select(ROW_COLUMNS)
       .eq('status', PropertyStatus.ACTIVE)
@@ -122,9 +121,9 @@ export const propertyService = {
       status: PropertyStatus.ACTIVE,
       expires_at: expiresAt,
     }
-    const { data: inserted, error } = await getSupabase()
+    const { data: inserted, error } = await getSupabaseBrowser()
       .from('properties')
-      .insert(row)
+      .insert(row as Database['public']['Tables']['properties']['Insert'])
       .select(ROW_COLUMNS)
       .single()
     if (error) rethrowUserError(error)
@@ -141,7 +140,7 @@ export const propertyService = {
     organizationId?: string,
     clientRequestId?: string
   ): Promise<{ id: string }> {
-    const { data: sessionRes } = await getSupabase().auth.getSession()
+    const { data: sessionRes } = await getSupabaseBrowser().auth.getSession()
     const token = sessionRes.session?.access_token
     if (!token) throw new Error('No autenticado')
 
@@ -154,14 +153,17 @@ export const propertyService = {
         clientRequestId: clientRequestId ?? null,
       }),
     })
-    const json = (await res.json().catch(() => ({}))) as { error?: string; id?: string }
-    if (!res.ok) throw new Error(json.error ?? 'No se pudo publicar la propiedad')
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: { code?: string; message?: string }
+      id?: string
+    }
+    if (!res.ok) throw new Error(json.error?.message ?? 'No se pudo publicar la propiedad')
     return { id: json.id ?? '' }
   },
 
   async updateProperty(id: string, updates: Partial<Property>): Promise<Property | null> {
     const row = { ...propertyToRow(updates), updated_at: new Date().toISOString() }
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .update(row)
       .eq('id', id)
@@ -174,7 +176,7 @@ export const propertyService = {
   async deleteProperty(id: string): Promise<boolean> {
     // Fetch the row first so we can also remove its storage files.
     const existing = await propertyService.getById(id)
-    const { error, count } = await getSupabase()
+    const { error, count } = await getSupabaseBrowser()
       .from('properties')
       .delete({ count: 'exact' })
       .eq('id', id)
@@ -187,7 +189,7 @@ export const propertyService = {
 
   async renewProperty(id: string): Promise<Property | null> {
     const expiresAt = new Date(Date.now() + LISTING_EXPIRATION_DAYS * 86_400_000).toISOString()
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseBrowser()
       .from('properties')
       .update({
         status: PropertyStatus.ACTIVE,
@@ -209,7 +211,7 @@ export const propertyService = {
    */
   registerView(id: string): void {
     if (typeof window === 'undefined') return
-    const supabase = getSupabase()
+    const supabase = getSupabaseBrowser()
     void supabase.rpc('increment_property_views', { property_id: id }).then(
       () => {},
       (err) => {
@@ -224,7 +226,7 @@ export const propertyService = {
   /** Count of ACTIVE listings a user has (free-plan limit checks). Lanza error
    *  ante fallo de DB (no devuelve 0 silencioso, que aparentaría éxito). */
   async countActiveListings(userId: string): Promise<number> {
-    const { count, error } = await getSupabase()
+    const { count, error } = await getSupabaseBrowser()
       .from('properties')
       .select('id', { count: 'exact', head: true })
       .eq('owner_id', userId)
@@ -236,7 +238,10 @@ export const propertyService = {
 
   /** Vistas diarias del owner (serie temporal, últimos N días). */
   async getViewsSeries(ownerId: string, days = 30): Promise<{ day: string; count: number }[]> {
-    const { data, error } = await getSupabase().rpc('get_owner_views', { owner_id: ownerId, days })
+    const { data, error } = await getSupabaseBrowser().rpc('get_owner_views', {
+      owner_id: ownerId,
+      days,
+    })
     if (error) return []
     return (data ?? []) as { day: string; count: number }[]
   },

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { PropertyDetail } from '@/components/property/PropertyDetail'
-import { propertyService } from '@/services/propertyService'
+import { getPropertyById } from '@/lib/server/propertyQueries'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -9,7 +9,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
-  const property = await propertyService.getById(id)
+  const property = await getPropertyById(id)
   if (!property) return { title: 'Propiedad no encontrada' }
   const mainImage = property.media.images.find((img) => img.isMain) ?? property.media.images[0]
   return {
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PropertyPage({ params }: Props) {
   const { id } = await params
-  const property = await propertyService.getById(id)
+  const property = await getPropertyById(id)
   if (!property) notFound()
 
   return (

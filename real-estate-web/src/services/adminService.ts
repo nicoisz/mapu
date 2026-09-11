@@ -1,7 +1,8 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseBrowser } from '@/lib/supabase/browser'
 import { rethrowUserError } from '@/lib/userMessages'
 import { PlatformRole } from '@/types/enums'
 import { PropertyRow } from '@/lib/propertyMapper'
+import type { Database } from '@/types/database.generated'
 
 /** Fila mínima de profiles para el panel admin. */
 export interface AdminUserRow {
@@ -22,7 +23,7 @@ export interface AdminUserRow {
  *  (platform_role = 'superadmin') puede leer/escribir aquí. */
 export const adminService = {
   async getStats() {
-    const supabase = getSupabase()
+    const supabase = getSupabaseBrowser()
     // organizations se suma cuando la tabla exista (F0.3).
     const [u, p, a] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
@@ -42,7 +43,7 @@ export const adminService = {
   async listUsers(search?: string): Promise<AdminUserRow[]> {
     // security-004: los datos completos se leen vía RPC de superadmin (los
     // grants por columna no exponen email/telefono al cliente).
-    const { data, error } = await getSupabase().rpc('admin_list_users', {
+    const { data, error } = await getSupabaseBrowser().rpc('admin_list_users', {
       search_term: search?.trim() ?? '',
     })
     if (error) rethrowUserError(error)
@@ -51,7 +52,7 @@ export const adminService = {
 
   /** Cambia el rol de plataforma (user/superadmin). */
   async setPlatformRole(userId: string, role: PlatformRole): Promise<void> {
-    const { error } = await getSupabase().rpc('admin_set_platform_role', {
+    const { error } = await getSupabaseBrowser().rpc('admin_set_platform_role', {
       target_user_id: userId,
       new_role: role,
     })
@@ -64,7 +65,7 @@ export const adminService = {
     field: 'is_email_verified' | 'is_phone_verified',
     value: boolean
   ): Promise<void> {
-    const { error } = await getSupabase().rpc('admin_toggle_verified', {
+    const { error } = await getSupabaseBrowser().rpc('admin_toggle_verified', {
       target_user_id: userId,
       field,
       value,
@@ -74,12 +75,13 @@ export const adminService = {
 
   /** Todas las propiedades (superadmin), opcionalmente por status/título. */
   async listProperties(status?: string, search?: string): Promise<PropertyRow[]> {
-    let q = getSupabase()
+    let q = getSupabaseBrowser()
       .from('properties')
       .select('*')
       .order('published_at', { ascending: false })
       .limit(200)
-    if (status && status !== 'all') q = q.eq('status', status)
+    if (status && status !== 'all')
+      q = q.eq('status', status as Database['public']['Enums']['property_status'])
     if (search?.trim()) q = q.ilike('title', `%${search.trim()}%`)
     const { data, error } = await q
     if (error) rethrowUserError(error)
@@ -88,7 +90,7 @@ export const adminService = {
 
   /** Organizaciones con conteo de miembros (superadmin). */
   async listOrganizations(search?: string): Promise<OrganizationRow[]> {
-    let q = getSupabase()
+    let q = getSupabaseBrowser()
       .from('organizations')
       .select('*, organization_members(count)')
       .order('created_at', { ascending: false })
@@ -107,7 +109,7 @@ export const adminService = {
     licenseNumber?: string
     rut?: string
   }): Promise<void> {
-    const supabase = getSupabase()
+    const supabase = getSupabaseBrowser()
     const { data: org, error } = await supabase
       .from('organizations')
       .insert({
@@ -132,17 +134,17 @@ export const adminService = {
     userId: string,
     role: 'owner' | 'admin' | 'agent' | null
   ): Promise<void> {
-    const { error } = await getSupabase().rpc('set_member_role', {
+    const { error } = await getSupabaseBrowser().rpc('set_member_role', {
       org_id: orgId,
       target_user_id: userId,
-      new_role: role,
+      new_role: role as string,
     })
     if (error) rethrowUserError(error)
   },
 
   /** Log de errores client-side (solo superadmin puede leer por RLS). */
   async listErrorLogs(search?: string, limit = 200): Promise<ErrorLogRow[]> {
-    let q = getSupabase()
+    let q = getSupabaseBrowser()
       .from('error_logs')
       .select('*')
       .order('created_at', { ascending: false })
@@ -158,7 +160,7 @@ export const adminService = {
 
   /** Ingresos desde payments + propiedades vendidas/arrendadas. */
   async getRevenue(): Promise<RevenueSnapshot> {
-    const supabase = getSupabase()
+    const supabase = getSupabaseBrowser()
     const [payments, sold, rented] = await Promise.all([
       supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(500),
       supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'sold'),
