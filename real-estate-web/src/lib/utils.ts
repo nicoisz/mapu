@@ -20,8 +20,10 @@ export function formatPriceShort(price: number, currency: Currency): string {
     if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(0)}M`
     return `$${(price / 1_000).toFixed(0)}k`
   }
-  if (price >= 1_000) return `$${(price / 1_000).toFixed(0)}k`
-  return `$${price}`
+  // Prefijo explícito: "$300k" en un pin no dice si son pesos o dólares, y la
+  // diferencia entre ambas lecturas es de tres órdenes de magnitud.
+  if (price >= 1_000) return `US$${(price / 1_000).toFixed(0)}k`
+  return `US$${price}`
 }
 
 export function getDisplayPrice(property: Property): { amount: string; suffix?: string } {
@@ -37,9 +39,10 @@ export function getDisplayPrice(property: Property): { amount: string; suffix?: 
 
 export function getMapPinPrice(property: Property): string {
   const { pricing, operation } = property
-  const price =
-    operation === PropertyOperation.RENT ? (pricing.monthlyRent ?? pricing.price) : pricing.price
-  return formatPriceShort(price, pricing.currency)
+  const isRent = operation === PropertyOperation.RENT
+  const price = isRent ? (pricing.monthlyRent ?? pricing.price) : pricing.price
+  // Sin el sufijo, un arriendo y una venta barata se leen igual en el mapa.
+  return `${formatPriceShort(price, pricing.currency)}${isRent ? '/mes' : ''}`
 }
 
 export function formatArea(area: number): string {
