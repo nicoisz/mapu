@@ -42,13 +42,6 @@ export function getZoneColor(bucket: ZoneBucket): string {
   return COLORS[bucket]
 }
 
-/** easeOutElastic: overshoots past the target and oscillates back (muelle). */
-export function easeOutElastic(t: number): number {
-  if (t === 0 || t === 1) return t
-  const c4 = (2 * Math.PI) / 3
-  return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1
-}
-
 /** Rounds fractional axial coords to the nearest hex cell (pointy-top). */
 function axialRound(q: number, r: number): { q: number; r: number } {
   const y = -q - r
@@ -261,16 +254,4 @@ export function propertyHexesToGeoJSON(
     })
   }
   return { type: 'FeatureCollection' as const, features }
-}
-
-/** Scales a hex's vertices around its center — used by the elastic animation. */
-export function scaleZoneGeometry(
-  verts: [number, number][],
-  center: { lat: number; lng: number },
-  scale: number
-): [number, number][] {
-  return verts.map(([lng, lat]) => [
-    center.lng + (lng - center.lng) * scale,
-    center.lat + (lat - center.lat) * scale,
-  ])
 }

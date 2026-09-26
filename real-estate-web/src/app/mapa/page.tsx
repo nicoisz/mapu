@@ -15,12 +15,19 @@ import { Badge } from '@/components/ui/Badge'
 
 type ViewMode = 'map' | 'list'
 
+/** Igual que en /buscar: evita importar maplibre-gl en la página solo para
+ *  tipar los bounds. */
+interface Bounds {
+  contains(lngLat: [number, number]): boolean
+}
+
 export default function MapaPage() {
   const router = useRouter()
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
   const [showFilters, setShowFilters] = useState(false)
   const [listOpen, setListOpen] = useState(true)
+  const [bounds, setBounds] = useState<Bounds | null>(null)
 
   const {
     query,
@@ -35,13 +42,23 @@ export default function MapaPage() {
     setSuggestions,
   } = useSearch()
 
+  // Solo lo que cae dentro del área visible del mapa, igual que /buscar: antes
+  // el contador decía "120 propiedades" mientras se veían tres.
+  const visible = useMemo(
+    () =>
+      bounds
+        ? results.filter((p) => bounds.contains([p.location.longitude, p.location.latitude]))
+        : results,
+    [results, bounds]
+  )
+
   const stats = useMemo(
     () => ({
-      total: results.length,
-      sale: results.filter((p) => p.operation === PropertyOperation.SALE).length,
-      rent: results.filter((p) => p.operation === PropertyOperation.RENT).length,
+      total: visible.length,
+      sale: visible.filter((p) => p.operation === PropertyOperation.SALE).length,
+      rent: visible.filter((p) => p.operation === PropertyOperation.RENT).length,
     }),
-    [results]
+    [visible]
   )
 
   return (
@@ -121,6 +138,7 @@ export default function MapaPage() {
             properties={results}
             selectedId={selectedProperty?.id}
             onPropertySelect={setSelectedProperty}
+            onBoundsChange={setBounds}
           />
 
           {selectedProperty && (
@@ -158,7 +176,7 @@ export default function MapaPage() {
             viewMode === 'map' && !listOpen ? 'md:hidden' : ''
           )}
         >
-          {results.length === 0 ? (
+          {visible.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-on-surface-variant">
               <Building2 size={40} className="mb-3 opacity-50" />
               <p className="font-medium text-on-surface">Sin resultados</p>
@@ -166,7 +184,7 @@ export default function MapaPage() {
             </div>
           ) : (
             <div className="p-3 space-y-3">
-              {results.map((property) => (
+              {visible.map((property) => (
                 <PropertyCard
                   key={property.id}
                   property={property}
