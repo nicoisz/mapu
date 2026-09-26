@@ -32,10 +32,21 @@ export interface PriceZoneLegend {
 /** Hex radius in degrees (~200 m at Santiago's latitude). */
 const HEX_RADIUS = 0.0018
 
+/**
+ * Rampa secuencial de un solo tono. Antes eran tres matices distintos
+ * (azul / morado / dorado) para una variable **ordinal**: obligaba a mirar
+ * la leyenda para saber cuál era el caro. Con una rampa clara→oscura la
+ * magnitud se lee sola.
+ *
+ * ponytail: hex fijo, no sigue el tema. Sobre basemap oscuro el extremo
+ * claro domina y sobre basemap claro domina el oscuro — legible en ambos,
+ * pero no óptimo. Si molesta: pasar `isDark` a getZoneColor (MapView y
+ * MiniMapInner ya lo tienen por useTheme) y duplicar la rampa.
+ */
 const COLORS: Record<ZoneBucket, string> = {
-  economic: '#3B82F6', // azul — zona económica
-  mid: '#8B5CF6', // morado — coste medio
-  premium: '#D4AF37', // dorado — zona más cara
+  economic: '#BCC6EE', // índigo pálido — zona económica
+  mid: '#6E7BE0', // índigo medio — coste medio
+  premium: '#2E2F8C', // índigo profundo — zona más cara
 }
 
 export function getZoneColor(bucket: ZoneBucket): string {

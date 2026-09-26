@@ -74,7 +74,7 @@ function HeroCarousel() {
             aria-label={`Imagen ${i + 1}`}
             className={cn(
               'rounded-full transition-all duration-500',
-              i === current ? 'bg-[#FF4D1C] h-8 w-2' : 'bg-white/30 h-2 w-2 hover:bg-white/60'
+              i === current ? 'bg-media-accent h-8 w-2' : 'bg-white/30 h-2 w-2 hover:bg-white/60'
             )}
           />
         ))}
@@ -106,7 +106,7 @@ function RotatingBadge() {
           <textPath href="#badge-circle">EXPLORAR · PROPIEDADES · EXPLORAR ·</textPath>
         </text>
       </svg>
-      <span className="w-12 h-12 rounded-full border border-white/40 flex items-center justify-center text-white transition-all duration-300 group-hover:bg-[#FF4D1C] group-hover:border-[#FF4D1C] group-hover:scale-110">
+      <span className="w-12 h-12 rounded-full border border-white/40 flex items-center justify-center text-white transition-all duration-300 group-hover:bg-media-accent group-hover:border-media-accent group-hover:text-media-ink group-hover:scale-110">
         <span className="material-symbols-outlined text-xl">arrow_outward</span>
       </span>
     </Link>
@@ -308,7 +308,7 @@ export default function LandingPage() {
           <h1 className="font-headline font-extrabold uppercase text-white leading-[0.95] tracking-tight drop-shadow-2xl">
             <span className="hero-reveal relative block text-5xl sm:text-7xl lg:text-8xl w-fit">
               <span
-                className="hero-bar absolute -left-6 lg:-left-20 right-[-0.5em] top-1/2 -translate-y-1/2 h-[0.32em] bg-[#FF4D1C]"
+                className="hero-bar absolute -left-6 lg:-left-20 right-[-0.5em] top-1/2 -translate-y-1/2 h-[0.32em] bg-media-accent"
                 aria-hidden
               />
               <span className="relative">Encuentra</span>
@@ -328,7 +328,7 @@ export default function LandingPage() {
             className="hero-reveal group mt-8 inline-flex items-center gap-4 text-white w-fit"
           >
             <span className="text-sm font-semibold tracking-wide">Explorar más</span>
-            <span className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center transition-all duration-300 group-hover:bg-[#FF4D1C] group-hover:border-[#FF4D1C] group-hover:translate-x-1.5">
+            <span className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center transition-all duration-300 group-hover:bg-media-accent group-hover:border-media-accent group-hover:text-media-ink group-hover:translate-x-1.5">
               <span className="material-symbols-outlined text-lg">arrow_forward</span>
             </span>
           </Link>
@@ -336,7 +336,7 @@ export default function LandingPage() {
           {/* Search pill — sits low, anchored left like the reference */}
           <form
             onSubmit={handleSearch}
-            className="hero-reveal mt-12 lg:mt-20 w-full max-w-2xl rounded-2xl sm:rounded-full bg-black/55 backdrop-blur-xl border border-white/10 p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shadow-elevated"
+            className="hero-reveal mt-12 lg:mt-20 w-full max-w-2xl rounded-2xl sm:rounded-full glass-media border border-white/10 p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
           >
             <div className="flex-1 flex items-center gap-3 pl-4 min-w-0">
               <span className="material-symbols-outlined text-white/50 select-none">search</span>
@@ -362,7 +362,7 @@ export default function LandingPage() {
             </select>
             <button
               type="submit"
-              className="bg-[#FF4D1C] text-white font-bold px-8 py-3 rounded-xl sm:rounded-full hover:brightness-110 hover:scale-[0.98] transition-all text-sm shrink-0"
+              className="bg-media-accent text-media-ink font-bold px-8 py-3 rounded-xl sm:rounded-full hover:brightness-110 hover:scale-[0.98] transition-all text-sm shrink-0"
             >
               Buscar
             </button>
@@ -415,7 +415,7 @@ export default function LandingPage() {
 
             return (
               <Link key={property.id} href={`/propiedad/${property.id}`} className="block group">
-                <div className="tonal-layer-1 rounded-xl overflow-hidden warm-glow transition-all duration-300 property-card h-full">
+                <div className="tonal-layer-1 rounded-xl overflow-hidden accent-glow transition-all duration-300 property-card h-full">
                   <div className="relative h-64 overflow-hidden">
                     {mainImg && (
                       <Image

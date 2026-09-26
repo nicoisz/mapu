@@ -99,8 +99,8 @@ export function Navbar() {
         className={cn(
           'flex items-center transition-all duration-500',
           pill
-            ? 'h-14 w-auto max-w-full gap-5 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 pl-5 pr-2 text-white shadow-elevated'
-            : 'h-16 w-full gap-4 px-4 bg-surface-container-lowest/90 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm text-on-surface'
+            ? 'glass-media h-14 w-auto max-w-full gap-5 rounded-full border border-white/10 pl-5 pr-2 text-white'
+            : 'glass h-16 w-full gap-4 px-4 border-b border-outline-variant/30 text-on-surface'
         )}
       >
         <Link
@@ -111,7 +111,7 @@ export function Navbar() {
           <span
             className={cn(
               'material-symbols-outlined text-2xl',
-              pill ? 'text-[#FF4D1C]' : 'text-primary'
+              pill ? 'text-media-accent' : 'text-primary'
             )}
           >
             map
@@ -137,7 +137,7 @@ export function Navbar() {
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
                     pill
                       ? isActive
-                        ? 'text-[#FF4D1C] font-bold'
+                        ? 'text-media-accent font-bold'
                         : 'text-white/70 hover:text-white hover:bg-white/10'
                       : isActive
                         ? 'text-primary font-bold'
@@ -151,7 +151,7 @@ export function Navbar() {
                       <span
                         className={cn(
                           'text-xs rounded-full px-1.5 py-px text-white',
-                          pill ? 'bg-[#FF4D1C]' : 'bg-accent'
+                          pill ? 'bg-media-accent text-media-ink' : 'bg-accent'
                         )}
                       >
                         {favCount}
@@ -233,7 +233,7 @@ export function Navbar() {
               className={cn(
                 'flex items-center gap-1.5 px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-95',
                 pill
-                  ? 'bg-[#FF4D1C] text-white rounded-full'
+                  ? 'bg-media-accent text-media-ink rounded-full'
                   : 'bg-primary text-on-primary rounded-lg'
               )}
             >

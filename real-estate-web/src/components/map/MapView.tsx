@@ -5,7 +5,7 @@ import maplibregl, { StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, RENT_COLOR, SALE_COLOR } from '@/constants'
 import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
 import { PropertyOperation } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
@@ -71,10 +71,8 @@ const STYLE_HYBRID: StyleSpecification = {
   ],
 }
 
-const ACCENT = '#FF4D1C'
-// Pin color per operation — must match the legend chips in /buscar.
-export const SALE_COLOR = '#FF4D1C'
-export const RENT_COLOR = '#0D9488'
+const ACCENT = SALE_COLOR
+// Pin colors live in @/constants — /buscar's legend chips read the same two.
 
 // Price-zone choropleth source/layer ids (added on top of the basemap).
 const ZONE_SOURCE = 'price-zones'
@@ -159,8 +157,8 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
   wrap.style.cursor = 'pointer'
   const size = count < 10 ? 38 : count < 100 ? 46 : 56
 
-  const bg = isDark ? '#15151A' : '#ffffff'
-  const fg = isDark ? '#F5F4F2' : '#141414'
+  const bg = isDark ? '#171A33' : '#ffffff'
+  const fg = isDark ? '#ECEEF7' : '#12141F'
   const edge = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.15)'
 
   const inner = document.createElement('div')
