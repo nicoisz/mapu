@@ -4,8 +4,6 @@ import {
   zonesToGeoJSON,
   propertyHexesToGeoJSON,
   cellFor,
-  easeOutElastic,
-  scaleZoneGeometry,
   ZoneMode,
 } from '@/lib/priceZones'
 import { searchService } from '@/services/searchService'
@@ -220,31 +218,6 @@ describe('cellFor', () => {
     const { center } = cellFor(-39.8142, -73.2459)
     expect(Math.abs(center.lat - -39.8142)).toBeLessThan(0.01)
     expect(Math.abs(center.lng - -73.2459)).toBeLessThan(0.01)
-  })
-})
-
-describe('easeOutElastic', () => {
-  it('comienza en 0 y termina en 1', () => {
-    expect(easeOutElastic(0)).toBe(0)
-    expect(easeOutElastic(1)).toBe(1)
-  })
-  it('overshoots por encima de 1 a mitad de curva', () => {
-    expect(easeOutElastic(0.5)).toBeGreaterThan(1)
-  })
-})
-
-describe('scaleZoneGeometry', () => {
-  it('escala vértices alrededor del centro', () => {
-    const verts: [number, number][] = [
-      [1, 2],
-      [3, 2],
-      [2, 4],
-    ]
-    const center = { lat: 2, lng: 2 }
-    const scaled = scaleZoneGeometry(verts, center, 2)
-    expect(scaled[0]).toEqual([0, 2])
-    expect(scaled[1]).toEqual([4, 2])
-    expect(scaled[2]).toEqual([2, 6])
   })
 })
 

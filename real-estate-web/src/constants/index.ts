@@ -22,13 +22,6 @@ export const DEFAULT_MAP_CENTER = {
 
 export const DEFAULT_MAP_ZOOM = 12
 
-// Target center + radius shown when switching to list view on /buscar.
-export const LIST_VIEW_CENTER = {
-  latitude: -33.625951,
-  longitude: -70.855756,
-}
-export const LIST_VIEW_RADIUS_KM = 50
-
 export const MAJOR_CITIES = [
   'Santiago',
   'Valparaíso',
