@@ -112,9 +112,13 @@ async function main() {
   }
 
   const header = [
-    '-- Generado por scripts/backfill-coords.ts. Re-ejecutable: cada UPDATE',
-    '-- apunta a un id y fija un valor fijo, así que correrlo dos veces no',
-    '-- cambia nada la segunda vez. Revisa las coordenadas antes de aplicar.',
+    '-- Corrección de coordenadas de avisos publicados antes de que /publicar',
+    '-- exigiera una ubicación real (ver PR 1 en docs/PLAN-MAPA.md).',
+    '--',
+    '-- Generado por scripts/backfill-coords.ts. Idempotente: cada UPDATE',
+    '-- apunta a un id y fija un valor constante, así que re-aplicarlo no',
+    '-- cambia nada. REVISAR las coordenadas antes de mergear: el geocoder',
+    '-- puede devolver una calle del mismo nombre en otra comuna.',
     `-- Propiedades corregidas: ${updates.length} de ${broken.length}.`,
     '',
   ]
