@@ -16,6 +16,16 @@ interface PropertyCardProps {
   isSelected?: boolean
   compact?: boolean
   onClick?: () => void
+  /**
+   * Misma tarjeta vertical, con la foto más baja y el texto más apretado.
+   * Es para la grilla de /buscar en modo lista, donde lo que importa es
+   * cuántas propiedades caben en pantalla, no el tamaño de cada foto.
+   *
+   * ponytail: es el tercer flag de layout junto a `compact` y `detail`.
+   * Si aparece un cuarto, conviene cambiarlos por un `variant` único en vez
+   * de seguir multiplicando combinaciones que nadie usa.
+   */
+  dense?: boolean
   /** Floating detail-card layout: X over the image, heart next to the title. */
   detail?: boolean
   onClose?: () => void
@@ -28,6 +38,7 @@ export function PropertyCard({
   property,
   isSelected,
   compact,
+  dense,
   onClick,
   detail,
   onClose,
@@ -55,7 +66,13 @@ export function PropertyCard({
       <div
         className={cn(
           'relative overflow-hidden shrink-0',
-          compact ? 'w-full h-40 sm:w-32 sm:h-auto sm:self-stretch sm:min-h-[9rem]' : 'h-60',
+          compact
+            ? 'w-full h-40 sm:w-32 sm:h-auto sm:self-stretch sm:min-h-[9rem]'
+            : dense
+              ? // Una columna en móvil: a ancho completo, 144px queda demasiado
+                // achatado. La foto baja recién cuando la grilla se abre.
+                'h-44 sm:h-36'
+              : 'h-60',
           detail ? 'rounded-t-2xl' : ''
         )}
       >
@@ -65,7 +82,11 @@ export function PropertyCard({
             alt={property.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, 400px"
+            sizes={
+              dense
+                ? '(max-width: 640px) 100vw, (max-width: 1536px) 33vw, 320px'
+                : '(max-width: 768px) 100vw, 400px'
+            }
           />
         ) : (
           <div className="w-full h-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant text-sm">
@@ -123,13 +144,15 @@ export function PropertyCard({
         )}
       </div>
 
-      <div className={cn('min-w-0', compact ? 'p-3 flex-1 flex flex-col' : 'p-5')}>
+      <div
+        className={cn('min-w-0', compact ? 'p-3 flex-1 flex flex-col' : dense ? 'p-3.5' : 'p-5')}
+      >
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <span
               className={cn(
                 'font-headline font-bold text-on-surface tracking-tight',
-                compact ? 'text-lg' : 'text-2xl'
+                compact || dense ? 'text-lg' : 'text-2xl'
               )}
             >
               {amount}
@@ -149,7 +172,9 @@ export function PropertyCard({
               </span>
             )}
           </div>
-          {!compact && (
+          {/* En dense la celda mide ~250px: la etiqueta de tipo empuja el
+              precio a dos líneas, y el precio importa más. */}
+          {!compact && !dense && (
             <span className="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant font-semibold shrink-0">
               {PROPERTY_TYPE_LABELS[property.type]}
             </span>
@@ -160,7 +185,7 @@ export function PropertyCard({
           <h3
             className={cn(
               'font-medium text-on-surface leading-tight min-w-0',
-              compact ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
+              compact || dense ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
             )}
           >
             {property.title}
@@ -222,7 +247,12 @@ export function PropertyCard({
             </Link>
           </div>
         ) : (
-          <div className="flex items-center gap-5 mt-4 pt-3.5 border-t border-outline-variant/30 text-xs text-on-surface-variant">
+          <div
+            className={cn(
+              'flex items-center border-t border-outline-variant/30 text-xs text-on-surface-variant',
+              dense ? 'gap-3.5 mt-3 pt-2.5' : 'gap-5 mt-4 pt-3.5'
+            )}
+          >
             {property.features.bedrooms !== undefined && (
               <span className="flex items-center gap-1.5">
                 <Bed size={13} />
@@ -242,9 +272,16 @@ export function PropertyCard({
             <Link
               href={`/propiedad/${property.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="ml-auto inline-flex items-center gap-1 rounded-md bg-primary text-on-primary text-xs font-semibold px-3 py-1.5 hover:brightness-110 transition-all"
+              // En dense el texto no cabe junto a los tres datos. Queda solo el
+              // icono, pero sigue siendo un <a> real con nombre accesible: la
+              // tarjeta entera es un div con onClick y no reemplaza al enlace.
+              aria-label={dense ? `Ver detalle de ${property.title}` : undefined}
+              className={cn(
+                'ml-auto inline-flex items-center gap-1 rounded-md bg-primary text-on-primary text-xs font-semibold hover:brightness-110 transition-all',
+                dense ? 'p-1.5' : 'px-3 py-1.5'
+              )}
             >
-              Ver detalle <ArrowRight size={12} />
+              {!dense && 'Ver detalle'} <ArrowRight size={12} />
             </Link>
           </div>
         )}
@@ -254,7 +291,7 @@ export function PropertyCard({
 }
 
 /** Loading placeholder matching PropertyCard's layout. */
-export function PropertyCardSkeleton({ compact }: { compact?: boolean }) {
+export function PropertyCardSkeleton({ compact, dense }: { compact?: boolean; dense?: boolean }) {
   return (
     <div
       className={cn(
@@ -262,8 +299,10 @@ export function PropertyCardSkeleton({ compact }: { compact?: boolean }) {
         compact ? 'flex gap-3' : ''
       )}
     >
-      <div className={cn('skeleton shrink-0', compact ? 'w-28 h-24' : 'h-60')} />
-      <div className={cn(compact ? 'p-3 flex-1' : 'p-5', 'space-y-3')}>
+      <div
+        className={cn('skeleton shrink-0', compact ? 'w-28 h-24' : dense ? 'h-44 sm:h-36' : 'h-60')}
+      />
+      <div className={cn(compact ? 'p-3 flex-1' : dense ? 'p-3.5' : 'p-5', 'space-y-3')}>
         <div className="skeleton h-6 w-28 rounded-md" />
         <div className="skeleton h-4 w-3/4 rounded-md" />
         <div className="skeleton h-3 w-1/2 rounded-md" />

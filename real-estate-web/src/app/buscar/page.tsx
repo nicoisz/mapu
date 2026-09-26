@@ -132,12 +132,14 @@ function SearchContent() {
   )
 
   // Paginate the list client-side (the map still clusters the full result set).
-  const PAGE_SIZE = 8
+  // La lista llena hasta 4 columnas, así que 8 tarjetas no alcanzan a llenar
+  // ni dos filas; la columna del mapa sigue siendo de una sola tarjeta de ancho.
+  const PAGE_SIZE = viewMode === 'list' ? 24 : 8
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const pageItems = useMemo(() => visible.slice(0, visibleCount), [visible, visibleCount])
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [visible])
+  }, [visible, PAGE_SIZE])
 
   // Counts per operation — the chips double as the map-pin color legend.
   const opCounts = useMemo(
@@ -305,11 +307,13 @@ function SearchContent() {
               <div
                 className={cn(
                   'p-3 gap-3',
-                  viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col'
+                  viewMode === 'list'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
+                    : 'flex flex-col'
                 )}
               >
                 {Array.from({ length: 4 }, (_, i) => (
-                  <PropertyCardSkeleton key={i} />
+                  <PropertyCardSkeleton key={i} dense={viewMode === 'list'} />
                 ))}
               </div>
             ) : visible.length === 0 ? (
@@ -322,7 +326,9 @@ function SearchContent() {
               <div
                 className={cn(
                   'p-3 gap-3',
-                  viewMode === 'list' ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex flex-col'
+                  viewMode === 'list'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
+                    : 'flex flex-col'
                 )}
               >
                 {pageItems.map((property) => (
@@ -330,6 +336,7 @@ function SearchContent() {
                     <PropertyCard
                       property={property}
                       isSelected={selected?.id === property.id}
+                      dense={viewMode === 'list'}
                       onClick={() =>
                         viewMode === 'list'
                           ? router.push(`/propiedad/${property.id}`)
@@ -341,7 +348,7 @@ function SearchContent() {
                 {visible.length > pageItems.length && (
                   <button
                     onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                    className="w-full py-2.5 text-sm font-medium text-primary hover:underline"
+                    className="col-span-full w-full py-2.5 text-sm font-medium text-primary hover:underline"
                   >
                     Ver más ({visible.length - pageItems.length} restantes)
                   </button>
