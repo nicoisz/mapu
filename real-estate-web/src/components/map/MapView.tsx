@@ -7,7 +7,7 @@ import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
 import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
-import { PropertyOperation, Currency } from '@/types/enums'
+import { PropertyOperation } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
 import {
   computePriceZones,
@@ -17,6 +17,7 @@ import {
   ZoneMode,
   ZoneBucket,
   ZoneCell,
+  PriceZoneLegend,
 } from '@/lib/priceZones'
 
 // OpenFreeMap — free vector tiles, no API key. Native styles per theme.
@@ -220,7 +221,9 @@ export default function MapView({
   // posible. La capa se rehace en el PR 21 (ver docs/PLAN-MAPA.md).
   const [zonesOn, setZonesOn] = useState(false)
   const [zoneMode, setZoneMode] = useState<ZoneMode>('sale')
-  const [zoneRanges, setZoneRanges] = useState<Record<ZoneBucket, [number, number]>>()
+  // La leyenda trae los rangos y la moneda en que están expresados: la moneda
+  // la decide el dataset, no una constante.
+  const [zoneLegend, setZoneLegend] = useState<PriceZoneLegend>()
   const [activeBucket, setActiveBucket] = useState<ZoneBucket | null>(null)
   const globalCellsRef = useRef<ZoneCell[] | null>(null)
   const zoneModeRef = useRef<ZoneMode>(zoneMode)
@@ -450,13 +453,13 @@ export default function MapView({
     if (!source || !source.setData) return
     if (!zonesOnRef.current) {
       source.setData({ type: 'FeatureCollection', features: [] })
-      setZoneRanges(undefined)
+      setZoneLegend(undefined)
       return
     }
     const data = propsDataRef.current
     const { cells, legend } = computePriceZones(data, zoneModeRef.current)
     globalCellsRef.current = cells
-    setZoneRanges(legend.ranges as Record<ZoneBucket, [number, number]>)
+    setZoneLegend(legend)
     const bucket = activeBucketRef.current
     // One hexagon per property, centered on its pin. Filter to the active bucket.
     const visible = bucket
@@ -655,7 +658,7 @@ export default function MapView({
           )}
         </div>
 
-        {zonesOn && zoneRanges && (
+        {zonesOn && zoneLegend && (
           <div className="rounded-xl border border-outline-variant/40 shadow-elevated bg-surface-container-low p-3 w-56">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">
@@ -671,7 +674,7 @@ export default function MapView({
               )}
             </div>
             {(['economic', 'mid', 'premium'] as ZoneBucket[]).map((bucket) => {
-              const range = zoneRanges[bucket]
+              const range = zoneLegend.ranges[bucket]
               const active = activeBucket === bucket
               return (
                 <button
@@ -693,8 +696,8 @@ export default function MapView({
                   </span>
                   {range && (
                     <span className="ml-auto text-on-surface-variant">
-                      {formatPriceShort(range[0], Currency.CLP)} –{' '}
-                      {formatPriceShort(range[1], Currency.CLP)}
+                      {formatPriceShort(range[0], zoneLegend.currency)} –{' '}
+                      {formatPriceShort(range[1], zoneLegend.currency)}
                     </span>
                   )}
                 </button>

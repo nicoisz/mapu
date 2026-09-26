@@ -1,0 +1,97 @@
+name: Preview por PR
+
+# Sube una versión de preview del Worker por cada PR y comenta la URL.
+# Existe porque los PRs de rediseño del mapa (docs/PLAN-MAPA.md, Fase 1) hay
+# que revisarlos en el navegador, no en el diff.
+
+on:
+  pull_request:
+    paths:
+      - 'real-estate-web/**'
+      - '.github/workflows/preview.yml'
+
+concurrency:
+  group: preview-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    # Nunca exponer los secrets del environment a un PR desde un fork.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: env
+    defaults:
+      run:
+        working-directory: real-estate-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: real-estate-web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (OpenNext)
+        run: npx opennextjs-cloudflare build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_FEATURE_CONTEXTO: ${{ vars.PREVIEW_FEATURE_CONTEXTO }}
+          NEXT_PUBLIC_FEATURE_MIS_LUGARES: ${{ vars.PREVIEW_FEATURE_MIS_LUGARES }}
+          NEXT_PUBLIC_FEATURE_VALOR: ${{ vars.PREVIEW_FEATURE_VALOR }}
+
+      # `versions upload` crea una versión SIN tomar tráfico de producción.
+      - name: Subir versión de preview
+        id: upload
+        run: |
+          set -o pipefail
+          npx wrangler versions upload 2>&1 | tee upload.log
+          url=$(grep -Eo 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' upload.log | head -1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Comentar la URL en el PR
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.upload.outputs.url }}
+        with:
+          script: |
+            const marker = '<!-- mapu-preview -->'
+            const url = process.env.PREVIEW_URL
+            const body = url
+              ? `${marker}\n🔍 **Preview de este PR:** ${url}\n\n_Versión subida sin tomar tráfico de producción. Se actualiza en cada push._`
+              : `${marker}\n⚠️ No se pudo obtener la URL de preview. Revisa el log del job \`preview\`.`
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const existing = comments.find((c) => c.body?.startsWith(marker))
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              })
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              })
+            }

@@ -1,5 +1,5 @@
 import { Property } from '@/types/property'
-import { PropertyOperation } from '@/types/enums'
+import { Currency, PropertyOperation } from '@/types/enums'
 
 /**
  * Choropleth zones built from the actual property dataset — no external
@@ -25,6 +25,8 @@ export interface ZoneCell {
 
 export interface PriceZoneLegend {
   ranges: Partial<Record<ZoneBucket, [number, number]>>
+  /** Moneda en la que están expresados los rangos (ver `dominantCurrency`). */
+  currency: Currency
 }
 
 /** Hex radius in degrees (~200 m at Santiago's latitude). */
@@ -122,6 +124,30 @@ export function findZone(cells: ZoneCell[], lat: number, lng: number): ZoneCell 
   return cells.find((c) => c.id === key)
 }
 
+/**
+ * Moneda dominante del conjunto, para no promediar monedas distintas.
+ *
+ * Un promedio que mezcla CLP con USD no significa nada: 300.000 y 300.000.000
+ * entran al mismo tercil. Hoy toda la app publica en CLP, así que esto no
+ * cambia ningún resultado; existe para que el día que entre otra moneda las
+ * zonas no empiecen a mentir en silencio.
+ */
+function dominantCurrency(properties: Property[]): Currency {
+  const counts = new Map<Currency, number>()
+  for (const p of properties) {
+    counts.set(p.pricing.currency, (counts.get(p.pricing.currency) ?? 0) + 1)
+  }
+  let winner = Currency.CLP
+  let best = 0
+  for (const [currency, count] of counts) {
+    if (count > best) {
+      winner = currency
+      best = count
+    }
+  }
+  return winner
+}
+
 /** Mean price per populated hex cell + tercile bucket. */
 export function computePriceZones(
   properties: Property[],
@@ -131,7 +157,15 @@ export function computePriceZones(
   const agg = new Map<string, { sum: number; count: number }>()
   const centers = new Map<string, { lat: number; lng: number }>()
 
-  for (const p of properties) {
+  // Solo la operación del modo. Antes no se filtraba: en modo "arriendo" una
+  // propiedad en venta entraba igual, con su precio de venta como fallback,
+  // y arrastraba los terciles hacia arriba.
+  const operation = mode === 'rent' ? PropertyOperation.RENT : PropertyOperation.SALE
+  const scoped = properties.filter((p) => p.operation === operation)
+  const currency = dominantCurrency(scoped)
+
+  for (const p of scoped) {
+    if (p.pricing.currency !== currency) continue
     const price = mode === 'rent' ? (p.pricing.monthlyRent ?? p.pricing.price) : p.pricing.price
     if (!price || price <= 0) continue
 
@@ -156,7 +190,7 @@ export function computePriceZones(
     if (values.length) ranges[bucket] = [Math.min(...values), Math.max(...values)]
   }
 
-  return { cells, legend: { ranges } }
+  return { cells, legend: { ranges, currency } }
 }
 
 export interface ZoneFeatureProperties {

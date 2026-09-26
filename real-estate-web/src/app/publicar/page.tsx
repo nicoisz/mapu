@@ -31,7 +31,8 @@ import {
   titleCase,
 } from '@/data/chileanLocations'
 import { formatPriceShort } from '@/lib/utils'
-import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
+import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
+import { isInsideChile } from '@/lib/geo'
 import { ContactMethod, Currency, PropertyOperation, PropertyType } from '@/types/enums'
 import type { Property, PropertyImage } from '@/types/property'
 
@@ -327,6 +328,28 @@ export default function PublicarPage() {
     if (!parsed.success || images.length === 0) return
 
     setSubmitting(true)
+
+    // Sin coordenadas creíbles no se publica. Antes, si el pin no estaba puesto
+    // y el geocoder fallaba, el aviso caía en silencio al centro de Santiago y
+    // ensuciaba el mapa para todos. Se resuelve ANTES de subir las fotos para
+    // no dejar imágenes huérfanas en Storage cuando la dirección no se ubica.
+    const located = coords
+      ? { latitude: coords.lat, longitude: coords.lng }
+      : await geocodeAddress({
+          street: parsed.data.street,
+          commune: parsed.data.commune,
+          city: parsed.data.city,
+          region: form.region,
+        })
+    if (!located || !isInsideChile(located.latitude, located.longitude)) {
+      setErrors((e) => ({
+        ...e,
+        street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
+      }))
+      setSubmitting(false)
+      return
+    }
+
     let uploaded: PropertyImage[] = []
     try {
       // New files get uploaded; existing ones keep their storage path.
@@ -346,24 +369,14 @@ export default function PublicarPage() {
 
       const v = parsed.data
       const isRent = operation === PropertyOperation.RENT
-      // Prefer the picked pin/geocoder coords; fall back to geocoding the
-      // address, then to the Santiago center.
-      const picked = coords
-        ? { latitude: coords.lat, longitude: coords.lng }
-        : await geocodeAddress({
-            street: v.street,
-            commune: v.commune,
-            city: v.city,
-            region: form.region,
-          })
       const data: Partial<Property> = {
         title: v.title,
         description: v.description,
         type,
         operation,
         location: {
-          latitude: picked?.latitude ?? DEFAULT_MAP_CENTER.latitude,
-          longitude: picked?.longitude ?? DEFAULT_MAP_CENTER.longitude,
+          latitude: located.latitude,
+          longitude: located.longitude,
           address: {
             street: v.street,
             city: v.city || v.commune,
