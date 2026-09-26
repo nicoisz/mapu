@@ -72,6 +72,7 @@ export function Reviews({
     setSubmitting(true)
     try {
       await reviewService.create({
+        authorId: user.id,
         subjectId,
         rating,
         comment,

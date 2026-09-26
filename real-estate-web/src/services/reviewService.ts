@@ -54,6 +54,10 @@ export const reviewService = {
   },
 
   async create(input: {
+    /** Debe ser el usuario en sesión: la política WITH CHECK exige
+     *  auth.uid() = author_id, así que omitirlo devuelve 403, no un error de
+     *  columna nula. */
+    authorId: string
     subjectId: string
     rating: number
     comment: string
@@ -63,6 +67,7 @@ export const reviewService = {
     const { error } = await getSupabase()
       .from('reviews')
       .insert({
+        author_id: input.authorId,
         subject_id: input.subjectId,
         organization_id: input.organizationId ?? null,
         property_id: input.propertyId ?? null,
