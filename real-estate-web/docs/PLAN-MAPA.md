@@ -110,14 +110,14 @@ par de números como ubicación, incluido `(0,0)`.
 - `src/services/geocodingService.ts`: implementar contra Nominatim (respetar `GEOCODING_MIN_INTERVAL_MS`), con `NEXT_PUBLIC_GEOCODING_URL` como override.
 - `src/app/publicar/page.tsx`: geocodificar al salir del campo dirección, mostrar el resultado en `LocationPicker` y **permitir corregir el pin arrastrándolo**.
 - `src/app/api/publish/route.ts`: rechazar publicación sin coordenadas válidas dentro de Chile.
-- `scripts/backfill-geocode.ts`: re-geocodificar los avisos existentes con coordenadas por defecto.
+- `scripts/backfill-coords.ts`: re-geocodifica los avisos existentes y **genera una migración** en `supabase/migrations/`, para que la aplique el `deploy-migrations.yml` que ya existe en vez de depender de que alguien abra el SQL Editor. La revisión ocurre en el diff del PR.
 
 **Tareas**
 
 - [ ] Implementar `geocode(address)` con throttling y manejo de errores
 - [ ] Integrar en `/publicar` con confirmación visual del pin
 - [ ] Validación server-side de bounds de Chile en `/api/publish`
-- [ ] Script de backfill + ejecución sobre el seed demo
+- [ ] Script de backfill + revisión de la migración generada
 - [ ] Tests de `geocodingService` (mock de respuestas)
 
 **Aceptación:** publicar una dirección de Valdivia deja el pin en Valdivia; ningún aviso nuevo queda en el centro de Santiago; el backfill reporta cuántos corrigió.
