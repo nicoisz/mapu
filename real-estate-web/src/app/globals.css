@@ -216,14 +216,6 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .map-pattern {
-    background-image: radial-gradient(
-      circle at 1px 1px,
-      rgb(var(--outline-variant)) 1px,
-      transparent 0
-    );
-    background-size: 24px 24px;
-  }
   /* Hide pre-animation content until GSAP takes over (no flash) */
   .gsap-init {
     visibility: hidden;
@@ -487,5 +479,149 @@
   .marquee-track,
   .word-in {
     animation: none;
+  }
+}
+
+/* ── Landing: reel de producto, hub, feed y micro-interacciones ──
+   Mismo criterio que el bloque anterior: CSS plano fuera de @layer para
+   que Tailwind no purgue clases que se componen con estilos inline.
+
+   Donde GSAP y CSS animan el mismo elemento se separan en capas
+   (posición / GSAP / flotación): GSAP escribe `transform` inline y
+   resetea translate/scale sueltos, y una animación CSS sobre la misma
+   propiedad le gana a cualquier estilo inline. */
+
+/* Reel: el avance lo marca la barra de progreso. Cuando termina su
+   animación, React pasa a la siguiente vista (onAnimationEnd), así que
+   pausar es solo `animation-play-state` y no hay setInterval que
+   sincronizar. */
+@keyframes reelProgress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.reel-progress {
+  transform-origin: left center;
+  animation: reelProgress var(--reel-ms, 5000ms) linear both;
+}
+
+/* Acercamiento lento sobre cada captura, en loop de ida y vuelta y
+   siempre corriendo, esté visible o no. Si el zoom arrancara y se cortara
+   con la vista activa, la captura que se desvanece saltaría de golpe a
+   escala 1; así el crossfade no tiene nada que saltar. */
+@keyframes kenBurns {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+.reel-slide {
+  transition: opacity 0.9s ease;
+  animation: kenBurns 11s ease-in-out infinite alternate;
+}
+.reel-progress[data-paused='true'],
+.reel[data-paused='true'] .reel-slide {
+  animation-play-state: paused;
+}
+
+/* Flotación suave para chips y tarjetas satélite. */
+@keyframes chipFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -9px, 0);
+  }
+}
+.chip-float {
+  animation: chipFloat 6s ease-in-out infinite;
+}
+
+/* Hub: en desktop cada chip va sobre una elipse con --x/--y; en móvil
+   la elipse no entra, así que los mismos nodos pasan a flujo normal. */
+.hub-slot {
+  position: static;
+}
+.hub-lines {
+  display: none;
+}
+@media (min-width: 768px) {
+  .hub-slot {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    translate: -50% -50%;
+  }
+  .hub-lines {
+    display: block;
+  }
+}
+
+/* Spotlight: un halo que sigue al cursor por dentro de la tarjeta. Va
+   con z-index -1 dentro de un contexto aislado, así queda sobre el fondo
+   de la tarjeta pero bajo su contenido: tiñe el cuerpo, no la foto. */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(var(--primary) / 0.16),
+    transparent 45%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.spotlight:hover::before {
+  opacity: 1;
+}
+
+/* Brillo que cruza el botón al pasar el cursor. */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.35) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.75s ease;
+  pointer-events: none;
+}
+.btn-shine:hover::after {
+  transform: translateX(120%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-progress,
+  .reel-slide,
+  .chip-float {
+    animation: none;
+  }
+  .hub-pulse {
+    display: none;
+  }
+  .btn-shine::after {
+    display: none;
   }
 }

@@ -10,6 +10,13 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
+import {
+  ActivityFeed,
+  FeatureHub,
+  ProductReel,
+  SectionIntro,
+  Words,
+} from '@/components/landing/LandingSections'
 
 /** Lo que la gente quiere dejar de hacer. Rota bajo el titular. */
 const PAIN_POINTS = [
@@ -70,25 +77,6 @@ const ORBS = [
   { top: '38%', right: '-10%', size: 460, tint: 'var(--orb-2)', delay: '-5s' },
   { bottom: '-18%', left: '30%', size: 340, tint: 'var(--orb-3)', delay: '-9s' },
 ]
-
-/** Titular partido en palabras para el reveal escalonado. Cada palabra va en
- *  un contenedor con overflow oculto: GSAP la sube desde abajo y el recorte
- *  hace que aparezca por detrás de una línea invisible. */
-function Words({ text, className }: { text: string; className?: string }) {
-  const words = text.split(' ')
-  return (
-    <span className={className}>
-      {words.map((word, i) => (
-        <span key={i} className="inline-block overflow-hidden align-bottom">
-          <span className="hero-word inline-block">
-            {word}
-            {i < words.length - 1 ? ' ' : ''}
-          </span>
-        </span>
-      ))}
-    </span>
-  )
-}
 
 function RotatingPain() {
   const [i, setI] = useState(0)
@@ -234,25 +222,107 @@ export default function LandingPage() {
           ease: 'power3.out',
         })
 
-        gsap.from('.map-content', {
-          scrollTrigger: { trigger: '.map-trigger', start: 'top 70%' },
-          y: 40,
-          opacity: 0,
-          duration: 1,
-          ease: 'power3.out',
+        // Títulos de sección: mismo reveal por palabra que el hero, pero
+        // disparado al entrar en pantalla en vez de al cargar.
+        gsap.utils.toArray<HTMLElement>('.section-title').forEach((title) => {
+          gsap.from(title.querySelectorAll('.section-word'), {
+            yPercent: 115,
+            duration: 0.8,
+            stagger: 0.05,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: title, start: 'top 86%' },
+          })
+        })
+        gsap.utils.toArray<HTMLElement>('.section-fade').forEach((el) => {
+          gsap.from(el, {
+            y: 18,
+            opacity: 0,
+            duration: 0.7,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: el, start: 'top 90%' },
+          })
         })
 
-        // Parallax del fondo del mapa. `scrub` lo ata al scroll en vez de
-        // dispararlo una vez: eso es lo que se lee como profundidad.
-        gsap.to('.map-parallax', {
-          yPercent: -12,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.map-trigger',
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true,
-          },
+        // Reel: la ventana de la app se inclina hacia atrás y cae en su
+        // lugar, el gesto típico de una landing de producto.
+        gsap.from('.reel-frame', {
+          scrollTrigger: { trigger: '.reel-frame', start: 'top 85%' },
+          rotateX: 16,
+          y: 70,
+          scale: 0.93,
+          opacity: 0,
+          transformOrigin: 'center top',
+          duration: 1.3,
+          ease: 'power3.out',
+        })
+        gsap.from('.reel-tab', {
+          scrollTrigger: { trigger: '.reel-frame', start: 'top 70%' },
+          y: 16,
+          opacity: 0,
+          duration: 0.6,
+          stagger: 0.08,
+          delay: 0.4,
+          ease: 'power3.out',
+        })
+        // Chips satélite con parallax a distintas velocidades: la diferencia
+        // de velocidad entre capas es lo que da profundidad.
+        gsap.utils.toArray<HTMLElement>('.reel-chip').forEach((chip, i) => {
+          gsap.to(chip, {
+            y: [-45, -20, -65][i % 3],
+            ease: 'none',
+            scrollTrigger: {
+              trigger: '.reel-trigger',
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+            },
+          })
+        })
+
+        // Hub: aparece el centro, las líneas se dibujan hacia afuera y los
+        // chips saltan al final de cada una.
+        const hubTl = gsap.timeline({
+          scrollTrigger: { trigger: '.hub', start: 'top 72%' },
+        })
+        hubTl
+          .from('.hub-center', { scale: 0.8, opacity: 0, duration: 0.7, ease: 'back.out(1.6)' })
+          .fromTo(
+            '.hub-line',
+            { strokeDashoffset: 1 },
+            { strokeDashoffset: 0, duration: 0.9, stagger: 0.05, ease: 'power2.out' },
+            0.2
+          )
+          .from(
+            '.hub-chip',
+            { scale: 0.6, opacity: 0, duration: 0.55, stagger: 0.06, ease: 'back.out(1.8)' },
+            0.45
+          )
+
+        // Actividad: el teléfono entra y los avisos van apareciendo de a uno,
+        // como llegan en la app.
+        const actTl = gsap.timeline({
+          scrollTrigger: { trigger: '.activity-phone', start: 'top 78%' },
+        })
+        actTl
+          .from('.activity-phone', {
+            y: 60,
+            rotate: -3,
+            opacity: 0,
+            duration: 1,
+            ease: 'power3.out',
+          })
+          .from(
+            '.activity-item',
+            { y: 22, opacity: 0, scale: 0.96, duration: 0.5, stagger: 0.4, ease: 'power2.out' },
+            0.55
+          )
+        gsap.from('.activity-check', {
+          scrollTrigger: { trigger: '.activity-trigger', start: 'top 70%' },
+          x: -16,
+          opacity: 0,
+          duration: 0.6,
+          stagger: 0.1,
+          ease: 'power3.out',
         })
 
         // La línea de "cómo funciona" se dibuja de izquierda a derecha y las
@@ -299,8 +369,22 @@ export default function LandingPage() {
     const onScroll = () => {
       window.dispatchEvent(new CustomEvent('mapu:scroll', { detail: { y: el.scrollTop } }))
     }
+    // Un solo listener para el halo de todas las tarjetas `.spotlight`, en
+    // vez de uno por tarjeta: la posición se escribe en la que está bajo el
+    // cursor y el CSS hace el resto.
+    const onMove = (e: PointerEvent) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.spotlight')
+      if (!card) return
+      const r = card.getBoundingClientRect()
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`)
+      card.style.setProperty('--my', `${e.clientY - r.top}px`)
+    }
     el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+    el.addEventListener('pointermove', onMove, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      el.removeEventListener('pointermove', onMove)
+    }
   }, [])
 
   return (
@@ -394,7 +478,7 @@ export default function LandingPage() {
             </select>
             <button
               type="submit"
-              className="shrink-0 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-on-primary transition-all hover:scale-[0.98] hover:brightness-110 sm:rounded-full"
+              className="btn-shine shrink-0 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-on-primary transition-all hover:scale-[0.98] hover:brightness-110 sm:rounded-full"
             >
               Buscar
             </button>
@@ -441,6 +525,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── REEL DE PRODUCTO ─────────────────────────────── */}
+      <ProductReel />
+
       {/* ─── STATS ────────────────────────────────────────── */}
       <section className="stats-trigger mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
@@ -460,17 +547,18 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── HUB DE FUNCIONES ─────────────────────────────── */}
+      <FeatureHub />
+
       {/* ─── DESTACADAS ───────────────────────────────────── */}
       <section className="property-grid-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
-        <div className="mb-10 flex items-end justify-between">
-          <div className="space-y-2">
-            <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface sm:text-4xl">
-              Propiedades destacadas
-            </h2>
-            <p className="text-on-surface-variant">
-              Las mejores oportunidades del mercado inmobiliario chileno.
-            </p>
-          </div>
+        <div className="mb-10 flex items-end justify-between gap-6">
+          <SectionIntro
+            align="left"
+            eyebrow="Destacadas"
+            title="Propiedades destacadas"
+            sub="Las mejores oportunidades del mercado inmobiliario chileno."
+          />
           <Link
             href="/buscar"
             className="ml-4 flex shrink-0 items-center gap-2 font-bold text-primary hover:underline"
@@ -491,7 +579,7 @@ export default function LandingPage() {
 
             return (
               <Link key={property.id} href={`/propiedad/${property.id}`} className="group block">
-                <div className="property-card accent-glow h-full overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface-container-low transition-all duration-300 group-hover:-translate-y-1.5">
+                <div className="property-card spotlight accent-glow h-full overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface-container-low transition-all duration-300 group-hover:-translate-y-1.5">
                   <div className="relative h-60 overflow-hidden">
                     {mainImg && (
                       <Image
@@ -551,43 +639,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── MAPA ─────────────────────────────────────────── */}
-      <section className="map-trigger relative my-16 h-[500px] overflow-hidden md:h-[600px]">
-        {/* El fondo sobresale arriba y abajo para que el parallax no descubra
-            el borde al desplazarse. */}
-        <div className="map-parallax map-pattern absolute inset-x-0 -inset-y-16 bg-surface-container-lowest">
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-        </div>
-
-        <div className="relative z-10 mx-auto flex h-full max-w-[1440px] items-center px-6 lg:px-20">
-          <div className="map-content max-w-xl space-y-8">
-            <h2 className="font-headline text-4xl font-bold leading-tight tracking-tight text-on-surface md:text-5xl">
-              Explora propiedades sobre el mapa
-            </h2>
-            <p className="text-lg leading-relaxed text-on-surface-variant">
-              Visualiza de forma interactiva la ubicación exacta de tu próximo hogar. Filtra por
-              barrios, servicios cercanos y conectividad en tiempo real.
-            </p>
-            <Link
-              href="/mapa"
-              className="inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 font-bold text-on-primary shadow-elevated transition-transform hover:scale-105"
-            >
-              <span className="material-symbols-outlined">explore</span>
-              Abrir mapa interactivo
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* ─── CÓMO FUNCIONA ────────────────────────────────── */}
       <section className="how-trigger mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
-        <div className="mb-16 space-y-3 text-center">
-          <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface sm:text-4xl">
-            Tu camino a casa es simple
-          </h2>
-          <p className="text-on-surface-variant">
-            MapU redefine la experiencia de búsqueda con tecnología avanzada.
-          </p>
+        <div className="mb-16">
+          <SectionIntro
+            eyebrow="Cómo funciona"
+            title="Tu camino a casa es simple"
+            sub="MapU redefine la experiencia de búsqueda con tecnología avanzada."
+          />
         </div>
 
         <div className="relative">
@@ -599,7 +658,10 @@ export default function LandingPage() {
           />
           <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3">
             {STEPS.map((step) => (
-              <div key={step.num} className="step-card group space-y-4 text-center">
+              <div
+                key={step.num}
+                className="step-card spotlight group space-y-4 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-8 text-center"
+              >
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-outline-variant/40 bg-surface-container-high transition-colors duration-500 group-hover:bg-primary">
                   <span className="font-headline text-2xl font-bold text-primary transition-colors duration-500 group-hover:text-on-primary">
                     {step.num}
@@ -614,6 +676,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ─── ACTIVIDAD DEL VENDEDOR ───────────────────────── */}
+      <ActivityFeed />
 
       {/* ─── CTA ──────────────────────────────────────────── */}
       <section className="cta-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
@@ -641,7 +706,7 @@ export default function LandingPage() {
             </div>
             <Link
               href="/publicar"
-              className="shrink-0 rounded-xl bg-surface-container-lowest px-10 py-4 text-lg font-bold text-on-surface shadow-elevated transition-all hover:scale-105 md:px-12 md:py-5"
+              className="btn-shine shrink-0 rounded-xl bg-surface-container-lowest px-10 py-4 text-lg font-bold text-on-surface shadow-elevated transition-all hover:scale-105 md:px-12 md:py-5"
             >
               Publicar ahora
             </Link>
