@@ -83,12 +83,6 @@
   --grad-a: linear-gradient(135deg, #ffd9c2, #dcd3ff);
   --grad-b: linear-gradient(135deg, #d9d6ff, #c6f0e4);
   --grad-ink: 21 22 43;
-
-  /* Acento que vive sobre fotografía (hero, navbar pill). NO se
-     redefine en .dark: el fondo siempre es la foto, no el tema. */
-  --media-accent: 142 151 255;
-  --media-ink: 11 13 30;
-
   color-scheme: light;
 }
 
@@ -192,16 +186,6 @@
       inset 0 1px 0 rgb(var(--glass-spec) / var(--glass-spec-op)),
       0 8px 24px -10px rgb(var(--shadow-color) / 0.45);
   }
-  /* Vidrio sobre fotografía. Fijo a propósito: el fondo es la foto, no el
-     tema — si siguiera al tema, en claro se volvería blanco sobre la imagen. */
-  .glass-media {
-    background: rgb(14 16 34 / 0.45);
-    backdrop-filter: blur(22px) saturate(180%);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.12),
-      0 10px 30px -12px rgb(0 0 0 / 0.6);
-  }
   /* Gradiente: solo cifra + label corto, y máx 3 por vista. Nunca detrás de
      texto largo — si va en todas las tarjetas, deja de destacar nada. */
   .grad-a,
@@ -215,13 +199,6 @@
   .grad-b {
     background: var(--grad-b);
   }
-  .hero-gradient {
-    background: linear-gradient(
-      180deg,
-      rgb(var(--background) / 0.2) 0%,
-      rgb(var(--background) / 0.92) 100%
-    );
-  }
   .accent-glow {
     transition:
       box-shadow 0.3s ease,
@@ -231,10 +208,6 @@
   .accent-glow:hover {
     box-shadow: 0 18px 40px -12px rgb(var(--primary) / 0.35);
     border-color: rgb(var(--primary) / 0.6);
-  }
-  .tonal-layer-1 {
-    background-color: rgb(var(--surface-container));
-    border: 1px solid rgb(var(--outline-variant) / 0.6);
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
@@ -430,4 +403,89 @@
 .maplibregl-ctrl-bottom-right,
 .maplibregl-ctrl-bottom-left {
   z-index: 10 !important;
+}
+
+/* ── Landing: grilla, orbes y marquee ──────────────────────────
+   CSS plano a propósito (fuera de @layer utilities): Tailwind purga
+   las utilidades del layer que no ve escritas completas, y varias de
+   estas clases se componen con estilos inline. */
+
+/* Grilla tenue del hero. Va en ::before para no pelear con el fondo
+   del section, y la máscara la desvanece en los bordes: una grilla que
+   llega hasta el borde se lee como tabla, no como textura. */
+.hero-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgb(var(--outline-variant) / 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--outline-variant) / 0.6) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 42%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 75% 60% at 50% 42%, #000 25%, transparent 78%);
+  pointer-events: none;
+}
+
+/* Orbe difuminado. El tamaño, color y posición van inline en cada uso;
+   acá solo vive el comportamiento común. */
+@keyframes orbFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -28px, 0) scale(1.08);
+  }
+}
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  pointer-events: none;
+  will-change: transform;
+  animation: orbFloat 16s ease-in-out infinite;
+}
+
+/* Marquee de comunas. El track lleva la lista duplicada y se desplaza
+   -50%: al llegar, la segunda copia está exactamente donde arrancó la
+   primera, así que el salto es invisible. */
+@keyframes marqueeX {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeX 42s linear infinite;
+}
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+
+/* Palabra rotativa del hero: entra desde abajo y sale hacia arriba. */
+@keyframes wordIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.word-in {
+  animation: wordIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .marquee-track,
+  .word-in {
+    animation: none;
+  }
 }
