@@ -69,11 +69,6 @@ const config: Config = {
           light: withAlpha('--accent-light'),
           dark: withAlpha('--accent-dark'),
         },
-
-        /** Acento sobre fotografía (hero, navbar en modo pill). No flipa con
-         *  el tema: ahí el fondo es la imagen, no una superficie. */
-        'media-accent': withAlpha('--media-accent'),
-        'media-ink': withAlpha('--media-ink'),
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],

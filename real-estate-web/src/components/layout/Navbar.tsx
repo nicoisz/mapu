@@ -30,17 +30,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-function ThemeToggle({ light }: { light?: boolean }) {
+function ThemeToggle() {
   const { theme, toggle, mounted } = useTheme()
   return (
     <button
       onClick={toggle}
-      className={cn(
-        'p-2 rounded-full transition-colors',
-        light
-          ? 'text-white/70 hover:text-white hover:bg-white/10'
-          : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
-      )}
+      className="p-2 rounded-full text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
       title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
       aria-label="Cambiar tema"
     >
@@ -79,8 +74,9 @@ export function Navbar() {
   }, [])
 
   const isHome = pathname === '/'
-  // On the landing hero the nav floats as a centered dark pill (doesn't span
-  // the full width); after scrolling it becomes the regular full-width bar.
+  // En el hero la nav flota como pill centrado; al scrollear pasa a barra
+  // completa. Es solo forma y posición: los colores son los del tema en los
+  // dos estados, porque detrás del pill ya no hay foto sino el fondo.
   const pill = isHome && !scrolled
 
   function handleLogout() {
@@ -99,8 +95,8 @@ export function Navbar() {
         className={cn(
           'flex items-center transition-all duration-500',
           pill
-            ? 'glass-media h-14 w-auto max-w-full gap-5 rounded-full border border-white/10 pl-5 pr-2 text-white'
-            : 'glass h-16 w-full gap-4 px-4 border-b border-outline-variant/30 text-on-surface'
+            ? 'glass h-14 w-auto max-w-full gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
+            : 'glass h-16 w-full gap-4 px-4 border-b border-outline-variant/30'
         )}
       >
         <Link
@@ -108,18 +104,9 @@ export function Navbar() {
           className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90"
           title="Inicio"
         >
-          <span
-            className={cn(
-              'material-symbols-outlined text-2xl',
-              pill ? 'text-media-accent' : 'text-primary'
-            )}
-          >
-            map
-          </span>
-          <span className={cn('hidden sm:inline', pill ? 'text-white' : 'text-on-surface')}>
-            {APP_CONFIG.name}
-          </span>
-          <span className={cn('sm:hidden', pill ? 'text-white' : 'text-on-surface')}>MapU</span>
+          <span className="material-symbols-outlined text-2xl text-primary">map</span>
+          <span className="hidden text-on-surface sm:inline">{APP_CONFIG.name}</span>
+          <span className="text-on-surface sm:hidden">MapU</span>
         </Link>
 
         <div className={pill ? 'w-2' : 'flex-1'} />
@@ -135,25 +122,16 @@ export function Navbar() {
                   href={href}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
-                    pill
-                      ? isActive
-                        ? 'text-media-accent font-bold'
-                        : 'text-white/70 hover:text-white hover:bg-white/10'
-                      : isActive
-                        ? 'text-primary font-bold'
-                        : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                    isActive
+                      ? 'text-primary font-bold'
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
                   )}
                 >
                   <Icon size={16} />
                   {label === 'Favoritos' && favCount > 0 ? (
                     <span className="flex items-center gap-1">
                       {label}
-                      <span
-                        className={cn(
-                          'text-xs rounded-full px-1.5 py-px text-white',
-                          pill ? 'bg-media-accent text-media-ink' : 'bg-accent'
-                        )}
-                      >
+                      <span className="text-xs rounded-full bg-accent px-1.5 py-px text-white">
                         {favCount}
                       </span>
                     </span>
@@ -166,7 +144,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle light={pill} />
+          <ThemeToggle />
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -178,29 +156,14 @@ export function Navbar() {
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className={cn(
-                        'w-8 h-8 rounded-full object-cover border-2',
-                        pill ? 'border-white/30' : 'border-outline-variant'
-                      )}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-outline-variant"
                     />
                   ) : (
-                    <div
-                      className={cn(
-                        'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                        pill
-                          ? 'bg-white/15 border border-white/20 text-white'
-                          : 'bg-primary/20 border border-primary/30 text-primary'
-                      )}
-                    >
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-primary/20 border border-primary/30 text-primary">
                       {user.name.charAt(0)}
                     </div>
                   )}
-                  <span
-                    className={cn(
-                      'hidden lg:inline text-sm font-medium',
-                      pill ? 'text-white' : 'text-on-surface'
-                    )}
-                  >
+                  <span className="hidden lg:inline text-sm font-medium text-on-surface">
                     {user.name.split(' ')[0]}
                   </span>
                 </button>
@@ -232,9 +195,8 @@ export function Navbar() {
               href="/login"
               className={cn(
                 'flex items-center gap-1.5 px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-95',
-                pill
-                  ? 'bg-media-accent text-media-ink rounded-full'
-                  : 'bg-primary text-on-primary rounded-lg'
+                'bg-primary text-on-primary',
+                pill ? 'rounded-full' : 'rounded-lg'
               )}
             >
               <LogIn size={16} />

@@ -11,132 +11,107 @@ import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
 
-const HERO_IMAGES = [
-  { src: '/1.jpg', alt: 'Propiedad de lujo en Chile' },
-  { src: '/2.jpg', alt: 'Casa moderna en Santiago' },
-  { src: '/3.jpg', alt: 'Vista de propiedad premium' },
+/** Lo que la gente quiere dejar de hacer. Rota bajo el titular. */
+const PAIN_POINTS = [
+  'recorrer comunas a ciegas',
+  'llamar por precios que no están publicados',
+  'conocer el barrio después de firmar',
+  'comparar fichas en diez pestañas',
 ]
 
-function HeroCarousel() {
-  const [current, setCurrent] = useState(0)
+const COMUNAS = [
+  'Las Condes',
+  'Providencia',
+  'Ñuñoa',
+  'Vitacura',
+  'La Reina',
+  'Lo Barnechea',
+  'Viña del Mar',
+  'Concón',
+  'Concepción',
+  'Valdivia',
+  'Puerto Varas',
+  'La Serena',
+  'Antofagasta',
+  'Temuco',
+]
 
-  useEffect(() => {
-    const id = setInterval(() => setCurrent((c) => (c + 1) % HERO_IMAGES.length), 6000)
-    return () => clearInterval(id)
-  }, [])
-
-  return (
-    <>
-      {HERO_IMAGES.map((img, i) => {
-        const active = i === current
-        return (
-          <div
-            key={i}
-            className="absolute inset-0 overflow-hidden"
-            style={{
-              opacity: active ? 1 : 0,
-              transition: 'opacity 1200ms ease-in-out',
-              zIndex: active ? 1 : 0,
-            }}
-          >
-            <Image
-              src={img.src}
-              alt={img.alt}
-              fill
-              style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
-              priority={i === 0}
-              sizes="100vw"
-            />
-          </div>
-        )
-      })}
-
-      {/* Cinematic scrim: dark left-to-right for headline contrast, fading to
-          the page background at the bottom so the hero blends into the page. */}
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/20"
-        style={{ zIndex: 2 }}
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-black/30"
-        style={{ zIndex: 2 }}
-      />
-
-      {/* Vertical dot indicators on the right edge */}
-      <div
-        className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 flex-col gap-3"
-        style={{ zIndex: 20 }}
-      >
-        {HERO_IMAGES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            aria-label={`Imagen ${i + 1}`}
-            className={cn(
-              'rounded-full transition-all duration-500',
-              i === current ? 'bg-media-accent h-8 w-2' : 'bg-white/30 h-2 w-2 hover:bg-white/60'
-            )}
-          />
-        ))}
-      </div>
-    </>
-  )
-}
-
-/** Rotating circular "Explorar" badge (signature element, bottom-right). */
-function RotatingBadge() {
-  return (
-    <Link
-      href="/buscar"
-      aria-label="Explorar propiedades"
-      className="hero-reveal hidden lg:flex absolute bottom-14 right-14 w-28 h-28 items-center justify-center group"
-      style={{ zIndex: 10 }}
-    >
-      <svg
-        viewBox="0 0 100 100"
-        className="absolute inset-0 w-full h-full animate-[spin_14s_linear_infinite] group-hover:[animation-play-state:paused]"
-      >
-        <defs>
-          <path id="badge-circle" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
-        </defs>
-        <text
-          className="fill-white/80"
-          style={{ fontSize: 8.2, letterSpacing: 2.2, fontWeight: 700 }}
-        >
-          <textPath href="#badge-circle">EXPLORAR · PROPIEDADES · EXPLORAR ·</textPath>
-        </text>
-      </svg>
-      <span className="w-12 h-12 rounded-full border border-white/40 flex items-center justify-center text-white transition-all duration-300 group-hover:bg-media-accent group-hover:border-media-accent group-hover:text-media-ink group-hover:scale-110">
-        <span className="material-symbols-outlined text-xl">arrow_outward</span>
-      </span>
-    </Link>
-  )
-}
-
+/** `to` se anima, `suffix` se queda quieto al lado. Separarlos evita parsear
+ *  strings como "24/7" o "15k+" dentro del contador. */
 const STATS = [
-  { value: '15k+', label: 'Propiedades' },
-  { value: '12', label: 'Regiones' },
-  { value: '24/7', label: 'Soporte Digital' },
-  { value: '5.0', label: 'Valoración Media' },
+  { to: 15, suffix: 'k+', label: 'Propiedades' },
+  { to: 12, suffix: '', label: 'Regiones' },
+  { to: 24, suffix: '/7', label: 'Soporte digital' },
+  { to: 5, suffix: '.0', label: 'Valoración media' },
 ]
 
 const STEPS = [
   {
     num: '01',
-    title: 'Busca con IA',
-    desc: 'Nuestra inteligencia artificial aprende tus gustos para ofrecerte solo lo mejor.',
+    title: 'Busca sobre el mapa',
+    desc: 'Filtra por comuna, precio y metros sin salir del mapa. Las zonas de precio se pintan solas.',
   },
   {
     num: '02',
-    title: 'Agenda Online',
-    desc: 'Reserva visitas presenciales o tours virtuales 3D con un solo clic.',
+    title: 'Agenda online',
+    desc: 'Reserva visitas presenciales o tours virtuales con un clic, directo con quien publica.',
   },
   {
     num: '03',
-    title: 'Cierra el Trato',
-    desc: 'Gestión digital de contratos y documentos con total seguridad legal.',
+    title: 'Cierra el trato',
+    desc: 'Gestión digital de contratos y documentos, con respaldo legal de punta a punta.',
   },
 ]
+
+/** Orbes del fondo del hero. Tres, puestos a mano: dan profundidad sin
+ *  leerse como ruido. El color sale de las variables del tema. */
+const ORBS = [
+  { top: '-8%', left: '-6%', size: 380, tint: 'var(--orb-1)', delay: '0s' },
+  { top: '38%', right: '-10%', size: 460, tint: 'var(--orb-2)', delay: '-5s' },
+  { bottom: '-18%', left: '30%', size: 340, tint: 'var(--orb-3)', delay: '-9s' },
+]
+
+/** Titular partido en palabras para el reveal escalonado. Cada palabra va en
+ *  un contenedor con overflow oculto: GSAP la sube desde abajo y el recorte
+ *  hace que aparezca por detrás de una línea invisible. */
+function Words({ text, className }: { text: string; className?: string }) {
+  const words = text.split(' ')
+  return (
+    <span className={className}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden align-bottom">
+          <span className="hero-word inline-block">
+            {word}
+            {i < words.length - 1 ? ' ' : ''}
+          </span>
+        </span>
+      ))}
+    </span>
+  )
+}
+
+function RotatingPain() {
+  const [i, setI] = useState(0)
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => setI((n) => (n + 1) % PAIN_POINTS.length), 2800)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <>
+      {/* El lector de pantalla recibe la lista completa una vez. El rotador
+          queda oculto: anunciar un cambio de texto cada 2,8 s es ruido. */}
+      <span className="sr-only">{PAIN_POINTS.join(', ')}.</span>
+      <span aria-hidden className="inline-block align-bottom">
+        <span key={i} className="word-in inline-block font-semibold text-primary">
+          {PAIN_POINTS[i]}
+        </span>
+      </span>
+    </>
+  )
+}
 
 function FavBtn({ property }: { property: Property }) {
   const { isFavorite, toggle } = useFavoritesContext()
@@ -195,6 +170,15 @@ export default function LandingPage() {
     let ctx: { revert: () => void } | undefined
     let cancelled = false
 
+    // Sin motion los contadores igual tienen que mostrar su número final:
+    // si no, se quedan en 0 para siempre.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll<HTMLElement>('.stat-value').forEach((el) => {
+        el.textContent = el.dataset.to ?? el.textContent
+      })
+      return
+    }
+
     Promise.all([
       import('gsap').then((m) => m.default ?? m.gsap),
       import('gsap/ScrollTrigger').then((m) => m.ScrollTrigger),
@@ -208,64 +192,93 @@ export default function LandingPage() {
       // on unmount strips ALL the inline styles GSAP applied, so returning to
       // the landing never leaves text stuck at low opacity.
       ctx = gsap.context(() => {
-        // Hero entrance: lines/sub/search rise in sequence, the accent slash
-        // sweeps in once its line is visible.
-        const heroTl = gsap.timeline()
-        heroTl
-          .from('.hero-reveal', {
-            y: 50,
-            opacity: 0,
-            duration: 1,
-            stagger: 0.15,
-            ease: 'power3.out',
-          })
+        gsap
+          .timeline()
+          .from('.hero-word', { yPercent: 115, duration: 0.9, stagger: 0.06, ease: 'power3.out' })
           .from(
-            '.hero-bar',
-            { scaleX: 0, transformOrigin: 'left center', duration: 0.7, ease: 'power3.inOut' },
-            0.35
+            '.hero-reveal',
+            { y: 24, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out' },
+            0.25
           )
 
+        // Contadores. Se anima un objeto plano y se escribe textContent:
+        // tweenear el nodo directo obliga a re-parsear el texto en cada frame.
+        gsap.utils.toArray<HTMLElement>('.stat-value').forEach((el) => {
+          const box = { v: 0 }
+          gsap.to(box, {
+            v: Number(el.dataset.to ?? 0),
+            duration: 1.4,
+            ease: 'power2.out',
+            scrollTrigger: { trigger: el, start: 'top 88%' },
+            onUpdate: () => {
+              el.textContent = String(Math.round(box.v))
+            },
+          })
+        })
+
         gsap.from('.stat-item', {
-          scrollTrigger: { trigger: '.stats-trigger', start: 'top 80%' },
-          y: 30,
+          scrollTrigger: { trigger: '.stats-trigger', start: 'top 85%' },
+          y: 24,
           opacity: 0,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: 'back.out(1.7)',
+          duration: 0.7,
+          stagger: 0.08,
+          ease: 'power3.out',
         })
 
         gsap.from('.property-card', {
-          scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 70%' },
-          y: 60,
+          scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 75%' },
+          y: 48,
           opacity: 0,
-          duration: 1,
-          stagger: 0.15,
+          duration: 0.9,
+          stagger: 0.12,
           ease: 'power3.out',
         })
 
         gsap.from('.map-content', {
-          scrollTrigger: { trigger: '.map-trigger', start: 'top 60%' },
-          x: -50,
-          opacity: 0,
-          duration: 1.2,
-          ease: 'power2.out',
-        })
-
-        gsap.from('.step-card', {
-          scrollTrigger: { trigger: '.how-trigger', start: 'top 70%' },
-          scale: 0.9,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.2,
-          ease: 'power1.out',
-        })
-
-        gsap.from('.cta-trigger', {
-          scrollTrigger: { trigger: '.cta-trigger', start: 'top 85%' },
-          y: 100,
+          scrollTrigger: { trigger: '.map-trigger', start: 'top 70%' },
+          y: 40,
           opacity: 0,
           duration: 1,
-          ease: 'power4.out',
+          ease: 'power3.out',
+        })
+
+        // Parallax del fondo del mapa. `scrub` lo ata al scroll en vez de
+        // dispararlo una vez: eso es lo que se lee como profundidad.
+        gsap.to('.map-parallax', {
+          yPercent: -12,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.map-trigger',
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+          },
+        })
+
+        // La línea de "cómo funciona" se dibuja de izquierda a derecha y las
+        // tarjetas entran detrás de ella.
+        gsap.from('.how-line', {
+          scrollTrigger: { trigger: '.how-trigger', start: 'top 72%' },
+          scaleX: 0,
+          transformOrigin: 'left center',
+          duration: 1.1,
+          ease: 'power2.inOut',
+        })
+        gsap.from('.step-card', {
+          scrollTrigger: { trigger: '.how-trigger', start: 'top 72%' },
+          y: 36,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.18,
+          ease: 'power3.out',
+        })
+
+        gsap.from('.cta-card', {
+          scrollTrigger: { trigger: '.cta-trigger', start: 'top 88%' },
+          y: 56,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'power3.out',
         })
       }, scroller)
 
@@ -293,66 +306,85 @@ export default function LandingPage() {
   return (
     <div
       ref={scrollRef}
-      className="overflow-y-auto h-full selection:bg-primary selection:text-on-primary"
+      className="h-full overflow-y-auto selection:bg-primary selection:text-on-primary"
     >
       {/* ─── HERO ─────────────────────────────────────────── */}
-      <section className="relative h-[92vh] min-h-[560px] flex items-center overflow-hidden -mt-16">
-        <HeroCarousel />
-        <RotatingBadge />
+      <section
+        className="hero-grid relative -mt-16 flex min-h-[94vh] items-center justify-center overflow-hidden px-6 pt-32 pb-20"
+        style={
+          {
+            '--orb-1': 'rgb(var(--primary) / 0.30)',
+            '--orb-2': 'rgb(var(--accent) / 0.24)',
+            '--orb-3': 'rgb(var(--secondary) / 0.20)',
+          } as React.CSSProperties
+        }
+      >
+        {ORBS.map((orb, i) => (
+          <span
+            key={i}
+            aria-hidden
+            className="orb"
+            style={{
+              top: orb.top,
+              left: orb.left,
+              right: orb.right,
+              bottom: orb.bottom,
+              width: orb.size,
+              height: orb.size,
+              background: orb.tint,
+              animationDelay: orb.delay,
+            }}
+          />
+        ))}
 
-        <div
-          className="relative w-full max-w-[1440px] mx-auto px-6 lg:px-20"
-          style={{ zIndex: 10 }}
-        >
-          {/* Headline: two offset lines, accent slash behind the first */}
-          <h1 className="font-headline font-extrabold uppercase text-white leading-[0.95] tracking-tight drop-shadow-2xl">
-            <span className="hero-reveal relative block text-5xl sm:text-7xl lg:text-8xl w-fit">
-              <span
-                className="hero-bar absolute -left-6 lg:-left-20 right-[-0.5em] top-1/2 -translate-y-1/2 h-[0.32em] bg-media-accent"
-                aria-hidden
-              />
-              <span className="relative">Encuentra</span>
+        <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
+          <span className="hero-reveal inline-flex items-center gap-2 rounded-full border border-outline-variant/50 bg-surface-container-low/60 px-3.5 py-1.5 text-xs font-semibold text-on-surface-variant backdrop-blur">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
             </span>
-            <span className="hero-reveal block text-5xl sm:text-7xl lg:text-8xl pl-[0.8em]">
-              tu lugar
-            </span>
+            15.000 propiedades sobre el mapa de Chile
+          </span>
+
+          <h1 className="mt-7 font-headline text-[2.75rem] font-extrabold leading-[0.95] tracking-tight text-on-surface sm:text-6xl lg:text-7xl">
+            <Words text="Encuentra tu lugar" className="block" />
+            <Words text="en el mapa de Chile" className="mt-1 block text-primary" />
           </h1>
 
-          <p className="hero-reveal mt-6 text-white/85 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] max-w-md drop-shadow-lg">
-            Propiedades disponibles, personas verificadas
+          <p className="hero-reveal mx-auto mt-7 max-w-xl text-base text-on-surface-variant sm:text-lg">
+            Sin <RotatingPain />
           </p>
 
-          {/* Explore more */}
-          <Link
-            href="/buscar"
-            className="hero-reveal group mt-8 inline-flex items-center gap-4 text-white w-fit"
-          >
-            <span className="text-sm font-semibold tracking-wide">Explorar más</span>
-            <span className="w-11 h-11 rounded-full border border-white/40 flex items-center justify-center transition-all duration-300 group-hover:bg-media-accent group-hover:border-media-accent group-hover:text-media-ink group-hover:translate-x-1.5">
-              <span className="material-symbols-outlined text-lg">arrow_forward</span>
-            </span>
-          </Link>
-
-          {/* Search pill — sits low, anchored left like the reference */}
+          {/* El buscador se queda en el hero: es la acción principal. */}
           <form
             onSubmit={handleSearch}
-            className="hero-reveal mt-12 lg:mt-20 w-full max-w-2xl rounded-2xl sm:rounded-full glass-media border border-white/10 p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
+            className="hero-reveal glass mx-auto mt-9 flex w-full max-w-2xl flex-col items-stretch gap-2 rounded-2xl border border-outline-variant/40 p-2 sm:flex-row sm:items-center sm:rounded-full"
           >
-            <div className="flex-1 flex items-center gap-3 pl-4 min-w-0">
-              <span className="material-symbols-outlined text-white/50 select-none">search</span>
+            <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
+              <span className="material-symbols-outlined select-none text-on-surface-variant">
+                search
+              </span>
+              <label htmlFor="hero-q" className="sr-only">
+                Ciudad, barrio o región
+              </label>
               <input
+                id="hero-q"
                 type="text"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Ciudad, barrio o región..."
-                className="w-full py-3 bg-transparent text-white placeholder:text-white/45 focus:outline-none text-sm"
+                className="w-full bg-transparent py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
               />
             </div>
-            <div className="hidden sm:block w-px h-7 bg-white/15 shrink-0" />
+            <div className="hidden h-7 w-px shrink-0 bg-outline-variant/60 sm:block" />
+            <label htmlFor="hero-type" className="sr-only">
+              Tipo de propiedad
+            </label>
             <select
+              id="hero-type"
               value={propertyType}
               onChange={(e) => setPropertyType(e.target.value)}
-              className="sm:w-44 py-3 px-4 bg-transparent text-white/85 text-sm focus:outline-none cursor-pointer [&>option]:text-black"
+              className="cursor-pointer bg-transparent px-4 py-3 text-sm text-on-surface focus:outline-none sm:w-44"
             >
               <option value="">Tipo de propiedad</option>
               <option value="casa">Casa</option>
@@ -362,21 +394,65 @@ export default function LandingPage() {
             </select>
             <button
               type="submit"
-              className="bg-media-accent text-media-ink font-bold px-8 py-3 rounded-xl sm:rounded-full hover:brightness-110 hover:scale-[0.98] transition-all text-sm shrink-0"
+              className="shrink-0 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-on-primary transition-all hover:scale-[0.98] hover:brightness-110 sm:rounded-full"
             >
               Buscar
             </button>
           </form>
+
+          <div className="hero-reveal mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-on-surface-variant">
+            {['Publicar es gratis', 'Precios por zona calculados del mercado', 'Sin comisión'].map(
+              (item) => (
+                <span key={item} className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-accent">
+                    check_circle
+                  </span>
+                  {item}
+                </span>
+              )
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── MARQUEE DE COMUNAS ───────────────────────────── */}
+      <section
+        aria-label="Comunas con propiedades publicadas"
+        className="marquee-mask overflow-hidden border-y border-outline-variant/30 bg-surface-container-low/40 py-5"
+      >
+        <div className="marquee-track">
+          {/* La lista va dos veces para que el loop no salte al reiniciar.
+              La copia es decorativa y se esconde del lector de pantalla. */}
+          {[0, 1].map((copy) => (
+            <div key={copy} aria-hidden={copy === 1} className="flex shrink-0 gap-10 pr-10">
+              {COMUNAS.map((comuna) => (
+                <span
+                  key={comuna}
+                  className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-on-surface-variant"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-outline">
+                    location_on
+                  </span>
+                  {comuna}
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ─── STATS ────────────────────────────────────────── */}
-      <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto stats-trigger">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="stats-trigger mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {STATS.map((s) => (
-            <div key={s.label} className="text-center stat-item space-y-2">
-              <p className="text-primary font-headline text-4xl md:text-5xl font-bold">{s.value}</p>
-              <p className="text-on-surface-variant text-xs font-bold tracking-widest uppercase">
+            <div key={s.label} className="stat-item space-y-2 text-center">
+              <p className="font-headline text-4xl font-bold tracking-tight text-on-surface md:text-5xl">
+                <span className="stat-value" data-to={s.to}>
+                  0
+                </span>
+                <span className="text-primary">{s.suffix}</span>
+              </p>
+              <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                 {s.label}
               </p>
             </div>
@@ -384,12 +460,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── FEATURED PROPERTIES GRID ─────────────────────── */}
-      <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto property-grid-trigger">
-        <div className="flex justify-between items-end mb-8">
+      {/* ─── DESTACADAS ───────────────────────────────────── */}
+      <section className="property-grid-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
+        <div className="mb-10 flex items-end justify-between">
           <div className="space-y-2">
-            <h2 className="font-headline text-3xl font-semibold text-on-surface">
-              Propiedades Destacadas
+            <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface sm:text-4xl">
+              Propiedades destacadas
             </h2>
             <p className="text-on-surface-variant">
               Las mejores oportunidades del mercado inmobiliario chileno.
@@ -397,13 +473,13 @@ export default function LandingPage() {
           </div>
           <Link
             href="/buscar"
-            className="text-primary font-bold flex items-center gap-2 hover:underline shrink-0 ml-4"
+            className="ml-4 flex shrink-0 items-center gap-2 font-bold text-primary hover:underline"
           >
             Ver todas <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featured.map((property) => {
             const mainImg = property.media.images.find((i) => i.isMain) ?? property.media.images[0]
             const price =
@@ -414,62 +490,58 @@ export default function LandingPage() {
             const isRent = property.operation === PropertyOperation.RENT
 
             return (
-              <Link key={property.id} href={`/propiedad/${property.id}`} className="block group">
-                <div className="tonal-layer-1 rounded-xl overflow-hidden accent-glow transition-all duration-300 property-card h-full">
-                  <div className="relative h-64 overflow-hidden">
+              <Link key={property.id} href={`/propiedad/${property.id}`} className="group block">
+                <div className="property-card accent-glow h-full overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface-container-low transition-all duration-300 group-hover:-translate-y-1.5">
+                  <div className="relative h-60 overflow-hidden">
                     {mainImg && (
                       <Image
                         src={mainImg.url}
                         alt={property.title}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     )}
                     <FavBtn property={property} />
                   </div>
 
-                  <div className="p-6 space-y-4">
+                  <div className="space-y-4 p-6">
                     <div className="space-y-2">
-                      <p className="text-primary font-headline font-bold text-2xl tracking-tight">
+                      <p className="font-headline text-2xl font-bold tracking-tight text-on-surface">
                         {displayPrice}
                         {isRent && (
-                          <span className="text-on-surface-variant text-base font-normal">
+                          <span className="text-base font-normal text-on-surface-variant">
                             /mes
                           </span>
                         )}
                       </p>
-                      <h3 className="font-headline text-xl font-semibold text-on-surface truncate">
+                      <h3 className="truncate font-headline text-lg font-semibold text-on-surface">
                         {property.title}
                       </h3>
-                      <p className="flex items-center gap-1 text-on-surface-variant text-sm">
+                      <p className="flex items-center gap-1 text-sm text-on-surface-variant">
                         <span className="material-symbols-outlined text-base">location_on</span>
                         {property.location.address.commune ?? property.location.address.city},{' '}
                         {property.location.address.region}
                       </p>
                     </div>
 
-                    <div className="flex justify-between pt-4 border-t border-outline-variant/30">
+                    <div className="flex justify-between border-t border-outline-variant/30 pt-4 text-on-surface-variant">
                       {property.features.bedrooms !== undefined && (
-                        <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-outline">bed</span>
-                          <span className="text-on-surface-variant">
-                            {property.features.bedrooms}
-                          </span>
-                        </div>
+                          {property.features.bedrooms}
+                        </span>
                       )}
                       {property.features.bathrooms !== undefined && (
-                        <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-outline">bathtub</span>
-                          <span className="text-on-surface-variant">
-                            {property.features.bathrooms}
-                          </span>
-                        </div>
+                          {property.features.bathrooms}
+                        </span>
                       )}
-                      <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-outline">straighten</span>
-                        <span className="text-on-surface-variant">{property.features.area} m²</span>
-                      </div>
+                        {property.features.area} m²
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -479,37 +551,38 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── MAP SECTION ──────────────────────────────────── */}
-      <section className="relative h-[500px] md:h-[600px] my-16 overflow-hidden map-trigger">
-        <div className="absolute inset-0 bg-surface-container-lowest map-pattern">
+      {/* ─── MAPA ─────────────────────────────────────────── */}
+      <section className="map-trigger relative my-16 h-[500px] overflow-hidden md:h-[600px]">
+        {/* El fondo sobresale arriba y abajo para que el parallax no descubra
+            el borde al desplazarse. */}
+        <div className="map-parallax map-pattern absolute inset-x-0 -inset-y-16 bg-surface-container-lowest">
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
         </div>
 
-        <div className="relative z-10 flex h-full items-center px-6 lg:px-20 max-w-[1440px] mx-auto">
-          <div className="max-w-xl space-y-8 map-content">
-            <h2 className="font-headline text-4xl md:text-5xl font-bold text-on-surface leading-tight">
+        <div className="relative z-10 mx-auto flex h-full max-w-[1440px] items-center px-6 lg:px-20">
+          <div className="map-content max-w-xl space-y-8">
+            <h2 className="font-headline text-4xl font-bold leading-tight tracking-tight text-on-surface md:text-5xl">
               Explora propiedades sobre el mapa
             </h2>
-            <p className="text-on-surface-variant text-lg leading-relaxed">
+            <p className="text-lg leading-relaxed text-on-surface-variant">
               Visualiza de forma interactiva la ubicación exacta de tu próximo hogar. Filtra por
               barrios, servicios cercanos y conectividad en tiempo real.
             </p>
             <Link
               href="/mapa"
-              className="inline-flex items-center gap-3 bg-primary text-on-primary font-bold px-8 py-4 rounded-full hover:scale-105 transition-transform shadow-lg"
-              style={{ boxShadow: '0 10px 30px rgba(180, 90, 48, 0.25)' }}
+              className="inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 font-bold text-on-primary shadow-elevated transition-transform hover:scale-105"
             >
               <span className="material-symbols-outlined">explore</span>
-              Abrir Mapa Interactivo
+              Abrir mapa interactivo
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─────────────────────────────────── */}
-      <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto how-trigger">
-        <div className="text-center space-y-3 mb-16">
-          <h2 className="font-headline text-3xl font-semibold text-on-surface">
+      {/* ─── CÓMO FUNCIONA ────────────────────────────────── */}
+      <section className="how-trigger mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
+        <div className="mb-16 space-y-3 text-center">
+          <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface sm:text-4xl">
             Tu camino a casa es simple
           </h2>
           <p className="text-on-surface-variant">
@@ -517,57 +590,74 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {STEPS.map((step) => (
-            <div key={step.num} className="space-y-4 text-center group step-card">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-surface-container-highest flex items-center justify-center border border-outline-variant/30 group-hover:bg-primary transition-colors duration-500">
-                <span className="font-headline text-2xl font-bold text-primary group-hover:text-on-primary transition-colors duration-500">
-                  {step.num}
-                </span>
+        <div className="relative">
+          {/* Línea que une los tres pasos, se dibuja al entrar en pantalla.
+              Solo en desktop, que es donde los pasos van en fila. */}
+          <span
+            aria-hidden
+            className="how-line absolute inset-x-[16.6%] top-10 hidden h-px bg-outline-variant/60 md:block"
+          />
+          <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3">
+            {STEPS.map((step) => (
+              <div key={step.num} className="step-card group space-y-4 text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-outline-variant/40 bg-surface-container-high transition-colors duration-500 group-hover:bg-primary">
+                  <span className="font-headline text-2xl font-bold text-primary transition-colors duration-500 group-hover:text-on-primary">
+                    {step.num}
+                  </span>
+                </div>
+                <h3 className="font-headline text-xl font-semibold text-on-surface">
+                  {step.title}
+                </h3>
+                <p className="leading-relaxed text-on-surface-variant">{step.desc}</p>
               </div>
-              <h3 className="font-headline text-xl font-semibold text-on-surface">{step.title}</h3>
-              <p className="text-on-surface-variant leading-relaxed">{step.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ─── CTA ──────────────────────────────────────────── */}
-      <section className="py-16 px-6 lg:px-20 max-w-[1440px] mx-auto cta-trigger">
-        <div className="relative bg-surface-container-high rounded-3xl p-10 md:p-12 overflow-hidden border border-outline-variant/20 shadow-2xl">
-          <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px]" />
-          <div className="absolute -left-20 -bottom-20 w-60 h-60 bg-primary/5 rounded-full blur-[80px]" />
-
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="max-w-2xl text-center md:text-left space-y-4">
-              <h2 className="font-headline text-3xl font-semibold text-on-surface">
+      <section className="cta-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
+        <div className="cta-card grad-a relative overflow-hidden rounded-3xl p-10 md:p-14">
+          <span
+            aria-hidden
+            className="orb"
+            style={{
+              top: '-34%',
+              right: '-6%',
+              width: 320,
+              height: 320,
+              background: 'rgb(255 255 255 / 0.25)',
+            }}
+          />
+          <div className="relative z-10 flex flex-col items-center justify-between gap-8 md:flex-row">
+            <div className="max-w-2xl space-y-4 text-center md:text-left">
+              <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">
                 ¿Tienes una propiedad para publicar?
               </h2>
-              <p className="text-on-surface-variant text-lg leading-relaxed">
+              <p className="text-lg leading-relaxed opacity-80">
                 Únete a la plataforma inmobiliaria más avanzada de Chile y llega a miles de
                 compradores calificados.
               </p>
             </div>
             <Link
               href="/publicar"
-              className="shrink-0 bg-primary text-on-primary font-bold px-10 md:px-12 py-4 md:py-5 rounded-xl hover:scale-105 transition-all text-lg"
-              style={{ boxShadow: '0 10px 30px rgba(180, 90, 48, 0.35)' }}
+              className="shrink-0 rounded-xl bg-surface-container-lowest px-10 py-4 text-lg font-bold text-on-surface shadow-elevated transition-all hover:scale-105 md:px-12 md:py-5"
             >
-              Publicar Ahora
+              Publicar ahora
             </Link>
           </div>
         </div>
       </section>
 
       {/* ─── FOOTER ───────────────────────────────────────── */}
-      <footer className="bg-surface-container-lowest border-t border-outline-variant/20 pb-20 md:pb-0">
-        <div className="flex flex-col md:flex-row justify-between items-center py-12 px-6 lg:px-20 max-w-[1440px] mx-auto gap-8">
-          <div className="flex flex-col items-center md:items-start gap-3">
+      <footer className="border-t border-outline-variant/20 bg-surface-container-lowest pb-20 md:pb-0">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-8 px-6 py-12 md:flex-row lg:px-20">
+          <div className="flex flex-col items-center gap-3 md:items-start">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">map</span>
-              <span className="font-headline font-bold text-primary text-lg">MapU Real Estate</span>
+              <span className="font-headline text-lg font-bold text-primary">MapU Real Estate</span>
             </div>
-            <p className="text-on-surface-variant text-sm text-center md:text-left">
+            <p className="text-center text-sm text-on-surface-variant md:text-left">
               © 2026 MapU Real Estate Chile - Todos los derechos reservados
             </p>
           </div>
@@ -577,7 +667,7 @@ export default function LandingPage() {
               <a
                 key={link}
                 href="#"
-                className="text-on-surface-variant hover:text-primary underline transition-all text-xs font-bold tracking-widest uppercase"
+                className="text-xs font-bold uppercase tracking-widest text-on-surface-variant underline transition-all hover:text-primary"
               >
                 {link}
               </a>
@@ -587,7 +677,7 @@ export default function LandingPage() {
           <div className="flex gap-4">
             <a
               href="#"
-              className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-primary transition-colors text-on-surface hover:text-on-primary"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-highest text-on-surface transition-colors hover:bg-primary hover:text-on-primary"
             >
               <span className="material-symbols-outlined">share</span>
             </a>
