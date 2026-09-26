@@ -52,9 +52,10 @@ Reglas que hacen que eso sea seguro:
 
 Pendientes de infraestructura, antes de empezar la Fase 1:
 
-- [ ] **Proteger `main`**: requerir PR y CI en verde (hoy la rama no tiene protección, el CI es solo informativo).
-- [ ] **Preview deployment por PR** en Cloudflare (`wrangler versions upload`). La Fase 1 es puramente visual y necesita revisarse en el navegador, no en el diff.
-- [ ] `src/lib/flags.ts` + variables en el environment `env` de GitHub.
+- [x] **Proteger `main`**: PR obligatorio (0 aprobaciones), check `quality` requerido, sin force-push ni borrado, `enforce_admins: false`. Aplicado vía API el 2026-09-25.
+- [x] **Preview deployment por PR** en Cloudflare (`wrangler versions upload`) — PR 0.
+- [x] `src/lib/flags.ts` + documentación en `.env.example` — PR 0.
+- [ ] Definir las variables `PREVIEW_FEATURE_*` en el repo si se quiere encender un flag en los previews (sin ellas, apagadas).
 
 ## Resumen
 
@@ -92,10 +93,17 @@ Pendientes de infraestructura, antes de empezar la Fase 1:
 
 Sin esto, todo lo demás pinta datos falsos con mucha confianza.
 
-### PR 1 — `fix(publicar): geocodificación real de direcciones`
+### PR 1 — `fix(publicar): no publicar sin coordenadas reales`
 
-**Problema:** la dirección no se convierte a lat/lng; todo aviso cae en el centro
-de Santiago (`DEFAULT_MAP_CENTER`). El mapa es ficción.
+> **Corregido al implementar (2026-09-25).** El `TODO.md` decía que faltaba
+> integrar la geocodificación; está desactualizado. `geocodingService.ts` ya
+> implementa `geocodeAddress`, `searchAddress` y `reverseGeocode` con throttle y
+> caché, y `/publicar` ya tiene geocoder con sugerencias y pin arrastrable.
+
+**Problema real:** el *fallback silencioso*. Si el usuario no ponía el pin y el
+geocoder fallaba, el aviso se publicaba igual en el centro de Santiago
+(`DEFAULT_MAP_CENTER`) sin avisar a nadie. Y `/api/publish` aceptaba cualquier
+par de números como ubicación, incluido `(0,0)`.
 
 **Alcance**
 
@@ -116,11 +124,23 @@ de Santiago (`DEFAULT_MAP_CENTER`). El mapa es ficción.
 
 ---
 
-### PR 2 — `fix(map): moneda correcta en pines y zonas de precio`
+### PR 2 — `fix(map): zonas por operación y precios sin ambigüedad de moneda`
 
-**Problema:** `formatPriceShort` antepone `$` y abrevia a miles en cualquier
-moneda → un aviso de UF 4.483 se muestra como `$4k`. Y `computePriceZones` suma
-UF con CLP en el mismo promedio, así que los terciles no significan nada.
+> **Corregido al implementar (2026-09-25).** El plan hablaba de normalizar
+> UF ↔ CLP: **la app no tiene UF**. El enum `Currency` es `('CLP','USD')`, el
+> enum de Postgres también, y `/publicar` fija `Currency.CLP` en duro. Hoy toda
+> la base está en pesos, así que ese promedio no estaba mintiendo.
+>
+> **Decisión de producto pendiente:** en Chile la mayoría de las ventas se
+> cotizan en UF y la app no puede expresarlas. Agregarla implica migración
+> (`ALTER TYPE ... ADD VALUE`), el valor UF del día para ordenar y filtrar
+> mezclando monedas, y definir cómo se muestra en tarjetas y pines. **Hay que
+> resolverlo antes del PR 21**, que asume UF/m².
+
+**Problemas reales:** `computePriceZones` no filtraba por operación (en modo
+arriendo cada propiedad en venta entraba con su precio de venta como fallback);
+mezclar monedas es un bug latente; `$300k` en un pin no dice si son pesos o
+dólares; y la leyenda hardcodeaba `Currency.CLP`.
 
 **Alcance**
 
@@ -147,9 +167,10 @@ UF con CLP en el mismo promedio, así que los terciles no significan nada.
 
 - `MapView.tsx`: `fitToken` debe encuadrar **los resultados visibles**, no la constante `LIST_VIEW_CENTER` (hoy "Ver lista" teletransporta el mapa a un punto fijo cerca de Talagante).
 - `MapView.tsx`: eliminar la animación elástica del hexágono — clona toda la `FeatureCollection` con `JSON.parse(JSON.stringify(...))` en cada frame.
-- `src/app/mapa/page.tsx`: pasar `onBoundsChange` para que la lista filtre por viewport igual que `/buscar`.
+- `src/app/mapa/page.tsx`: pasar `onBoundsChange` para que la lista filtre por viewport igual que `/buscar` (el contador decía "120 propiedades" mientras se veían tres).
 - `src/constants/index.ts`: eliminar `LIST_VIEW_CENTER` / `LIST_VIEW_RADIUS_KM`.
 - Zonas de precio **apagadas por defecto** (`zonesOn = false`) hasta el PR 21.
+- Quedan sin uso `easeOutElastic` y `scaleZoneGeometry`: se eliminan con sus tests.
 
 **Aceptación:** apretar "Lista" mantiene la zona que el usuario estaba mirando; no hay `requestAnimationFrame` clonando geometría; `/mapa` y `/buscar` filtran igual.
 
@@ -163,8 +184,9 @@ Es la única fuente de plusvalía que nadie puede copiar, porque es tu inventari
 **Alcance**
 
 - `supabase/migrations/*_price_cells.sql`: tabla `price_cell_snapshots` (`cell_id`, centro, `period`, `operation`, `uf_per_m2_mean`, `uf_per_m2_median`, `n`, `created_at`).
-- `scripts/snapshot-price-cells.ts`: agrega los avisos activos por celda y escribe el período.
-- `.github/workflows/`: cron mensual.
+- `scripts/snapshot-price-cells.ts`: agrega los avisos activos por celda; por defecto emite SQL, con `--apply` escribe (upsert).
+- `src/lib/priceZones.ts`: `cellFor()` expone el bucketing hexagonal para que lo guardado coincida con lo dibujado.
+- `.github/workflows/`: cron mensual. **Pendiente de aprobación** — es un job programado que escribe en producción sin revisión humana; el YAML está en la descripción del PR 4.
 
 **Aceptación:** correr el script dos veces en el mismo período es idempotente; con el seed demo genera filas con `n` correcto.
 
@@ -239,6 +261,10 @@ diseñado y no embebido.
 ## FASE 2 — Una sola pantalla, más fácil de usar
 
 ### PR 9 — `refactor(search): unificar /mapa y /buscar`
+
+> **Recomendación tras implementar la Fase 0:** adelantarlo a antes de la Fase 1.
+> Los PRs 5–8 hay que verificarlos en dos pantallas mientras `/mapa` exista, y
+> el PR 3 ya tuvo que parchear `/mapa` con doce líneas que este PR borra.
 
 **Problema:** dos implementaciones de la misma pantalla, con capacidades
 distintas (bounds, sort y paginación solo en `/buscar`).
