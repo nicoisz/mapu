@@ -7,6 +7,7 @@ import { Property } from '@/types/property'
 import { FREE_PLAN_LISTINGS_LIMIT, LISTING_EXPIRATION_DAYS } from '@/constants'
 import { activeExpiryFilter } from '@/services/propertyService'
 import { hasReachedListingLimit, isPremiumAccount } from '@/lib/listingQuota'
+import { isInsideChile } from '@/lib/geo'
 
 /**
  * POST /api/publish
@@ -33,7 +34,14 @@ const publishSchema = z.object({
   description: z.string().trim().max(2000, 'Máximo 2000 caracteres').optional(),
   type: z.enum(['house', 'apartment', 'land', 'office', 'commercial', 'warehouse']),
   operation: z.enum(['sale', 'rent']),
-  location: z.object({ latitude: z.number(), longitude: z.number() }),
+  // El cliente ya lo valida, pero la ruta server-side es la frontera real:
+  // un payload armado a mano no puede meter un aviso en medio del océano.
+  location: z
+    .object({ latitude: z.number(), longitude: z.number() })
+    .refine(
+      (l) => isInsideChile(l.latitude, l.longitude),
+      'La ubicación de la propiedad debe estar dentro de Chile'
+    ),
   pricing: z.object({ price: z.number().positive('El precio debe ser mayor a 0') }),
   features: z.object({ area: z.number().positive('La superficie debe ser mayor a 0') }),
   media: z.object({ images: z.array(imageSchema).min(1, 'Agrega al menos una foto') }),
