@@ -5,12 +5,7 @@ import maplibregl, { StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Supercluster from 'supercluster'
 import { Property } from '@/types/property'
-import {
-  DEFAULT_MAP_CENTER,
-  DEFAULT_MAP_ZOOM,
-  LIST_VIEW_CENTER,
-  LIST_VIEW_RADIUS_KM,
-} from '@/constants'
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants'
 import { formatPriceShort, getMapPinPrice } from '@/lib/utils'
 import { PropertyOperation, Currency } from '@/types/enums'
 import { useTheme } from '@/hooks/useTheme'
@@ -19,8 +14,6 @@ import {
   propertyHexesToGeoJSON,
   findZone,
   getZoneColor,
-  easeOutElastic,
-  scaleZoneGeometry,
   ZoneMode,
   ZoneBucket,
   ZoneCell,
@@ -223,13 +216,13 @@ export default function MapView({
   const [layer, setLayer] = useState<BaseLayer>('streets')
 
   // ── Price zones ────────────────────────────────────────────────
-  const [zonesOn, setZonesOn] = useState(true)
+  // Apagadas por defecto: el estado inicial del mapa es el mas silencioso
+  // posible. La capa se rehace en el PR 21 (ver docs/PLAN-MAPA.md).
+  const [zonesOn, setZonesOn] = useState(false)
   const [zoneMode, setZoneMode] = useState<ZoneMode>('sale')
   const [zoneRanges, setZoneRanges] = useState<Record<ZoneBucket, [number, number]>>()
   const [activeBucket, setActiveBucket] = useState<ZoneBucket | null>(null)
-  const zoneGeoRef = useRef<GeoJSON.FeatureCollection | null>(null)
   const globalCellsRef = useRef<ZoneCell[] | null>(null)
-  const animRef = useRef<number | null>(null)
   const zoneModeRef = useRef<ZoneMode>(zoneMode)
   zoneModeRef.current = zoneMode
   const zonesOnRef = useRef(zonesOn)
@@ -293,7 +286,6 @@ export default function MapView({
     mapRef.current = map
 
     return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current)
       markersRef.current.forEach((m) => m.remove())
       markersRef.current.clear()
       readyRef.current = false
@@ -448,46 +440,6 @@ export default function MapView({
         'fill-outline-color': 'rgba(255,255,255,0.85)',
       },
     })
-    // Cursor + click: the selected hex does an elastic scale "boing" using the
-    // easeOutElastic curve, re-feeding geometry through setData() (MapLibre
-    // can't CSS-deform canvas geometry, so we swap GeoJSON coordinates live).
-    map.on('mouseenter', ZONE_LAYER, () => (map.getCanvas().style.cursor = 'pointer'))
-    map.on('mouseleave', ZONE_LAYER, () => (map.getCanvas().style.cursor = ''))
-    map.on('click', ZONE_LAYER, (e) => {
-      const feat = e.features?.[0]
-      const id = feat?.properties?.id as string | undefined
-      if (!id || !zoneGeoRef.current) return
-      const source = map.getSource(ZONE_SOURCE) as maplibregl.GeoJSONSource
-      if (!source || !source.setData) return
-      if (animRef.current) cancelAnimationFrame(animRef.current)
-      // Find the target feature and animate it, keeping all others intact.
-      const target = zoneGeoRef.current.features.find(
-        (f) => (f.properties as { id: string })?.id === id
-      )
-      if (!target) return
-      const targetGeom = target.geometry as GeoJSON.Polygon
-      const ring = targetGeom.coordinates[0]
-      // Hex center = midpoint of two opposite corners (v0 ↔ v3).
-      const center = {
-        lat: (ring[0][1] + ring[3][1]) / 2,
-        lng: (ring[0][0] + ring[3][0]) / 2,
-      }
-      const start = performance.now()
-      const DUR = 900
-      const tick = (now: number) => {
-        const t = Math.min((now - start) / DUR, 1)
-        const s = 1 + 0.35 * easeOutElastic(t)
-        const scaled = scaleZoneGeometry(ring.slice(0, -1) as [number, number][], center, s)
-        const copy: GeoJSON.FeatureCollection = JSON.parse(JSON.stringify(zoneGeoRef.current))
-        const copyTarget = copy.features.find(
-          (f) => (f.properties as { id: string })?.id === id
-        ) as GeoJSON.Feature<GeoJSON.Polygon>
-        copyTarget.geometry.coordinates = [[...scaled, scaled[0]]]
-        source.setData(copy)
-        if (t < 1) animRef.current = requestAnimationFrame(tick)
-      }
-      animRef.current = requestAnimationFrame(tick)
-    })
   }
 
   // Recompute zones from the current dataset + mode, update the layer data.
@@ -499,7 +451,6 @@ export default function MapView({
     if (!zonesOnRef.current) {
       source.setData({ type: 'FeatureCollection', features: [] })
       setZoneRanges(undefined)
-      zoneGeoRef.current = null
       return
     }
     const data = propsDataRef.current
@@ -513,8 +464,7 @@ export default function MapView({
           (p) => findZone(cells, p.location.latitude, p.location.longitude)?.bucket === bucket
         )
       : data
-    zoneGeoRef.current = propertyHexesToGeoJSON(visible, cells)
-    source.setData(zoneGeoRef.current)
+    source.setData(propertyHexesToGeoJSON(visible, cells))
   }
 
   // Zone color for a property's pin (diamond), or null when zones are hidden.
@@ -580,24 +530,22 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
 
-  // ── Zoom to the fixed list-view target on request (list view) ────
+  // ── Encuadrar los resultados visibles (vista lista) ─────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !fitToken) return
-    // Center on the configured point and cover a LIST_VIEW_RADIUS_KM radius.
-    const { latitude, longitude } = LIST_VIEW_CENTER
-    const dLat = LIST_VIEW_RADIUS_KM / 111.32
-    const dLng = LIST_VIEW_RADIUS_KM / (111.32 * Math.cos((latitude * Math.PI) / 180))
-    const target: [[number, number], [number, number]] = [
-      [longitude - dLng, latitude - dLat],
-      [longitude + dLng, latitude + dLat],
-    ]
+    // Antes esto encuadraba una constante fija en las afueras de Santiago, asi
+    // que apretar "Lista" desde Valdivia te mandaba a la Region Metropolitana.
+    const data = propsDataRef.current
+    if (!data.length) return
+    const target = new maplibregl.LngLatBounds()
+    data.forEach((p) => target.extend([p.location.longitude, p.location.latitude]))
     const opts = { padding: 60, maxZoom: 15, speed: 0.8, duration: 600, essential: true }
     // The list column animates to a narrower width right as this fires, so fit
     // against the *current* container size and re-fit on each resize until the
     // animation settles — keeps the properties centered in the compressed map.
-    // map.resize() BEFORE subscribing: emite 'resize', pero aún no hay listener,
-    // así que no se re-entra. El handler de resize solo re-fit (sin resize),
+    // map.resize() BEFORE subscribing: emite 'resize', pero aun no hay listener,
+    // asi que no se re-entra. El handler de resize solo re-fit (sin resize),
     // evitando el loop resize → resize que reventaba el stack.
     map.resize()
     const doFit = () => {
