@@ -3,6 +3,7 @@ import {
   computePriceZones,
   zonesToGeoJSON,
   propertyHexesToGeoJSON,
+  cellFor,
   ZoneMode,
 } from '@/lib/priceZones'
 import { searchService } from '@/services/searchService'
@@ -199,6 +200,24 @@ describe('computePriceZones', () => {
     const dLng = Math.abs(c.center.lng - p.location.longitude)
     expect(dLat).toBeLessThan(0.05)
     expect(dLng).toBeLessThan(0.05)
+  })
+})
+
+describe('cellFor', () => {
+  it('da la misma celda para coordenadas dentro del mismo hexágono', () => {
+    const a = cellFor(-33.4489, -70.6693)
+    const b = cellFor(-33.4489 + 0.0001, -70.6693 + 0.0001)
+    expect(b.id).toBe(a.id)
+  })
+
+  it('da celdas distintas para sectores separados', () => {
+    expect(cellFor(-33.4489, -70.6693).id).not.toBe(cellFor(-33.46, -70.68).id)
+  })
+
+  it('el centro devuelto cae cerca de la coordenada consultada', () => {
+    const { center } = cellFor(-39.8142, -73.2459)
+    expect(Math.abs(center.lat - -39.8142)).toBeLessThan(0.01)
+    expect(Math.abs(center.lng - -73.2459)).toBeLessThan(0.01)
   })
 })
 

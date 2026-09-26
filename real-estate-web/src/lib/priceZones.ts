@@ -115,6 +115,21 @@ function assignBuckets(cells: ZoneCell[]): void {
   })
 }
 
+/**
+ * Celda hexagonal que contiene una coordenada, exista o no data ahí.
+ *
+ * `findZone` solo encuentra celdas pobladas del render actual; esto da el
+ * bucketing crudo, que es lo que necesita el snapshot histórico para que lo
+ * que se guarda mes a mes coincida con lo que el mapa dibuja.
+ */
+export function cellFor(
+  lat: number,
+  lng: number
+): { id: string; center: { lat: number; lng: number } } {
+  const { q, r } = axialFromLngLat(lng, lat, HEX_RADIUS)
+  return { id: `${q}:${r}`, center: centerLngLat(q, r, HEX_RADIUS) }
+}
+
 /** Finds the populated hex cell containing a coordinate, or undefined if that
  *  sector has no property data. Reuses the exact same axial bucketing as
  *  computePriceZones, so lookups stay consistent with the rendered map. */
