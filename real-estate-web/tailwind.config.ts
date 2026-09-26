@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-/** Calidez Boutique — every color reads from a CSS variable (see globals.css),
+/** Tinta & Latón — every color reads from a CSS variable (see globals.css),
  *  so a single utility like `bg-primary` works in both light and dark themes
  *  and opacity modifiers (`bg-primary/10`) keep working. */
 const withAlpha = (v: string) => `rgb(var(${v}) / <alpha-value>)`
@@ -69,6 +69,11 @@ const config: Config = {
           light: withAlpha('--accent-light'),
           dark: withAlpha('--accent-dark'),
         },
+
+        /** Acento sobre fotografía (hero, navbar en modo pill). No flipa con
+         *  el tema: ahí el fondo es la imagen, no una superficie. */
+        'media-accent': withAlpha('--media-accent'),
+        'media-ink': withAlpha('--media-ink'),
       },
       fontFamily: {
         sans: ['Manrope', 'system-ui', 'sans-serif'],

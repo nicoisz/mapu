@@ -67,3 +67,10 @@ export const STATUS_LABELS: Record<string, string> = {
   sold: 'Vendido',
   rented: 'Arrendado',
 }
+
+/** Color por operación — pines del mapa y chips de leyenda en /buscar leen
+ *  de aquí. Vivía duplicado (literal en la página, constante en MapView) y
+ *  las dos copias se desincronizaban. Es hex fijo a propósito: va sobre
+ *  imagen satelital, no sobre una superficie del tema. */
+export const SALE_COLOR = '#3D46C4'
+export const RENT_COLOR = '#0F766E'

@@ -5,6 +5,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useTheme } from '@/hooks/useTheme'
 import { zonesToGeoJSON, getZoneColor, ZoneCell } from '@/lib/priceZones'
+import { SALE_COLOR } from '@/constants'
 
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron'
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark'
@@ -65,7 +66,7 @@ export default function MiniMapInner({
 
     const pin = document.createElement('div')
     pin.innerHTML = `<div style="
-      width:16px;height:16px;background:#FF4D1C;
+      width:16px;height:16px;background:${SALE_COLOR};
       border:3px solid white;border-radius:50%;
       box-shadow:0 2px 8px rgba(0,0,0,0.35);
     "></div>`
@@ -155,7 +156,7 @@ export default function MiniMapInner({
         id: 'mini-zone-highlight',
         type: 'line',
         source: ZONE_SOURCE,
-        paint: { 'line-color': '#111111', 'line-width': 2.5 },
+        paint: { 'line-color': '#12141F', 'line-width': 2.5 },
         filter: ['==', ['get', 'id'], hlId],
       })
     }

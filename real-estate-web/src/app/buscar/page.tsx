@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Building2, KeyRound, List, Map as MapIcon, Tag } from 'lucide-react'
 import { PropertyOperation } from '@/types/enums'
+import { RENT_COLOR, SALE_COLOR } from '@/constants'
 import { computePriceZones, findZone, getZoneColor, ZoneBucket } from '@/lib/priceZones'
 import DynamicMapView from '@/components/map/DynamicMapView'
 import { PropertyCard, PropertyCardSkeleton } from '@/components/property/PropertyCard'
@@ -214,12 +215,20 @@ function SearchContent() {
           {query && <span className="text-on-surface-variant"> · &quot;{query}&quot;</span>}
         </span>
 
-        {/* Operation legend — colors match the map pins */}
-        <span className="flex items-center gap-1 rounded-full bg-[#FF4D1C]/12 text-[#FF4D1C] px-2 py-0.5 font-semibold">
+        {/* Operation legend — mismo hex que los pines, vía @/constants.
+            Va en `style` y no en clase: Tailwind compila clases literales,
+            una arbitraria interpolada (`bg-[${VAR}]`) no se genera nunca. */}
+        <span
+          className="flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold"
+          style={{ color: SALE_COLOR, backgroundColor: `${SALE_COLOR}1F` }}
+        >
           <Tag size={11} />
           {opCounts.sale} venta
         </span>
-        <span className="flex items-center gap-1 rounded-full bg-[#0D9488]/12 text-[#0D9488] px-2 py-0.5 font-semibold">
+        <span
+          className="flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold"
+          style={{ color: RENT_COLOR, backgroundColor: `${RENT_COLOR}1F` }}
+        >
           <KeyRound size={11} />
           {opCounts.rent} arriendo
         </span>

@@ -230,8 +230,15 @@ export default function DashboardPage() {
             icon={<Building2 size={16} />}
             hint={`${properties.length} en total`}
           />
-          <StatCard label="Visitas" value={totals.views} icon={<Eye size={16} />} />
-          <StatCard label="Contactos" value={totals.contacts} icon={<MessageSquare size={16} />} />
+          {/* Las dos métricas de resultado van con gradiente; el inventario
+              queda plano para que el contraste siga significando algo. */}
+          <StatCard label="Visitas" value={totals.views} icon={<Eye size={16} />} tone="a" />
+          <StatCard
+            label="Contactos"
+            value={totals.contacts}
+            icon={<MessageSquare size={16} />}
+            tone="b"
+          />
         </div>
 
         {/* Free plan limit */}

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useTheme } from '@/hooks/useTheme'
+import { SALE_COLOR } from '@/constants'
 
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron'
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark'
@@ -41,7 +42,7 @@ export default function LocationPickerInner({ latitude, longitude, onChange }: P
 
     const pin = document.createElement('div')
     pin.innerHTML = `<div style="
-      width:18px;height:18px;background:#FF4D1C;
+      width:18px;height:18px;background:${SALE_COLOR};
       border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);
       cursor:grab;
     "></div>`
