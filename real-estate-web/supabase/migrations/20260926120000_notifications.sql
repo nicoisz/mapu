@@ -130,3 +130,26 @@ revoke all on function public.mark_notifications_seen() from public;
 grant execute on function public.owner_activity() to authenticated;
 grant execute on function public.owner_unread_count() to authenticated;
 grant execute on function public.mark_notifications_seen() to authenticated;
+
+-- `properties.contacts_count` existe y se mapea a `listing.inquiries`, pero
+-- nunca lo incrementó nadie. Ahora que hay mensajes, se mantiene solo — mismo
+-- patrón que `sync_favorites_count`, incluido el DELETE: un perfil borrado
+-- arrastra sus mensajes por cascade y el contador quedaría inflado.
+create or replace function public.sync_contacts_count() returns trigger
+  language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    update public.properties
+       set contacts_count = coalesce(contacts_count, 0) + 1
+     where id = new.property_id;
+  elsif tg_op = 'DELETE' then
+    update public.properties
+       set contacts_count = greatest(coalesce(contacts_count, 0) - 1, 0)
+     where id = old.property_id;
+  end if;
+  return null;
+end $$;
+
+create or replace trigger trg_contacts_count
+  after insert or delete on public.messages
+  for each row execute function public.sync_contacts_count();
