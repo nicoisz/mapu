@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/Button'
 import { MiniMap } from '@/components/map/MiniMap'
 import { Reviews } from '@/components/reviews/Reviews'
 import { contactService } from '@/services/contactService'
+import { ContactOwnerForm } from '@/components/property/ContactOwnerForm'
 import { shareService } from '@/services/shareService'
 import { cn, formatArea, formatDate, getDisplayPrice } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
@@ -386,6 +387,8 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                 </Button>
               )}
             </div>
+
+            <ContactOwnerForm propertyId={property.id} ownerId={property.ownerId} />
 
             {property.pricing.pricePerSquareMeter && (
               <div className="mt-4 pt-4 border-t border-outline-variant/60 text-sm text-on-surface-variant">

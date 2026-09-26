@@ -7,6 +7,7 @@ import {
   BarChart3,
   Building,
   Building2,
+  Bell,
   Bug,
   Heart,
   LayoutDashboard,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications'
 import { ExchangeIndicators } from '@/components/layout/ExchangeIndicators'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/Button'
@@ -41,6 +43,10 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuthContext()
   const { count: favCount } = useFavoritesContext()
+  const unreadCount = useUnreadNotifications()
+
+  const badgeFor = (href: string) =>
+    href === '/favoritos' ? favCount : href === '/notificaciones' ? unreadCount : 0
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
@@ -71,6 +77,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     { href: '/buscar', label: 'Explorar', icon: Map },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
     { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard },
+    { href: '/notificaciones', label: 'Notificaciones', icon: Bell },
   ]
 
   const metricsItem: NavItem = { href: '/metricas', label: 'Métricas', icon: BarChart3 }
@@ -162,9 +169,9 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             >
               <Icon size={18} className="shrink-0" />
               {!collapsed && label}
-              {!collapsed && href === '/favoritos' && favCount > 0 && (
+              {!collapsed && badgeFor(href) > 0 && (
                 <span className="ml-auto text-xs rounded-full px-1.5 py-px bg-accent text-white">
-                  {favCount}
+                  {badgeFor(href)}
                 </span>
               )}
             </Link>
