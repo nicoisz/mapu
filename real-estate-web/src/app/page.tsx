@@ -43,15 +43,6 @@ const COMUNAS = [
   'Temuco',
 ]
 
-/** `to` se anima, `suffix` se queda quieto al lado. Separarlos evita parsear
- *  strings como "24/7" o "15k+" dentro del contador. */
-const STATS = [
-  { to: 15, suffix: 'k+', label: 'Propiedades' },
-  { to: 12, suffix: '', label: 'Regiones' },
-  { to: 24, suffix: '/7', label: 'Soporte digital' },
-  { to: 5, suffix: '.0', label: 'Valoración media' },
-]
-
 const STEPS = [
   {
     num: '01',
@@ -113,7 +104,7 @@ function FavBtn({ property }: { property: Property }) {
         toggle(property)
       }}
       className={cn(
-        'absolute top-4 right-4 p-2 bg-surface-container-lowest/50 backdrop-blur-md rounded-full transition-colors',
+        'absolute top-4 right-4 p-2 bg-surface-container-lowest/50 rounded-full transition-colors',
         fav ? 'text-error' : 'text-on-surface hover:text-error'
       )}
       aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
@@ -158,14 +149,7 @@ export default function LandingPage() {
     let ctx: { revert: () => void } | undefined
     let cancelled = false
 
-    // Sin motion los contadores igual tienen que mostrar su número final:
-    // si no, se quedan en 0 para siempre.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.querySelectorAll<HTMLElement>('.stat-value').forEach((el) => {
-        el.textContent = el.dataset.to ?? el.textContent
-      })
-      return
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     Promise.all([
       import('gsap').then((m) => m.default ?? m.gsap),
@@ -188,30 +172,6 @@ export default function LandingPage() {
             { y: 24, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out' },
             0.25
           )
-
-        // Contadores. Se anima un objeto plano y se escribe textContent:
-        // tweenear el nodo directo obliga a re-parsear el texto en cada frame.
-        gsap.utils.toArray<HTMLElement>('.stat-value').forEach((el) => {
-          const box = { v: 0 }
-          gsap.to(box, {
-            v: Number(el.dataset.to ?? 0),
-            duration: 1.4,
-            ease: 'power2.out',
-            scrollTrigger: { trigger: el, start: 'top 88%' },
-            onUpdate: () => {
-              el.textContent = String(Math.round(box.v))
-            },
-          })
-        })
-
-        gsap.from('.stat-item', {
-          scrollTrigger: { trigger: '.stats-trigger', start: 'top 85%' },
-          y: 24,
-          opacity: 0,
-          duration: 0.7,
-          stagger: 0.08,
-          ease: 'power3.out',
-        })
 
         gsap.from('.property-card', {
           scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 75%' },
@@ -421,80 +381,97 @@ export default function LandingPage() {
           />
         ))}
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl text-center">
-          <span className="hero-reveal inline-flex items-center gap-2 rounded-full border border-outline-variant/50 bg-surface-container-low/60 px-3.5 py-1.5 text-xs font-semibold text-on-surface-variant backdrop-blur">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
-            </span>
-            15.000 propiedades sobre el mapa de Chile
-          </span>
-
-          <h1 className="mt-7 font-headline text-[2.75rem] font-extrabold leading-[0.95] tracking-tight text-on-surface sm:text-6xl lg:text-7xl">
-            <Words text="Encuentra tu lugar" className="block" />
-            <Words text="en el mapa de Chile" className="mt-1 block text-primary" />
-          </h1>
-
-          <p className="hero-reveal mx-auto mt-7 max-w-xl text-base text-on-surface-variant sm:text-lg">
-            Sin <RotatingPain />
-          </p>
-
-          {/* El buscador se queda en el hero: es la acción principal. */}
-          <form
-            onSubmit={handleSearch}
-            className="hero-reveal glass mx-auto mt-9 flex w-full max-w-2xl flex-col items-stretch gap-2 rounded-2xl border border-outline-variant/40 p-2 sm:flex-row sm:items-center sm:rounded-full"
-          >
-            <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
-              <span className="material-symbols-outlined select-none text-on-surface-variant">
-                search
+        <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-14 lg:grid-cols-2 lg:px-14">
+          <div>
+            <span className="hero-reveal inline-flex items-center gap-2 rounded-full border border-outline-variant/50 bg-surface-container-low px-3.5 py-1.5 text-xs font-semibold text-on-surface-variant">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
               </span>
-              <label htmlFor="hero-q" className="sr-only">
-                Ciudad, barrio o región
-              </label>
-              <input
-                id="hero-q"
-                type="text"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Ciudad, barrio o región..."
-                className="w-full bg-transparent py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
-              />
-            </div>
-            <div className="hidden h-7 w-px shrink-0 bg-outline-variant/60 sm:block" />
-            <label htmlFor="hero-type" className="sr-only">
-              Tipo de propiedad
-            </label>
-            <select
-              id="hero-type"
-              value={propertyType}
-              onChange={(e) => setPropertyType(e.target.value)}
-              className="cursor-pointer bg-transparent px-4 py-3 text-sm text-on-surface focus:outline-none sm:w-44"
-            >
-              <option value="">Tipo de propiedad</option>
-              <option value="casa">Casa</option>
-              <option value="departamento">Departamento</option>
-              <option value="terreno">Terreno</option>
-              <option value="oficina">Oficina</option>
-            </select>
-            <button
-              type="submit"
-              className="btn-shine shrink-0 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-on-primary transition-all hover:scale-[0.98] hover:brightness-110 sm:rounded-full"
-            >
-              Buscar
-            </button>
-          </form>
+              Venta y arriendo, de Antofagasta a Puerto Varas
+            </span>
 
-          <div className="hero-reveal mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-on-surface-variant">
-            {['Publicar es gratis', 'Precios por zona calculados del mercado', 'Sin comisión'].map(
-              (item) => (
+            <h1 className="mt-7 font-headline text-[2.75rem] font-extrabold leading-[0.95] tracking-tight text-on-surface sm:text-6xl lg:text-5xl xl:text-6xl">
+              <Words text="Encuentra tu lugar" className="block" />
+              <Words text="en el mapa de Chile" className="mt-1 block text-primary" />
+            </h1>
+
+            <p className="hero-reveal mt-7 max-w-xl text-base text-on-surface-variant sm:text-lg">
+              Sin <RotatingPain />
+            </p>
+
+            {/* El buscador se queda en el hero: es la acción principal. */}
+            <form
+              onSubmit={handleSearch}
+              className="hero-reveal solid-chrome mt-9 flex w-full max-w-2xl flex-col items-stretch gap-2 rounded-2xl border border-outline-variant/40 p-2 sm:flex-row sm:items-center sm:rounded-full"
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-3 pl-4">
+                <span className="material-symbols-outlined select-none text-on-surface-variant">
+                  search
+                </span>
+                <label htmlFor="hero-q" className="sr-only">
+                  Ciudad, barrio o región
+                </label>
+                <input
+                  id="hero-q"
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Ciudad, barrio o región..."
+                  className="w-full bg-transparent py-3 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                />
+              </div>
+              <div className="hidden h-7 w-px shrink-0 bg-outline-variant/60 sm:block" />
+              <label htmlFor="hero-type" className="sr-only">
+                Tipo de propiedad
+              </label>
+              <select
+                id="hero-type"
+                value={propertyType}
+                onChange={(e) => setPropertyType(e.target.value)}
+                className="cursor-pointer bg-transparent px-4 py-3 text-sm text-on-surface focus:outline-none sm:w-44"
+              >
+                <option value="">Tipo de propiedad</option>
+                <option value="casa">Casa</option>
+                <option value="departamento">Departamento</option>
+                <option value="terreno">Terreno</option>
+                <option value="oficina">Oficina</option>
+              </select>
+              <button
+                type="submit"
+                className="btn-shine shrink-0 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-on-primary transition-all hover:scale-[0.98] hover:brightness-110 sm:rounded-full"
+              >
+                Buscar
+              </button>
+            </form>
+
+            <div className="hero-reveal mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-on-surface-variant">
+              {[
+                'Publicar es gratis',
+                'Precios por zona calculados del mercado',
+                'Sin comisión',
+              ].map((item) => (
                 <span key={item} className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px] text-accent">
                     check_circle
                   </span>
                   {item}
                 </span>
-              )
-            )}
+              ))}
+            </div>
+          </div>
+
+          {/* Captura real del mapa: el producto se explica solo. */}
+          <div className="hero-reveal relative hidden overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface-container-low shadow-elevated lg:block">
+            <Image
+              src="/showcase/mapa.webp"
+              alt="Mapa de Santiago con pines de precio por propiedad y zonas económica, media y premium"
+              width={1600}
+              height={1000}
+              priority
+              sizes="(max-width: 1024px) 0px, 55vw"
+              className="h-auto w-full"
+            />
           </div>
         </div>
       </section>
@@ -527,25 +504,6 @@ export default function LandingPage() {
 
       {/* ─── REEL DE PRODUCTO ─────────────────────────────── */}
       <ProductReel />
-
-      {/* ─── STATS ────────────────────────────────────────── */}
-      <section className="stats-trigger mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-          {STATS.map((s) => (
-            <div key={s.label} className="stat-item space-y-2 text-center">
-              <p className="font-headline text-4xl font-bold tracking-tight text-on-surface md:text-5xl">
-                <span className="stat-value" data-to={s.to}>
-                  0
-                </span>
-                <span className="text-primary">{s.suffix}</span>
-              </p>
-              <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                {s.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ─── HUB DE FUNCIONES ─────────────────────────────── */}
       <FeatureHub />
@@ -700,8 +658,7 @@ export default function LandingPage() {
                 ¿Tienes una propiedad para publicar?
               </h2>
               <p className="text-lg leading-relaxed opacity-80">
-                Únete a la plataforma inmobiliaria más avanzada de Chile y llega a miles de
-                compradores calificados.
+                Publicar es gratis. Los mensajes y favoritos de cada aviso llegan a tu panel.
               </p>
             </div>
             <Link
@@ -732,7 +689,7 @@ export default function LandingPage() {
               <a
                 key={link}
                 href="#"
-                className="text-xs font-bold uppercase tracking-widest text-on-surface-variant underline transition-all hover:text-primary"
+                className="text-sm text-on-surface-variant underline transition-all hover:text-primary"
               >
                 {link}
               </a>

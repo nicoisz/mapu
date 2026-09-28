@@ -78,7 +78,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     >
       {children}
       {promptOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-[fadeIn_.2s_ease]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-[fadeIn_.2s_ease]">
           <div className="bg-surface-container-low w-full max-w-sm rounded-2xl shadow-elevated border border-outline-variant/40 p-6 text-center relative">
             <button
               onClick={() => setPromptOpen(false)}

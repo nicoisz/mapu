@@ -862,7 +862,7 @@ export default function PublicarPage() {
         </form>
 
         {/* Mobile sticky action bar */}
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/60 shadow-xl">
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-surface-container-low/95 border-t border-outline-variant/60 shadow-xl">
           <div className="flex items-center gap-3">
             <div className="min-w-0">
               <p className="font-headline font-bold text-on-surface text-base leading-tight truncate">
@@ -886,7 +886,7 @@ export default function PublicarPage() {
       </div>
 
       {submitting && (
-        <div className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-50 bg-background/60 flex items-center justify-center p-6">
           <GlowLoader fill label="Publicando tu propiedad…" className="max-w-sm w-full h-auto" />
         </div>
       )}

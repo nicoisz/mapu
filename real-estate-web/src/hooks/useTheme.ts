@@ -15,7 +15,7 @@ function currentTheme(): Theme {
  *  component (e.g. the navbar) updates ALL consumers (map, mini-map, …).
  *  Persists to localStorage. */
 export function useTheme() {
-  // Dark-first default matches the anti-FOUC script and avoids a flash.
+  // Placeholder until mount; the real value comes from the anti-FOUC script.
   const [theme, setTheme] = useState<Theme>('dark')
   const [mounted, setMounted] = useState(false)
 

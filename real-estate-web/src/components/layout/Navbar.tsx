@@ -95,8 +95,8 @@ export function Navbar() {
         className={cn(
           'flex items-center transition-all duration-500',
           pill
-            ? 'glass h-14 w-auto max-w-full gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
-            : 'glass h-16 w-full gap-4 px-4 border-b border-outline-variant/30'
+            ? 'solid-chrome h-14 w-auto max-w-full gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
+            : 'solid-chrome h-16 w-full gap-4 px-4 border-b border-outline-variant/30'
         )}
       >
         <Link

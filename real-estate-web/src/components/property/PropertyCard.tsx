@@ -119,7 +119,7 @@ export function PropertyCard({
               onClose()
             }}
             aria-label="Cerrar detalle"
-            className="absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md bg-black/45 text-white hover:bg-black/60 transition-all"
+            className="absolute top-2.5 right-2.5 p-2 rounded-full bg-black/45 text-white hover:bg-black/60 transition-all"
           >
             <X size={15} />
           </button>
@@ -130,7 +130,7 @@ export function PropertyCard({
               toggle(property)
             }}
             className={cn(
-              'absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition-all',
+              'absolute top-2.5 right-2.5 p-2 rounded-full transition-all',
               fav ? 'bg-primary text-on-primary' : 'bg-black/35 text-white hover:bg-black/55'
             )}
             aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
