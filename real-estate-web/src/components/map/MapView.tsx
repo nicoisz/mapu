@@ -129,7 +129,7 @@ function makePinElement(
     <div style="
       background:${bg};color:#ffffff;
       padding:4px 10px;border-radius:9999px;
-      font-size:11px;font-weight:700;white-space:nowrap;font-family:Manrope,sans-serif;
+      font-size:11px;font-weight:700;white-space:nowrap;font-family:inherit;
       box-shadow:0 3px 10px rgba(0,0,0,${isSelected ? '0.5' : '0.3'});
       border:${isSelected ? '2px' : '1.5px'} solid ${edge};
     ">${diamond}${label}</div>
@@ -169,7 +169,7 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
       width:${size}px;height:${size}px;border-radius:9999px;
       background:${bg};color:${fg};
       display:flex;align-items:center;justify-content:center;
-      font-size:13px;font-weight:800;font-family:Manrope,sans-serif;
+      font-size:13px;font-weight:800;font-family:inherit;
       box-shadow:0 4px 14px rgba(0,0,0,0.35);
       border:2px solid ${edge};
       transition:background 0.2s ease,color 0.2s ease,border-color 0.2s ease;

@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
-
 /* ──────────────────────────────────────────────────────────────
    Tinta & Latón — una familia azul-tinta para superficies en ambos
    temas, índigo como primario y latón reservado a precio/premium.
@@ -73,9 +71,7 @@
 
   --shadow-color: 22 25 45;
 
-  /* Vidrio: tinte + borde especular. Ver .glass más abajo. */
-  --glass-bg: 255 255 255;
-  --glass-op: 0.62;
+  /* Borde especular de los gradientes (.grad-a / .grad-b). */
   --glass-spec: 255 255 255;
   --glass-spec-op: 0.9;
 
@@ -102,7 +98,7 @@
   --surface-variant: 37 42 78;
   --surface-tint: 142 151 255;
   --on-surface: 236 238 247;
-  --on-surface-variant: 154 161 192;
+  --on-surface-variant: 212 215 232;
 
   --primary: 142 151 255;
   --on-primary: 11 13 30;
@@ -138,8 +134,6 @@
 
   --shadow-color: 0 0 0;
 
-  --glass-bg: 40 44 82;
-  --glass-op: 0.55;
   --glass-spec: 255 255 255;
   --glass-spec-op: 0.14;
 
@@ -152,7 +146,7 @@
 
 @layer base {
   html {
-    font-family: 'Manrope', system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   body {
     background-color: rgb(var(--background));
@@ -172,19 +166,12 @@
 }
 
 @layer utilities {
-  /* Vidrio iOS. Va en chrome flotante (navbar, barras, overlays de mapa),
-     nunca en tarjetas de contenido: vidrio sobre fondo plano no tiene nada
-     que refractar y se ve falso. El saturate() y el `inset 0 1px 0` (borde
-     especular superior) son los dos detalles que lo separan de un div con
-     blur. El borde exterior lo pone quien la usa, para poder hacer solo
-     `border-b` en barras pegadas arriba. */
-  .glass {
-    background: rgb(var(--glass-bg) / var(--glass-op));
-    backdrop-filter: blur(22px) saturate(180%);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    box-shadow:
-      inset 0 1px 0 rgb(var(--glass-spec) / var(--glass-spec-op)),
-      0 8px 24px -10px rgb(var(--shadow-color) / 0.45);
+  /* Chrome flotante (navbar, buscador, chips sobre el reel): superficie
+     opaca y una sombra mínima. Sin blur: el contraste lo da el relleno.
+     El borde lo pone quien la usa, para poder hacer solo `border-b`. */
+  .solid-chrome {
+    background: rgb(var(--surface-container-low));
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
   }
   /* Gradiente: solo cifra + label corto, y máx 3 por vista. Nunca detrás de
      texto largo — si va en todas las tarjetas, deja de destacar nada. */
@@ -624,4 +611,9 @@
   .btn-shine::after {
     display: none;
   }
+}
+
+/* Archivo expandido: es el ancho, no el peso, lo que le da carácter. */
+.font-headline {
+  font-stretch: 115%;
 }

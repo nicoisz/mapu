@@ -157,7 +157,7 @@ export function ProductReel() {
           >
             <div className="reel-chip">
               <div className="chip-float">
-                <span className="glass flex items-center gap-2 whitespace-nowrap rounded-2xl border border-outline-variant/40 px-4 py-2.5 text-sm font-semibold text-on-surface">
+                <span className="solid-chrome flex items-center gap-2 whitespace-nowrap rounded-2xl border border-outline-variant/40 px-4 py-2.5 text-sm font-semibold text-on-surface">
                   <span className="material-symbols-outlined text-[18px] text-primary">
                     {chip.icon}
                   </span>
@@ -326,7 +326,7 @@ export function FeatureHub() {
           className="hub-slot w-full md:w-auto"
           style={{ '--x': '50%', '--y': '50%' } as React.CSSProperties}
         >
-          <div className="hub-center glass mx-auto flex w-fit items-center gap-3 rounded-3xl border border-outline-variant/40 px-7 py-5 shadow-elevated">
+          <div className="hub-center solid-chrome mx-auto flex w-fit items-center gap-3 rounded-3xl border border-outline-variant/40 px-7 py-5 shadow-elevated">
             <span className="material-symbols-outlined text-3xl text-primary">map</span>
             <span className="font-headline text-2xl font-bold text-on-surface">MapU</span>
           </div>
@@ -464,20 +464,16 @@ export function ActivityFeed() {
                 >
                   <span
                     className={cn(
-                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
                       a.kind === 'message' ? 'bg-primary/15 text-primary' : 'bg-error/15 text-error'
                     )}
                   >
-                    {a.kind === 'message' ? (
-                      a.who?.charAt(0)
-                    ) : (
-                      <span
-                        className="material-symbols-outlined text-[18px]"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        favorite
-                      </span>
-                    )}
+                    <span
+                      className="material-symbols-outlined text-[18px]"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      {a.kind === 'message' ? 'chat' : 'favorite'}
+                    </span>
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] leading-snug text-on-surface">

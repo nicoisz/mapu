@@ -413,7 +413,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
               <button
                 onClick={() => setMapOpen(true)}
                 aria-label="Ampliar mapa"
-                className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-surface-container-high/95 backdrop-blur rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface shadow-soft border border-outline-variant/50 hover:text-primary transition-colors"
+                className="absolute top-2 right-2 z-10 flex items-center gap-1.5 bg-surface-container-high/95 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface shadow-soft border border-outline-variant/50 hover:text-primary transition-colors"
               >
                 <Maximize2 size={13} /> Ampliar
               </button>
@@ -441,7 +441,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       {/* Map modal — compact, map fills the whole card */}
       {mapOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           onClick={() => setMapOpen(false)}
         >
           <div
@@ -456,12 +456,12 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
             <button
               onClick={() => setMapOpen(false)}
               aria-label="Cerrar mapa"
-              className="absolute top-2.5 right-2.5 z-20 bg-surface-container-high/95 backdrop-blur rounded-full w-8 h-8 flex items-center justify-center shadow-soft border border-outline-variant/50 text-on-surface-variant hover:text-error hover:border-error transition-colors"
+              className="absolute top-2.5 right-2.5 z-20 bg-surface-container-high/95 rounded-full w-8 h-8 flex items-center justify-center shadow-soft border border-outline-variant/50 text-on-surface-variant hover:text-error hover:border-error transition-colors"
             >
               <X size={16} />
             </button>
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 max-w-[90%]">
-              <p className="text-xs bg-surface-container-high/95 backdrop-blur text-on-surface px-3 py-1.5 rounded-full shadow-soft border border-outline-variant/50 flex items-center gap-1.5 truncate">
+              <p className="text-xs bg-surface-container-high/95 text-on-surface px-3 py-1.5 rounded-full shadow-soft border border-outline-variant/50 flex items-center gap-1.5 truncate">
                 <MapPin size={12} className="shrink-0" />
                 <span className="truncate">
                   {property.location.displayAddress ??
@@ -474,7 +474,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       )}
 
       {/* Mobile sticky CTA */}
-      <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
+      <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low/95 border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
         <div className="min-w-0">
           <p className="font-headline font-bold text-on-surface text-lg leading-tight truncate">
             {amount}
