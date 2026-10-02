@@ -215,9 +215,8 @@ export default function MapView({
   const [layer, setLayer] = useState<BaseLayer>('streets')
 
   // ── Price zones ────────────────────────────────────────────────
-  // Apagadas por defecto: el estado inicial del mapa es el mas silencioso
-  // posible. La capa se rehace en el PR 21 (ver docs/PLAN-MAPA.md).
-  const [zonesOn, setZonesOn] = useState(false)
+  // Los hexágonos se muestran al entrar; el control permite ocultarlos.
+  const [zonesOn, setZonesOn] = useState(true)
   const [zoneMode, setZoneMode] = useState<ZoneMode>('sale')
   // La leyenda trae los rangos y la moneda en que están expresados: la moneda
   // la decide el dataset, no una constante.
@@ -628,6 +627,7 @@ export default function MapView({
         <div className="flex rounded-full overflow-hidden border border-outline-variant/40 shadow-elevated bg-surface-container-low">
           <button
             onClick={() => setZonesOn((v) => !v)}
+            aria-pressed={zonesOn}
             className={
               zonesOn
                 ? 'px-3.5 py-1.5 text-xs font-bold bg-primary text-on-primary'
