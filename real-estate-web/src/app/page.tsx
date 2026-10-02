@@ -171,25 +171,6 @@ export default function LandingPage() {
             0.25
           )
 
-        // Move only the oversized decorative layer, using the existing scroller.
-        gsap.utils.toArray<HTMLElement>('.blueprint-drift').forEach((layer) => {
-          const travel = Number(layer.dataset.parallaxTravel) || 300
-          gsap.fromTo(
-            layer,
-            { y: -travel / 2 },
-            {
-              y: travel / 2,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: layer.closest('.blueprint-section'),
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: 0.65,
-              },
-            }
-          )
-        })
-
         if (scroller.querySelector('.property-card'))
           gsap.from('.property-card', {
             scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 75%' },

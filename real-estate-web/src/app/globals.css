@@ -398,63 +398,6 @@
    las utilidades del layer que no ve escritas completas, y varias de
    estas clases se componen con estilos inline. */
 
-/* House floor plans occupy the existing margins with generous empty space. */
-.blueprint-section {
-  position: relative;
-  isolation: isolate;
-}
-.blueprint-background {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-  color: rgb(var(--on-surface) / 0.13);
-  -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
-  mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
-}
-.blueprint-drift {
-  position: absolute;
-  inset: -200px 0;
-  background-color: currentColor;
-  -webkit-mask: var(--blueprint-art) center / 100% 100% no-repeat;
-  mask: var(--blueprint-art) center / 100% 100% no-repeat;
-}
-.blueprint-background--courtyard {
-  --blueprint-art: url('/patterns/courtyard.svg');
-}
-.blueprint-background--villa {
-  --blueprint-art: url('/patterns/villa.svg');
-}
-.blueprint-background--duplex {
-  --blueprint-art: url('/patterns/duplex.svg');
-}
-[data-hero] .blueprint-background {
-  color: rgb(var(--on-secondary) / 0.12);
-}
-@media (max-width: 767px) {
-  .blueprint-background {
-    opacity: 0.65;
-  }
-  .blueprint-drift {
-    -webkit-mask-size: 900px 100%;
-    mask-size: 900px 100%;
-  }
-  .blueprint-background--courtyard .blueprint-drift {
-    -webkit-mask-position: left center;
-    mask-position: left center;
-  }
-  .blueprint-background--duplex .blueprint-drift {
-    -webkit-mask-position: right center;
-    mask-position: right center;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .blueprint-drift {
-    transform: none !important;
-  }
-}
-
 /* Orbe difuminado. El tamaño, color y posición van inline en cada uso;
    acá solo vive el comportamiento común. */
 @keyframes orbFloat {
