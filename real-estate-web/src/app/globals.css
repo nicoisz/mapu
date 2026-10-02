@@ -398,12 +398,12 @@
    las utilidades del layer que no ve escritas completas, y varias de
    estas clases se componen con estilos inline. */
 
-/* Each territory has its own composition and generous empty space. */
-.cartographic-section {
+/* House floor plans occupy the existing margins with generous empty space. */
+.blueprint-section {
   position: relative;
   isolation: isolate;
 }
-.cartographic-background {
+.blueprint-background {
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -413,55 +413,44 @@
   -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
   mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
 }
-.cartographic-drift {
+.blueprint-drift {
   position: absolute;
-  inset: -48px 0;
+  inset: -200px 0;
   background-color: currentColor;
-  -webkit-mask: var(--cartographic-art) center / 100% 100% no-repeat;
-  mask: var(--cartographic-art) center / 100% 100% no-repeat;
+  -webkit-mask: var(--blueprint-art) center / 100% 100% no-repeat;
+  mask: var(--blueprint-art) center / 100% 100% no-repeat;
 }
-.cartographic-background--urban {
-  --cartographic-art: url('/patterns/urban.svg');
+.blueprint-background--courtyard {
+  --blueprint-art: url('/patterns/courtyard.svg');
 }
-.cartographic-background--terrain {
-  --cartographic-art: url('/patterns/terrain.svg');
+.blueprint-background--villa {
+  --blueprint-art: url('/patterns/villa.svg');
 }
-.cartographic-background--rural {
-  --cartographic-art: url('/patterns/rural.svg');
+.blueprint-background--duplex {
+  --blueprint-art: url('/patterns/duplex.svg');
 }
-.cartographic-background--neighborhood {
-  --cartographic-art: url('/patterns/neighborhood.svg');
-}
-.cartographic-background--coastal {
-  --cartographic-art: url('/patterns/coastal.svg');
-}
-[data-hero] .cartographic-background {
+[data-hero] .blueprint-background {
   color: rgb(var(--on-secondary) / 0.12);
 }
-.cta-card .cartographic-background {
-  color: rgb(var(--on-primary) / 0.15);
-}
 @media (max-width: 767px) {
-  .cartographic-background {
+  .blueprint-background {
     opacity: 0.65;
   }
-  .cartographic-drift {
+  .blueprint-drift {
     -webkit-mask-size: 900px 100%;
     mask-size: 900px 100%;
   }
-  .cartographic-background--urban .cartographic-drift,
-  .cartographic-background--rural .cartographic-drift {
+  .blueprint-background--courtyard .blueprint-drift {
     -webkit-mask-position: left center;
     mask-position: left center;
   }
-  .cartographic-background--neighborhood .cartographic-drift,
-  .cartographic-background--coastal .cartographic-drift {
+  .blueprint-background--duplex .blueprint-drift {
     -webkit-mask-position: right center;
     mask-position: right center;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cartographic-drift {
+  .blueprint-drift {
     transform: none !important;
   }
 }

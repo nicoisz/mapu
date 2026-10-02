@@ -15,7 +15,7 @@ import {
 import { reviewService, Review } from '@/services/reviewService'
 import { cn } from '@/lib/utils'
 import { LandingAccents } from './LandingAccents'
-import { CartographicBackground } from './CartographicBackground'
+import { ArchitecturalBackground } from './ArchitecturalBackground'
 
 /* Secciones de la landing. Solo markup y estado local: todas las entradas
    al hacer scroll las registra la página en un único gsap.context, por
@@ -156,8 +156,8 @@ export function ProductReel() {
   const slide = SLIDES[active]
 
   return (
-    <section className="reel-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="terrain" />
+    <section className="reel-trigger landing-section blueprint-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <ArchitecturalBackground variant="villa" />
       <LandingAccents variant="contour" className="accent-reel" />
       <SectionIntro
         eyebrow="Producto"
@@ -424,8 +424,8 @@ const SELLER_POINTS = [
 
 export function ActivityFeed() {
   return (
-    <section className="activity-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="neighborhood" />
+    <section className="activity-trigger landing-section blueprint-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <ArchitecturalBackground variant="duplex" />
       <LandingAccents variant="orbit" className="accent-activity" />
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div className="space-y-8">
@@ -626,8 +626,7 @@ const WHY = [
 
 export function WhyMapu() {
   return (
-    <section className="why-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="rural" />
+    <section className="why-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <LandingAccents variant="route" className="accent-why" />
       <h2 className="section-title relative z-10 mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
         <Words text="Por qué MapU" wordClass="section-word" />
