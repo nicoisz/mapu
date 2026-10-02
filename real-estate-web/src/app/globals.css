@@ -624,55 +624,6 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Nav "Buscar": brillo en movimiento ─────────────────────────
-   Una banda de luz barre el texto y el icono (mix-blend overlay para que
-   aclare lo que pase por debajo) y el pill late con un halo cálido. El
-   overflow oculta mantiene la banda dentro del link, así no invade los
-   ítems vecinos. */
-@keyframes navShineSweep {
-  0% {
-    transform: translateX(-150%) skewX(-18deg);
-  }
-  60%,
-  100% {
-    transform: translateX(260%) skewX(-18deg);
-  }
-}
-@keyframes navShineGlow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgb(255 168 56 / 0);
-  }
-  50% {
-    box-shadow: 0 0 14px 1px rgb(255 168 56 / 0.75);
-  }
-}
-.nav-shine {
-  position: relative;
-  overflow: hidden;
-  border-radius: 9999px;
-  animation: navShineGlow 3.2s ease-in-out infinite;
-}
-.nav-shine::after {
-  content: '';
-  position: absolute;
-  top: -30%;
-  bottom: -30%;
-  left: 0;
-  width: 45%;
-  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.85), transparent);
-  transform: translateX(-150%) skewX(-18deg);
-  animation: navShineSweep 3.2s ease-in-out infinite;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-}
-@media (prefers-reduced-motion: reduce) {
-  .nav-shine,
-  .nav-shine::after {
-    animation: none;
-  }
-}
-
 /* The photo moves with scroll; its inner layer handles the slow camera drift. */
 .hero-photo-frame {
   height: clamp(640px, calc(100svh - 174px), 826px);
@@ -899,82 +850,128 @@
   }
 }
 
-/* 1.8 seconds of light followed by a three-second pause. */
-@keyframes searchShimmer {
+/* One shared cycle for both search controls: a slow 3s sweep, then 3s dark. */
+@keyframes searchLightSweep {
   0% {
-    transform: translateX(-140%);
-  }
-  37.5%,
-  100% {
-    transform: translateX(140%);
-  }
-}
-@keyframes searchShimmerGlow {
-  0%,
-  37.5%,
-  100% {
+    background-position: 140% 50%;
     opacity: 0;
-    background-position: 160% 50%;
   }
-  18% {
+  5% {
     opacity: 1;
-    background-position: 50% 50%;
   }
-  36% {
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    background-position: -40% 50%;
     opacity: 0;
-    background-position: -60% 50%;
   }
 }
-@keyframes searchTextGlow {
-  0%,
-  37.5%,
-  100% {
+@keyframes searchLightText {
+  0% {
+    background-position: 140% 50%;
     text-shadow: none;
   }
-  18% {
-    text-shadow:
-      0 0 7px rgb(255 255 255 / 0.85),
-      0 0 18px rgb(138 180 255 / 0.65);
+  25% {
+    text-shadow: 0 0 8px rgb(165 206 255 / 0.65);
+  }
+  50%,
+  100% {
+    background-position: -40% 50%;
+    text-shadow: none;
   }
 }
+@keyframes searchLightHalo {
+  0%,
+  50%,
+  100% {
+    box-shadow: 0 0 0 rgb(110 174 255 / 0);
+  }
+  25% {
+    box-shadow: 0 0 14px rgb(110 174 255 / 0.45);
+  }
+}
+@keyframes searchLightIcon {
+  0%,
+  50%,
+  100% {
+    filter: none;
+  }
+  25% {
+    filter: drop-shadow(0 0 4px #a9ceff) brightness(1.5);
+  }
+}
+.nav-shine,
 .search-shimmer {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  animation: searchLightHalo 6s linear infinite;
 }
+.nav-shine {
+  border-radius: 9999px;
+}
+.nav-shine::after,
 .search-shimmer::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    transparent 25%,
-    rgb(255 255 255 / 0.28) 50%,
-    transparent 75%
-  );
-  animation: searchShimmer 4.8s ease-in-out infinite;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.28) 50%, transparent 60%)
+    140% 50% / 300% 100%;
+  animation: searchLightSweep 6s linear infinite;
 }
+.nav-shine::before,
 .search-shimmer::before {
   content: '';
   position: absolute;
   inset: 0;
+  padding: 1.5px;
   border-radius: inherit;
-  padding: 1px;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent 25%, #a9ceff 50%, transparent 75%) 160% 50% / 250%
+  z-index: 2;
+  background: linear-gradient(105deg, transparent 40%, #d2e6ff 50%, transparent 60%) 140% 50% / 300%
     100%;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: searchShimmerGlow 4.8s ease-in-out infinite;
+  animation: searchLightSweep 6s linear infinite;
 }
-.search-shimmer-label {
+.search-light-label {
   position: relative;
   z-index: 1;
-  animation: searchTextGlow 4.8s ease-in-out infinite;
+  background: linear-gradient(105deg, currentColor 40%, #c7e4ff 50%, currentColor 60%) 140% 50% /
+    300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: searchLightText 6s linear infinite;
+}
+.search-light-icon {
+  animation: searchLightIcon 6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-shine,
+  .search-shimmer {
+    animation: none;
+  }
+  .nav-shine::before,
+  .nav-shine::after,
+  .search-shimmer::before,
+  .search-shimmer::after {
+    display: none;
+  }
+  .search-light-label {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+  .search-light-icon {
+    animation: none;
+  }
 }
 .map-launch-glow {
   border: 1px solid transparent;
@@ -995,9 +992,6 @@
   .search-shimmer::before,
   .search-shimmer::after {
     display: none;
-  }
-  .search-shimmer-label {
-    animation: none;
   }
   .map-launch-glow {
     transition: none;

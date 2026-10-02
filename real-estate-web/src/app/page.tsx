@@ -499,7 +499,7 @@ export default function LandingPage() {
                 type="submit"
                 className="search-shimmer w-full rounded-lg bg-primary py-3.5 text-[15px] font-semibold text-on-primary transition-all hover:brightness-110 active:scale-[0.99]"
               >
-                <span className="search-shimmer-label">
+                <span className="search-light-label">
                   {tab === 'publish' ? 'Publicar' : tab === 'rent' ? 'Arrendar' : 'Buscar'}
                 </span>
               </button>

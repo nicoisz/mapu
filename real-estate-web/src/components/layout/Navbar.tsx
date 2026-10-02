@@ -147,7 +147,10 @@ export function Navbar() {
                         : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
                   )}
                 >
-                  <Icon size={16} />
+                  <Icon
+                    size={16}
+                    className={href === '/buscar' ? 'search-light-icon' : undefined}
+                  />
                   {label === 'Favoritos' && favCount > 0 ? (
                     <span className="flex items-center gap-1">
                       {label}
@@ -156,7 +159,9 @@ export function Navbar() {
                       </span>
                     </span>
                   ) : (
-                    label
+                    <span className={href === '/buscar' ? 'search-light-label' : undefined}>
+                      {label}
+                    </span>
                   )}
                 </Link>
               )
@@ -246,14 +251,19 @@ export function Navbar() {
                 )}
               >
                 <div className="relative">
-                  <Icon size={20} />
+                  <Icon
+                    size={20}
+                    className={href === '/buscar' ? 'search-light-icon' : undefined}
+                  />
                   {href === '/favoritos' && favCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                       {favCount}
                     </span>
                   )}
                 </div>
-                <span>{label === 'Mis propiedades' ? 'Panel' : label}</span>
+                <span className={href === '/buscar' ? 'search-light-label' : undefined}>
+                  {label === 'Mis propiedades' ? 'Panel' : label}
+                </span>
               </span>
             </Link>
           )
