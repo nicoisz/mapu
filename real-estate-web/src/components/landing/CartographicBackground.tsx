@@ -1,5 +1,9 @@
-/** Decorative linework only; its wrapper is animated by the landing's GSAP context. */
-export function CartographicBackground({ variant = 'urban' }: { variant?: 'urban' | 'coastal' }) {
+/** Each section names its territory explicitly; patterns are never tiled. */
+export function CartographicBackground({
+  variant,
+}: {
+  variant: 'urban' | 'terrain' | 'rural' | 'neighborhood' | 'coastal'
+}) {
   return (
     <div
       aria-hidden="true"

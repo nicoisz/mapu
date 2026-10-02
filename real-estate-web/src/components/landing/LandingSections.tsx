@@ -153,7 +153,7 @@ export function ProductReel() {
 
   return (
     <section className="reel-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="coastal" />
+      <CartographicBackground variant="terrain" />
       <SectionIntro
         eyebrow="Producto"
         title="Todo el mercado en una pantalla"
@@ -419,7 +419,7 @@ const SELLER_POINTS = [
 export function ActivityFeed() {
   return (
     <section className="activity-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="urban" />
+      <CartographicBackground variant="neighborhood" />
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div className="space-y-8">
           <SectionIntro
@@ -619,7 +619,7 @@ const WHY = [
 export function WhyMapu() {
   return (
     <section className="cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="urban" />
+      <CartographicBackground variant="rural" />
       <h2 className="section-title mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
         <Words text="Por qué MapU" wordClass="section-word" />
       </h2>

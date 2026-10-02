@@ -174,9 +174,9 @@ export default function LandingPage() {
         gsap.utils.toArray<HTMLElement>('.cartographic-drift').forEach((layer) => {
           gsap.fromTo(
             layer,
-            { y: -36 },
+            { y: -24 },
             {
-              y: 36,
+              y: 24,
               ease: 'none',
               scrollTrigger: {
                 trigger: layer.closest('.cartographic-section'),

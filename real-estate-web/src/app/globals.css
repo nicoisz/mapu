@@ -398,7 +398,7 @@
    las utilidades del layer que no ve escritas completas, y varias de
    estas clases se componen con estilos inline. */
 
-/* Cartographic linework: clipped to each section, below all content. */
+/* Each territory has its own composition and generous empty space. */
 .cartographic-section {
   position: relative;
   isolation: isolate;
@@ -409,37 +409,55 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  color: rgb(var(--on-surface) / 0.16);
-  -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
-  mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+  color: rgb(var(--on-surface) / 0.13);
+  -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
+  mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
 }
 .cartographic-drift {
   position: absolute;
-  inset: -64px -6%;
+  inset: -48px 0;
   background-color: currentColor;
-  -webkit-mask: url('/patterns/urban.svg') center / cover no-repeat;
-  mask: url('/patterns/urban.svg') center / cover no-repeat;
+  -webkit-mask: var(--cartographic-art) center / 100% 100% no-repeat;
+  mask: var(--cartographic-art) center / 100% 100% no-repeat;
+}
+.cartographic-background--urban {
+  --cartographic-art: url('/patterns/urban.svg');
+}
+.cartographic-background--terrain {
+  --cartographic-art: url('/patterns/terrain.svg');
+}
+.cartographic-background--rural {
+  --cartographic-art: url('/patterns/rural.svg');
+}
+.cartographic-background--neighborhood {
+  --cartographic-art: url('/patterns/neighborhood.svg');
 }
 .cartographic-background--coastal {
-  color: rgb(var(--on-surface) / 0.19);
-}
-.cartographic-background--coastal .cartographic-drift {
-  -webkit-mask-image: url('/patterns/coastal.svg');
-  mask-image: url('/patterns/coastal.svg');
+  --cartographic-art: url('/patterns/coastal.svg');
 }
 [data-hero] .cartographic-background {
-  color: rgb(var(--on-secondary) / 0.16);
+  color: rgb(var(--on-secondary) / 0.12);
 }
 .cta-card .cartographic-background {
-  color: rgb(var(--on-primary) / 0.19);
+  color: rgb(var(--on-primary) / 0.15);
 }
 @media (max-width: 767px) {
   .cartographic-background {
-    opacity: 0.7;
+    opacity: 0.65;
   }
   .cartographic-drift {
-    -webkit-mask-size: auto 100%;
-    mask-size: auto 100%;
+    -webkit-mask-size: 900px 100%;
+    mask-size: 900px 100%;
+  }
+  .cartographic-background--urban .cartographic-drift,
+  .cartographic-background--rural .cartographic-drift {
+    -webkit-mask-position: left center;
+    mask-position: left center;
+  }
+  .cartographic-background--neighborhood .cartographic-drift,
+  .cartographic-background--coastal .cartographic-drift {
+    -webkit-mask-position: right center;
+    mask-position: right center;
   }
 }
 @media (prefers-reduced-motion: reduce) {
