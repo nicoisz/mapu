@@ -3,150 +3,159 @@
 @tailwind utilities;
 
 /* ──────────────────────────────────────────────────────────────
-   Tinta & Latón — una familia azul-tinta para superficies en ambos
-   temas, índigo como primario y latón reservado a precio/premium.
-   El teal queda como semántica de dato (arriendo), no como adorno.
+   Casa & Mapa — paleta Casavo: lona crema, tinta carbón y naranjo
+   de marca. La tinta es el primario (texto y botones, como Casavo),
+   el naranjo queda como acento de marca y el teal sobrevive como
+   semántica de dato (arriendo).
 
    Regla de superficie: el RELLENO define la tarjeta, el borde solo la
-   remata. Por eso en claro el fondo es gris frío y las tarjetas son
-   blanco puro: antes fondo (#FAF9F7) y tarjeta (#F5F4F1) se separaban
-   1.04:1 y era el borde el que dibujaba la tarjeta entera.
+   remata. Fondo crema, tarjetas blanco puro.
 
    Tokens en canales RGB separados por espacio para que Tailwind
    (`rgb(var(--x) / <alpha-value>)`) mantenga las utilidades de opacidad
    (bg-primary/10, border-outline-variant/30).
    Todo par texto/fondo verificado >= 4.5:1 (>= 3:1 para no-texto).
+   El acento de texto usa un naranjo quemado para pasar contraste;
+   el naranjo brillante vive en --secondary y en rellenos.
    ────────────────────────────────────────────────────────────── */
 
 :root {
-  /* LIGHT — gris frío de fondo, tarjetas blanco puro */
-  --background: 243 244 248;
-  --on-background: 18 20 31;
-  --surface: 243 244 248;
-  --surface-dim: 226 229 238;
+  /* LIGHT — lona blanca (como Casavo), tarjetas gris plano sin borde */
+  --background: 255 255 255;
+  --on-background: 29 29 27;
+  --surface: 255 255 255;
+  --surface-dim: 240 240 237;
   --surface-bright: 255 255 255;
   --surface-container-lowest: 255 255 255;
-  --surface-container-low: 255 255 255;
-  --surface-container: 238 240 246;
-  --surface-container-high: 231 233 241;
-  --surface-container-highest: 223 226 236;
-  --surface-variant: 234 236 243;
-  --surface-tint: 61 70 196;
-  --on-surface: 18 20 31;
-  --on-surface-variant: 90 96 118;
+  --surface-container-low: 250 250 248;
+  --surface-container: 240 240 237;
+  --surface-container-high: 233 233 230;
+  --surface-container-highest: 225 225 221;
+  --surface-variant: 240 240 237;
+  --surface-tint: 255 153 31;
+  --on-surface: 29 29 27;
+  --on-surface-variant: 92 92 90;
 
-  --primary: 61 70 196;
-  --on-primary: 255 255 255;
-  --primary-container: 224 226 250;
-  --on-primary-container: 15 18 74;
+  /* Primario = tinta carbón (#1D1D1B). Botones y texto. */
+  --primary: 29 29 27;
+  --on-primary: 246 246 241;
+  --primary-container: 232 231 226;
+  --on-primary-container: 29 29 27;
 
-  /* Secondary = latón. Solo precio, sellos premium, distinciones. */
-  --secondary: 131 103 47;
-  --on-secondary: 255 255 255;
-  --secondary-container: 245 232 208;
-  --on-secondary-container: 61 46 13;
+  /* Secondary = naranjo de marca (#FF991F). Acentos y sellos. */
+  --secondary: 255 153 31;
+  --on-secondary: 29 29 27;
+  --secondary-container: 255 240 224;
+  --on-secondary-container: 90 46 0;
 
   /* Tertiary = teal. Semántica de arriendo en mapa y chips. */
-  --tertiary: 15 118 110;
+  --tertiary: 13 122 111;
   --on-tertiary: 255 255 255;
-  --tertiary-container: 204 240 234;
+  --tertiary-container: 214 243 238;
   --on-tertiary-container: 4 45 42;
 
-  --accent: 15 118 110;
-  --accent-light: 45 154 140;
-  --accent-dark: 11 90 84;
+  /* Acento de texto: naranjo quemado (contraste AA sobre crema). */
+  --accent: 154 87 0;
+  --accent-light: 255 153 31;
+  --accent-dark: 120 66 0;
 
-  --outline: 122 128 147;
-  --outline-variant: 221 224 234;
-  --border: 221 224 234;
+  --outline: 117 117 115;
+  --outline-variant: 226 226 222;
+  --border: 226 226 222;
 
-  --error: 186 26 26;
+  --error: 179 38 30;
   --on-error: 255 255 255;
   --error-container: 255 218 214;
   --on-error-container: 65 0 2;
 
-  --inverse-surface: 29 33 64;
-  --inverse-on-surface: 236 238 247;
-  --inverse-primary: 142 151 255;
+  --inverse-surface: 29 29 27;
+  --inverse-on-surface: 246 246 241;
+  --inverse-primary: 255 153 31;
 
-  --shadow-color: 22 25 45;
+  --shadow-color: 29 29 27;
 
   /* Borde especular de los gradientes (.grad-a / .grad-b). */
   --glass-spec: 255 255 255;
   --glass-spec-op: 0.9;
 
   /* Gradientes: SOLO métricas destacadas. Ver .grad-a / .grad-b. */
-  --grad-a: linear-gradient(135deg, #ffd9c2, #dcd3ff);
-  --grad-b: linear-gradient(135deg, #d9d6ff, #c6f0e4);
-  --grad-ink: 21 22 43;
+  --grad-a: linear-gradient(135deg, #ffe0bd, #ff991f);
+  --grad-b: linear-gradient(135deg, #f0ede6, #d8d4cc);
+  --grad-ink: 29 29 27;
   color-scheme: light;
 }
 
 .dark {
-  /* DARK — tinta índigo profunda, no negro plano: el negro puro no deja
+  /* DARK — tinta carbón profunda, no negro plano: el negro puro no deja
      nada que desenfocar detrás del vidrio y aplana las capas. */
-  --background: 16 18 40;
-  --on-background: 236 238 247;
-  --surface: 16 18 40;
-  --surface-dim: 11 13 30;
-  --surface-bright: 46 52 96;
-  --surface-container-lowest: 11 13 30;
-  --surface-container-low: 23 26 51;
-  --surface-container: 29 33 64;
-  --surface-container-high: 37 42 78;
-  --surface-container-highest: 46 52 96;
-  --surface-variant: 37 42 78;
-  --surface-tint: 142 151 255;
-  --on-surface: 236 238 247;
-  --on-surface-variant: 212 215 232;
+  --background: 20 20 18;
+  --on-background: 246 246 241;
+  --surface: 20 20 18;
+  --surface-dim: 14 14 12;
+  --surface-bright: 45 44 41;
+  --surface-container-lowest: 14 14 12;
+  --surface-container-low: 27 27 24;
+  --surface-container: 33 33 29;
+  --surface-container-high: 41 41 36;
+  --surface-container-highest: 50 49 44;
+  --surface-variant: 41 41 36;
+  --surface-tint: 255 153 31;
+  --on-surface: 246 246 241;
+  --on-surface-variant: 208 207 199;
 
-  --primary: 142 151 255;
-  --on-primary: 11 13 30;
-  --primary-container: 45 50 120;
-  --on-primary-container: 219 222 255;
+  --primary: 246 246 241;
+  --on-primary: 29 29 27;
+  --primary-container: 55 54 49;
+  --on-primary-container: 240 239 232;
 
-  --secondary: 216 188 134;
-  --on-secondary: 43 33 10;
-  --secondary-container: 74 60 30;
-  --on-secondary-container: 240 224 194;
+  --secondary: 255 176 77;
+  --on-secondary: 43 25 0;
+  --secondary-container: 90 58 15;
+  --on-secondary-container: 255 224 189;
 
   --tertiary: 94 198 180;
   --on-tertiary: 0 55 49;
   --tertiary-container: 20 92 84;
   --on-tertiary-container: 190 240 232;
 
-  --accent: 94 198 180;
-  --accent-light: 140 220 206;
-  --accent-dark: 32 130 119;
+  --accent: 224 160 60;
+  --accent-light: 255 190 110;
+  --accent-dark: 180 120 30;
 
-  --outline: 107 114 153;
-  --outline-variant: 43 48 87;
-  --border: 43 48 87;
+  --outline: 107 106 99;
+  --outline-variant: 60 59 54;
+  --border: 60 59 54;
 
   --error: 255 180 171;
   --on-error: 105 0 5;
   --error-container: 147 0 10;
   --on-error-container: 255 218 214;
 
-  --inverse-surface: 236 238 247;
-  --inverse-on-surface: 29 33 64;
-  --inverse-primary: 61 70 196;
+  --inverse-surface: 246 246 241;
+  --inverse-on-surface: 29 29 27;
+  --inverse-primary: 255 153 31;
 
   --shadow-color: 0 0 0;
 
   --glass-spec: 255 255 255;
   --glass-spec-op: 0.14;
 
-  --grad-a: linear-gradient(135deg, #3b3a8f, #6e5ad6);
-  --grad-b: linear-gradient(135deg, #17505a, #1f7168);
-  --grad-ink: 244 243 255;
+  --grad-a: linear-gradient(135deg, #6a4210, #c8791a);
+  --grad-b: linear-gradient(135deg, #2b2b27, #3c3b35);
+  --grad-ink: 246 246 241;
 
   color-scheme: dark;
 }
 
 @layer base {
   html {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
   }
   body {
     background-color: rgb(var(--background));
@@ -193,8 +202,8 @@
       transform 0.3s ease;
   }
   .accent-glow:hover {
-    box-shadow: 0 18px 40px -12px rgb(var(--primary) / 0.35);
-    border-color: rgb(var(--primary) / 0.6);
+    box-shadow: 0 18px 40px -12px rgb(var(--secondary) / 0.4);
+    border-color: rgb(var(--secondary) / 0.6);
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
@@ -565,7 +574,7 @@
   border-radius: inherit;
   background: radial-gradient(
     420px circle at var(--mx, 50%) var(--my, 50%),
-    rgb(var(--primary) / 0.16),
+    rgb(var(--secondary) / 0.18),
     transparent 45%
   );
   opacity: 0;
@@ -613,7 +622,69 @@
   }
 }
 
-/* Archivo expandido: es el ancho, no el peso, lo que le da carácter. */
+/* Archivo condensado: es el ancho, no el peso, lo que le da carácter.
+   Casavo lleva sus titulares en Bagoss Condensed Light; Archivo a 85% +
+   peso 300 es lo más cerca que queda sin fuentes propietarias. */
 .font-headline {
-  font-stretch: 115%;
+  font-stretch: 90%;
+}
+.font-display {
+  font-family:
+    Archivo,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-stretch: 85%;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+/* ── Nav "Buscar": brillo en movimiento ─────────────────────────
+   Una banda de luz barre el texto y el icono (mix-blend overlay para que
+   aclare lo que pase por debajo) y el pill late con un halo cálido. El
+   overflow oculta mantiene la banda dentro del link, así no invade los
+   ítems vecinos. */
+@keyframes navShineSweep {
+  0% {
+    transform: translateX(-150%) skewX(-18deg);
+  }
+  60%,
+  100% {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+@keyframes navShineGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 168 56 / 0);
+  }
+  50% {
+    box-shadow: 0 0 14px 1px rgb(255 168 56 / 0.75);
+  }
+}
+.nav-shine {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  animation: navShineGlow 3.2s ease-in-out infinite;
+}
+.nav-shine::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.85), transparent);
+  transform: translateX(-150%) skewX(-18deg);
+  animation: navShineSweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-shine,
+  .nav-shine::after {
+    animation: none;
+  }
 }
