@@ -10,6 +10,7 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
+import { CartographicBackground } from '@/components/landing/CartographicBackground'
 import {
   ActivityFeed,
   CtaCards,
@@ -168,6 +169,24 @@ export default function LandingPage() {
             { y: 24, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out' },
             0.25
           )
+
+        // Move only the oversized decorative layer, using the existing scroller.
+        gsap.utils.toArray<HTMLElement>('.cartographic-drift').forEach((layer) => {
+          gsap.fromTo(
+            layer,
+            { y: -24 },
+            {
+              y: 24,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: layer.closest('.cartographic-section'),
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+              },
+            }
+          )
+        })
 
         gsap.from('.property-card', {
           scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 75%' },
@@ -354,8 +373,9 @@ export default function LandingPage() {
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
         data-hero
-        className="relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary"
+        className="cartographic-section relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary"
       >
+        <CartographicBackground variant="urban" />
         <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-14 lg:grid-cols-2 lg:px-14">
           <div>
             <h1 className="font-display text-[2.75rem] leading-[1.04] sm:text-6xl lg:text-[3.9rem] xl:text-[4.4rem]">
@@ -608,7 +628,8 @@ export default function LandingPage() {
 
       {/* ─── CTA ──────────────────────────────────────────── */}
       <section className="cta-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
-        <div className="cta-card relative overflow-hidden rounded-3xl bg-primary p-10 text-on-primary md:p-14">
+        <div className="cta-card cartographic-section relative overflow-hidden rounded-3xl bg-primary p-10 text-on-primary md:p-14">
+          <CartographicBackground variant="coastal" />
           <span
             aria-hidden
             className="orb"

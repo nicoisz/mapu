@@ -398,20 +398,72 @@
    las utilidades del layer que no ve escritas completas, y varias de
    estas clases se componen con estilos inline. */
 
-/* Grilla tenue del hero. Va en ::before para no pelear con el fondo
-   del section, y la máscara la desvanece en los bordes: una grilla que
-   llega hasta el borde se lee como tabla, no como textura. */
-.hero-grid::before {
-  content: '';
+/* Each territory has its own composition and generous empty space. */
+.cartographic-section {
+  position: relative;
+  isolation: isolate;
+}
+.cartographic-background {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(to right, rgb(var(--outline-variant) / 0.6) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(var(--outline-variant) / 0.6) 1px, transparent 1px);
-  background-size: 72px 72px;
-  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 42%, #000 25%, transparent 78%);
-  mask-image: radial-gradient(ellipse 75% 60% at 50% 42%, #000 25%, transparent 78%);
+  z-index: -1;
+  overflow: hidden;
   pointer-events: none;
+  color: rgb(var(--on-surface) / 0.13);
+  -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
+  mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
+}
+.cartographic-drift {
+  position: absolute;
+  inset: -48px 0;
+  background-color: currentColor;
+  -webkit-mask: var(--cartographic-art) center / 100% 100% no-repeat;
+  mask: var(--cartographic-art) center / 100% 100% no-repeat;
+}
+.cartographic-background--urban {
+  --cartographic-art: url('/patterns/urban.svg');
+}
+.cartographic-background--terrain {
+  --cartographic-art: url('/patterns/terrain.svg');
+}
+.cartographic-background--rural {
+  --cartographic-art: url('/patterns/rural.svg');
+}
+.cartographic-background--neighborhood {
+  --cartographic-art: url('/patterns/neighborhood.svg');
+}
+.cartographic-background--coastal {
+  --cartographic-art: url('/patterns/coastal.svg');
+}
+[data-hero] .cartographic-background {
+  color: rgb(var(--on-secondary) / 0.12);
+}
+.cta-card .cartographic-background {
+  color: rgb(var(--on-primary) / 0.15);
+}
+@media (max-width: 767px) {
+  .cartographic-background {
+    opacity: 0.65;
+  }
+  .cartographic-drift {
+    -webkit-mask-size: 900px 100%;
+    mask-size: 900px 100%;
+  }
+  .cartographic-background--urban .cartographic-drift,
+  .cartographic-background--rural .cartographic-drift {
+    -webkit-mask-position: left center;
+    mask-position: left center;
+  }
+  .cartographic-background--neighborhood .cartographic-drift,
+  .cartographic-background--coastal .cartographic-drift {
+    -webkit-mask-position: right center;
+    mask-position: right center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cartographic-drift {
+    transform: none !important;
+  }
 }
 
 /* Orbe difuminado. El tamaño, color y posición van inline en cada uso;
