@@ -872,3 +872,29 @@
     transition-duration: 140ms;
   }
 }
+
+/* A grid track animates to the answer's natural height in both directions. */
+.faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease;
+}
+.faq-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.faq-chevron {
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.faq-chevron[data-open='true'] {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-panel,
+  .faq-chevron {
+    transition: none;
+  }
+}

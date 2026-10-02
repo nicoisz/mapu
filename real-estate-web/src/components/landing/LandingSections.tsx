@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -809,6 +809,9 @@ const FAQS = [
 ]
 
 export function FaqAccordion() {
+  const id = useId()
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({})
+
   return (
     <section
       id="faq"
@@ -823,20 +826,45 @@ export function FaqAccordion() {
           sub="Y si queda algo, escríbenos: estamos para ayudarte con tu propiedad."
         />
         <div className="divide-y divide-outline-variant/50 border-y border-outline-variant/50">
-          {FAQS.map((faq) => (
-            <details key={faq.q} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left">
-                <span className="font-headline text-base font-semibold text-on-surface sm:text-lg">
-                  {faq.q}
-                </span>
-                <ChevronDown
-                  size={20}
-                  className="shrink-0 text-on-surface-variant transition-transform duration-300 group-open:rotate-180"
-                />
-              </summary>
-              <p className="mt-3 max-w-2xl leading-relaxed text-on-surface-variant">{faq.a}</p>
-            </details>
-          ))}
+          {FAQS.map((faq, index) => {
+            const open = !!expanded[index]
+            const panelId = id + '-answer-' + index
+            return (
+              <div key={faq.q} className="py-5">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={panelId}
+                  onClick={() =>
+                    setExpanded((current) => ({ ...current, [index]: !current[index] }))
+                  }
+                  className="flex w-full items-center justify-between gap-4 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                >
+                  <span className="font-headline text-base font-semibold text-on-surface sm:text-lg">
+                    {faq.q}
+                  </span>
+                  <ChevronDown
+                    size={20}
+                    className="faq-chevron shrink-0 text-on-surface-variant"
+                    data-open={open}
+                  />
+                </button>
+                <div
+                  id={panelId}
+                  className="faq-panel"
+                  data-open={open}
+                  aria-hidden={!open}
+                  inert={!open}
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    <p className="pt-3 max-w-2xl leading-relaxed text-on-surface-variant">
+                      {faq.a}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}{' '}
         </div>
       </div>
     </section>
