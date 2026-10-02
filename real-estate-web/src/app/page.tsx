@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { HeroGallery } from '@/components/landing/HeroGallery'
+import { LandingAccents } from '@/components/landing/LandingAccents'
 import { useRouter } from 'next/navigation'
 import { propertyService } from '@/services/propertyService'
 import { formatPriceShort } from '@/lib/utils'
@@ -169,19 +171,22 @@ export default function LandingPage() {
             0.25
           )
 
-        gsap.from('.property-card', {
-          scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 75%' },
-          y: 48,
-          opacity: 0,
-          duration: 0.9,
-          stagger: 0.12,
-          ease: 'power3.out',
-        })
+        if (scroller.querySelector('.property-card'))
+          gsap.from('.property-card', {
+            scrollTrigger: { trigger: '.property-grid-trigger', start: 'top 75%' },
+            y: 48,
+            opacity: 0,
+            duration: 0.9,
+            stagger: 0.12,
+            ease: 'power3.out',
+          })
 
         // Títulos de sección: mismo reveal por palabra que el hero, pero
         // disparado al entrar en pantalla en vez de al cargar.
         gsap.utils.toArray<HTMLElement>('.section-title').forEach((title) => {
-          gsap.from(title.querySelectorAll('.section-word'), {
+          const words = title.querySelectorAll('.section-word')
+          if (words.length === 0) return
+          gsap.from(words, {
             yPercent: 115,
             duration: 0.8,
             stagger: 0.05,
@@ -235,6 +240,47 @@ export default function LandingPage() {
           })
         })
 
+        gsap.to('.hero-photo-parallax', {
+          yPercent: 8,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '[data-hero]',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1.2,
+          },
+        })
+
+        gsap.utils.toArray<HTMLElement>('.landing-accents').forEach((accent, index) => {
+          const section = accent.closest('section')
+          gsap.fromTo(
+            accent.querySelectorAll('.ambient-drawing'),
+            { strokeDashoffset: 1 },
+            {
+              strokeDashoffset: 0,
+              duration: 1.8,
+              stagger: 0.16,
+              ease: 'power2.out',
+              scrollTrigger: { trigger: section, start: 'top 82%' },
+            }
+          )
+          gsap.fromTo(
+            accent.querySelector('.ambient-orbit'),
+            { y: 35, rotate: -8 },
+            {
+              y: -55,
+              rotate: index % 2 ? 10 : 5,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: section,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: 1.5,
+              },
+            }
+          )
+        })
+
         // Por qué MapU: las tarjetas entran escalonadas.
         gsap.from('.why-card', {
           scrollTrigger: { trigger: '.why-card', start: 'top 85%' },
@@ -246,11 +292,11 @@ export default function LandingPage() {
         })
 
         // Resultados: el collage con parallax. Cada foto recorre una distancia
-        // grande y distinta (±100/±140/±80 px) para que las capas se muevan a
+        // grande y distinta (±170/±220/±140 px) para que las capas se muevan a
         // velocidad muy distinta; esa diferencia es la profundidad. Las cifras
         // aparecen de a una.
         gsap.utils.toArray<HTMLElement>('.results-img').forEach((img, i) => {
-          const range = [200, 280, 160][i % 3]
+          const range = [340, 440, 280][i % 3]
           gsap.fromTo(
             img,
             { y: range / 2 },
@@ -354,9 +400,9 @@ export default function LandingPage() {
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
         data-hero
-        className="relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary"
+        className="relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
       >
-        <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-14 lg:grid-cols-2 lg:px-14">
+        <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-12 lg:grid-cols-2 lg:px-6">
           <div>
             <h1 className="font-display text-[2.75rem] leading-[1.04] sm:text-6xl lg:text-[3.9rem] xl:text-[4.4rem]">
               <Words text="Tu lugar en Chile" className="block" />
@@ -453,19 +499,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Foto del producto enmarcada, como la foto del hero de Casavo. */}
-          <div className="hero-reveal relative hidden lg:block">
-            <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-elevated">
-              <Image
-                src="/2.jpg"
-                alt="Casa con vista al valle en la hora dorada"
-                width={1400}
-                height={1500}
-                priority
-                sizes="(max-width: 1024px) 0px, 50vw"
-                className="h-[600px] w-full object-cover object-center"
-              />
-            </div>
+          <div className="hero-reveal relative mx-auto w-full max-w-[620px] lg:max-w-none">
+            <HeroGallery />
           </div>
         </div>
       </section>
@@ -506,8 +541,9 @@ export default function LandingPage() {
       <WhyMapu />
 
       {/* ─── DESTACADAS ───────────────────────────────────── */}
-      <section className="property-grid-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
-        <div className="mb-10 flex items-end justify-between gap-6">
+      <section className="property-grid-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
+        <LandingAccents variant="route" className="accent-featured" />
+        <div className="relative z-10 mb-10 flex items-end justify-between gap-6">
           <SectionIntro
             align="left"
             eyebrow="Destacadas"
@@ -607,7 +643,7 @@ export default function LandingPage() {
       <FaqAccordion />
 
       {/* ─── CTA ──────────────────────────────────────────── */}
-      <section className="cta-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
+      <section className="cta-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
         <div className="cta-card relative overflow-hidden rounded-3xl bg-primary p-10 text-on-primary md:p-14">
           <span
             aria-hidden
