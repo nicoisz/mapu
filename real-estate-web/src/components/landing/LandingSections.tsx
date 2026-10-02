@@ -3,6 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import {
+  ArrowRight,
+  Camera,
+  ChevronDown,
+  Handshake,
+  LineChart,
+  MapPinned,
+  Star,
+} from 'lucide-react'
+import { reviewService, Review } from '@/services/reviewService'
 import { cn } from '@/lib/utils'
 
 /* Secciones de la landing. Solo markup y estado local: todas las entradas
@@ -54,11 +64,11 @@ export function SectionIntro({
     <div
       className={cn('space-y-4', align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-xl')}
     >
-      <span className="section-fade inline-flex items-center gap-2 rounded-full border border-outline-variant/50 bg-surface-container-low/70 px-3 py-1 text-xs font-semibold text-on-surface-variant">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+      <span className="section-fade inline-flex items-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-lowest px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+        <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
         {eyebrow}
       </span>
-      <h2 className="section-title font-headline text-3xl font-bold leading-tight tracking-tight text-on-surface sm:text-4xl">
+      <h2 className="section-title font-display text-4xl leading-[1.02] text-on-surface sm:text-5xl">
         <Words text={title} wordClass="section-word" />
       </h2>
       {sub && <p className="section-fade text-on-surface-variant sm:text-lg">{sub}</p>}
@@ -501,6 +511,316 @@ export function ActivityFeed() {
               ))}
             </ul>
           </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ─── Resultados concretos ─────────────────────────────────────── */
+
+/* Solo promesas verificables del producto: publicar es gratis, no hay
+   comisión, los precios por zona salen del mercado. Nada de cifras de
+   clientes inventadas — eso se infla solo cuando hay datos reales. */
+const STATS = [
+  { value: 'Gratis', label: 'Publicar una propiedad' },
+  { value: '14', label: 'Ciudades de Chile en el mapa' },
+  { value: '0%', label: 'Comisión por publicar' },
+  { value: 'En vivo', label: 'Precio por zona, calculado del mercado' },
+]
+
+/* Fotos dispersas en los bordes, como el collage de "Concrete Results" de
+   Casavo. Solo en desktop: en móvil no hay ancho para que respiren. Cada una
+   lleva su propio parallax (ver GSAP en la página). */
+const RESULTS_IMGS = [
+  { src: '/1.jpg', cls: 'left-0 top-40 w-52 -rotate-3' },
+  { src: '/2.jpg', cls: 'right-0 top-36 w-60 rotate-2' },
+  { src: '/3.jpg', cls: 'left-24 bottom-24 w-44 rotate-2' },
+]
+
+export function StatsBand() {
+  return (
+    <section className="results-trigger relative mx-auto max-w-[1440px] overflow-hidden px-6 py-44 lg:px-20">
+      {RESULTS_IMGS.map((im) => (
+        <div
+          key={im.src}
+          aria-hidden
+          className={cn(
+            'results-img pointer-events-none absolute hidden overflow-hidden rounded-2xl border border-outline-variant/30 shadow-elevated lg:block',
+            im.cls
+          )}
+        >
+          <Image
+            src={im.src}
+            alt=""
+            width={420}
+            height={320}
+            sizes="260px"
+            className="h-40 w-full object-cover"
+          />
+        </div>
+      ))}
+
+      <div className="section-title relative z-10 mx-auto max-w-2xl text-center">
+        <h2 className="font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
+          <Words text="Resultados concretos, historias reales" wordClass="section-word" />
+        </h2>
+        <p className="section-fade mx-auto mt-6 max-w-lg text-lg text-on-surface-variant">
+          Más de{' '}
+          <span className="rounded-full bg-secondary px-3 py-1 font-semibold text-on-secondary">
+            miles de propiedades
+          </span>{' '}
+          publicadas en Chile, con precios calculados del mercado.
+        </p>
+      </div>
+
+      <div className="relative z-10 mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
+        {STATS.map((s) => (
+          <div key={s.label} className="stat-item text-center">
+            <p className="font-display text-4xl leading-none text-on-surface sm:text-5xl">
+              {s.value}
+            </p>
+            <p className="mt-3 text-sm text-on-surface-variant">{s.label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ─── Por qué MapU ─────────────────────────────────────────────── */
+
+const WHY = [
+  {
+    icon: MapPinned,
+    title: 'Todo el mercado en un mapa',
+    desc: 'Busca, filtra y compara propiedades sin salir del mapa, comuna por comuna.',
+  },
+  {
+    icon: LineChart,
+    title: 'Precios por zona',
+    desc: 'Zonas económica, media y premium calculadas con datos reales del mercado.',
+  },
+  {
+    icon: Handshake,
+    title: 'Contacto directo',
+    desc: 'Escribe a quien publica, sin intermediarios ni comisiones escondidas.',
+  },
+  {
+    icon: Camera,
+    title: 'Avisos con fotos reales',
+    desc: 'Galería, características y ubicación de cada propiedad en una ficha clara.',
+  },
+]
+
+export function WhyMapu() {
+  return (
+    <section className="mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <h2 className="section-title mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
+        <Words text="Por qué MapU" wordClass="section-word" />
+      </h2>
+      <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {WHY.map((item) => {
+          const Icon = item.icon
+          return (
+            <div
+              key={item.title}
+              className="why-card flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
+            >
+              <Icon size={44} strokeWidth={1.25} className="text-on-surface" />
+              <div className="mt-24 space-y-3">
+                <h3 className="font-display text-2xl leading-tight text-on-surface">
+                  {item.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-on-surface-variant">{item.desc}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+/* ─── Tarjetas CTA ─────────────────────────────────────────────── */
+
+const CTA_CARDS = [
+  {
+    img: '/3.jpg',
+    title: 'Publica gratis',
+    desc: 'Sube tu propiedad en minutos y llega a compradores de todo Chile.',
+    cta: 'Publicar ahora',
+    href: '/publicar',
+  },
+  {
+    img: '/showcase/mapa.webp',
+    title: 'Explora el mapa',
+    desc: 'Mira precios por zona y encuentra tu próximo barrio.',
+    cta: 'Abrir el mapa',
+    href: '/mapa',
+  },
+  {
+    img: '/1.jpg',
+    title: 'Encuentra tu casa',
+    desc: 'Filtra por comuna, precio y metros, y guarda tus favoritas.',
+    cta: 'Buscar propiedades',
+    href: '/buscar',
+  },
+]
+
+export function CtaCards() {
+  return (
+    <section className="mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
+      <div className="grid gap-6 md:grid-cols-3">
+        {CTA_CARDS.map((card) => (
+          <Link
+            key={card.title}
+            href={card.href}
+            className="group relative flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[1.75rem]"
+          >
+            <Image
+              src={card.img}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent"
+            />
+            <div className="relative z-10 space-y-3 p-7 text-white">
+              <h3 className="font-display text-2xl leading-tight sm:text-[1.75rem]">
+                {card.title}
+              </h3>
+              <p className="text-sm text-white/80">{card.desc}</p>
+              <span className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-on-secondary">
+                {card.cta}
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ─── Historias reales (reseñas) ───────────────────────────────── */
+
+/** Solo reseñas reales y de 4+ estrellas. Si no hay, la sección no se
+ *  dibuja: mejor ausente que con testimonios de relleno. */
+export function Testimonials() {
+  const [reviews, setReviews] = useState<Review[]>([])
+
+  useEffect(() => {
+    let active = true
+    reviewService
+      .listAll()
+      .then((all) => {
+        if (active) {
+          setReviews(all.filter((r) => r.rating >= 4 && r.comment.trim().length > 0).slice(0, 3))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (reviews.length === 0) return null
+
+  return (
+    <section className="mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <SectionIntro
+        eyebrow="Historias reales"
+        title="Lo que dicen quienes ya usaron MapU"
+        sub="Experiencias de compradores, vendedores y corredoras en la plataforma."
+      />
+      <div className="mt-14 grid gap-6 md:grid-cols-3">
+        {reviews.map((r) => (
+          <figure
+            key={r.id}
+            className="flex h-full flex-col gap-6 rounded-3xl border border-outline-variant/40 bg-surface-container-lowest p-7"
+          >
+            <div className="flex gap-0.5" aria-label={`${r.rating} de 5 estrellas`}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  size={16}
+                  className={
+                    i < r.rating ? 'fill-secondary text-secondary' : 'text-outline-variant'
+                  }
+                />
+              ))}
+            </div>
+            <blockquote className="flex-1 font-headline text-lg leading-snug text-on-surface">
+              «{r.comment}»
+            </blockquote>
+            <figcaption className="flex items-center gap-3 border-t border-outline-variant/40 pt-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-sm font-bold text-secondary">
+                {(r.author_name ?? '?').charAt(0)}
+              </span>
+              <span className="text-sm">
+                <b className="block text-on-surface">{r.author_name ?? 'Usuario MapU'}</b>
+                <span className="text-on-surface-variant">
+                  {r.property_title ? `Sobre «${r.property_title}»` : 'En MapU'}
+                </span>
+              </span>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ─── Preguntas frecuentes ─────────────────────────────────────── */
+
+const FAQS = [
+  {
+    q: '¿Publicar una propiedad tiene costo?',
+    a: 'No. Publicar es gratis y no cobramos comisión: creas tu aviso, subes las fotos y lo ves en el mapa al instante.',
+  },
+  {
+    q: '¿De dónde salen los precios por zona?',
+    a: 'Se calculan con los valores de las propiedades publicadas en cada comuna y se pintan sobre el mapa en zonas económica, media y premium.',
+  },
+  {
+    q: '¿Cómo contacto a quien publica?',
+    a: 'Desde la ficha de la propiedad puedes escribirle directo o llamarlo. No hay intermediarios en el medio.',
+  },
+  {
+    q: '¿Puedo publicar desde el celular?',
+    a: 'Sí. MapU funciona en el navegador del teléfono y también en la app, con la misma cuenta y tus favoritos sincronizados.',
+  },
+]
+
+export function FaqAccordion() {
+  return (
+    <section id="faq" className="mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+        <SectionIntro
+          align="left"
+          eyebrow="Preguntas frecuentes"
+          title="Lo que suele preguntarse"
+          sub="Y si queda algo, escríbenos: estamos para ayudarte con tu propiedad."
+        />
+        <div className="divide-y divide-outline-variant/50 border-y border-outline-variant/50">
+          {FAQS.map((faq) => (
+            <details key={faq.q} className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left">
+                <span className="font-headline text-base font-semibold text-on-surface sm:text-lg">
+                  {faq.q}
+                </span>
+                <ChevronDown
+                  size={20}
+                  className="shrink-0 text-on-surface-variant transition-transform duration-300 group-open:rotate-180"
+                />
+              </summary>
+              <p className="mt-3 max-w-2xl leading-relaxed text-on-surface-variant">{faq.a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>

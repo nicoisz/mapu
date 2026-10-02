@@ -156,7 +156,7 @@ export default function MiniMapInner({
         id: 'mini-zone-highlight',
         type: 'line',
         source: ZONE_SOURCE,
-        paint: { 'line-color': '#12141F', 'line-width': 2.5 },
+        paint: { 'line-color': '#1D1D1B', 'line-width': 2.5 },
         filter: ['==', ['get', 'id'], hlId],
       })
     }

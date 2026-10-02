@@ -157,8 +157,8 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
   wrap.style.cursor = 'pointer'
   const size = count < 10 ? 38 : count < 100 ? 46 : 56
 
-  const bg = isDark ? '#171A33' : '#ffffff'
-  const fg = isDark ? '#ECEEF7' : '#12141F'
+  const bg = isDark ? '#21211D' : '#ffffff'
+  const fg = isDark ? '#F6F6F1' : '#1D1D1B'
   const edge = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.15)'
 
   const inner = document.createElement('div')

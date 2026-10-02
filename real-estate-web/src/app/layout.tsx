@@ -17,10 +17,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {/* Titulares: Archivo (Omnibus-Type) expandido. Cuerpo: fuente del sistema. */}
+        {/* Titulares: Archivo (Omnibus-Type) condensada, hasta light.
+            Cuerpo: Inter. */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Inter:wght@400;500;600;700&display=swap"
         />
         <link
           rel="stylesheet"
