@@ -291,6 +291,20 @@ export default function LandingPage() {
           ease: 'power3.out',
         })
 
+        // Animate complete action cards; individual CSS translate handles hover separately.
+        gsap.utils.toArray<HTMLElement>('.card-reveal').forEach((card, index) => {
+          gsap.from(card, {
+            y: 24,
+            scale: 0.985,
+            opacity: 0,
+            duration: 0.75,
+            delay: (index % 3) * 0.07,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+            scrollTrigger: { trigger: card, start: 'top 90%', once: true },
+          })
+        })
+
         // Resultados: el collage con parallax. Cada foto recorre una distancia
         // grande y distinta (±170/±220/±140 px) para que las capas se muevan a
         // velocidad muy distinta; esa diferencia es la profundidad. Las cifras
@@ -570,14 +584,14 @@ export default function LandingPage() {
 
             return (
               <Link key={property.id} href={`/propiedad/${property.id}`} className="group block">
-                <div className="property-card spotlight accent-glow h-full overflow-hidden rounded-3xl border border-outline-variant/50 bg-surface-container-lowest transition-all duration-300 group-hover:-translate-y-1.5">
+                <div className="property-card card-motion spotlight accent-glow h-full overflow-hidden rounded-3xl border border-outline-variant/50 bg-surface-container-lowest">
                   <div className="relative h-60 overflow-hidden">
                     {mainImg && (
                       <Image
                         src={mainImg.url}
                         alt={property.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     )}

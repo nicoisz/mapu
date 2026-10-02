@@ -634,7 +634,7 @@ export function WhyMapu() {
           return (
             <div
               key={item.title}
-              className="why-card why-detail relative overflow-hidden flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
+              className="why-card card-motion why-detail relative overflow-hidden flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
             >
               <span aria-hidden className="why-detail-orbit" />
               <span className="why-icon relative z-10">
@@ -688,14 +688,14 @@ export function CtaCards() {
           <Link
             key={card.title}
             href={card.href}
-            className="group relative flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[1.75rem]"
+            className="card-motion card-reveal group relative flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[1.75rem]"
           >
             <Image
               src={card.img}
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              className="object-cover"
             />
             <span
               aria-hidden
@@ -708,7 +708,7 @@ export function CtaCards() {
               <p className="text-sm text-white/80">{card.desc}</p>
               <span className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-on-secondary">
                 {card.cta}
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                <ArrowRight size={16} />
               </span>
             </div>
           </Link>
@@ -753,7 +753,7 @@ export function Testimonials() {
         {reviews.map((r) => (
           <figure
             key={r.id}
-            className="flex h-full flex-col gap-6 rounded-3xl border border-outline-variant/40 bg-surface-container-lowest p-7"
+            className="card-motion flex h-full flex-col gap-6 rounded-3xl border border-outline-variant/40 bg-surface-container-lowest p-7"
           >
             <div className="flex gap-0.5" aria-label={`${r.rating} de 5 estrellas`}>
               {Array.from({ length: 5 }).map((_, i) => (
