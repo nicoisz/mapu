@@ -10,6 +10,7 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
+import { CartographicBackground } from '@/components/landing/CartographicBackground'
 import {
   ActivityFeed,
   FeatureHub,
@@ -188,6 +189,24 @@ export default function LandingPage() {
             { y: 24, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out' },
             0.25
           )
+
+        // Move only the oversized decorative layer, using the existing scroller.
+        gsap.utils.toArray<HTMLElement>('.cartographic-drift').forEach((layer) => {
+          gsap.fromTo(
+            layer,
+            { y: -36 },
+            {
+              y: 36,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: layer.closest('.cartographic-section'),
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+              },
+            }
+          )
+        })
 
         // Contadores. Se anima un objeto plano y se escribe textContent:
         // tweenear el nodo directo obliga a re-parsear el texto en cada frame.
@@ -394,7 +413,7 @@ export default function LandingPage() {
     >
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
-        className="hero-grid relative -mt-16 flex min-h-[94vh] items-center justify-center overflow-hidden px-6 pt-32 pb-20"
+        className="cartographic-section relative -mt-16 flex min-h-[94vh] items-center justify-center overflow-hidden px-6 pt-32 pb-20"
         style={
           {
             '--orb-1': 'rgb(var(--primary) / 0.30)',
@@ -403,6 +422,7 @@ export default function LandingPage() {
           } as React.CSSProperties
         }
       >
+        <CartographicBackground variant="urban" />
         {ORBS.map((orb, i) => (
           <span
             key={i}
@@ -640,7 +660,8 @@ export default function LandingPage() {
       </section>
 
       {/* ─── CÓMO FUNCIONA ────────────────────────────────── */}
-      <section className="how-trigger mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
+      <section className="how-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-20 lg:px-20">
+        <CartographicBackground variant="coastal" />
         <div className="mb-16">
           <SectionIntro
             eyebrow="Cómo funciona"
@@ -682,7 +703,8 @@ export default function LandingPage() {
 
       {/* ─── CTA ──────────────────────────────────────────── */}
       <section className="cta-trigger mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
-        <div className="cta-card grad-a relative overflow-hidden rounded-3xl p-10 md:p-14">
+        <div className="cta-card cartographic-section grad-a relative overflow-hidden rounded-3xl p-10 md:p-14">
+          <CartographicBackground variant="coastal" />
           <span
             aria-hidden
             className="orb"

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { CartographicBackground } from './CartographicBackground'
 
 /* Secciones de la landing. Solo markup y estado local: todas las entradas
    al hacer scroll las registra la página en un único gsap.context, por
@@ -141,7 +142,8 @@ export function ProductReel() {
   const slide = SLIDES[active]
 
   return (
-    <section className="reel-trigger mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="reel-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <CartographicBackground variant="coastal" />
       <SectionIntro
         eyebrow="Producto"
         title="Todo el mercado en una pantalla"
@@ -283,7 +285,8 @@ const HUB_POINTS = HUB_FEATURES.map((_, i) => {
 
 export function FeatureHub() {
   return (
-    <section className="hub-trigger mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="hub-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <CartographicBackground variant="urban" />
       <SectionIntro
         eyebrow="Plataforma"
         title="Todo lo que necesitas, en un solo lugar"
@@ -406,7 +409,8 @@ const SELLER_POINTS = [
 
 export function ActivityFeed() {
   return (
-    <section className="activity-trigger mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="activity-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <CartographicBackground variant="urban" />
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div className="space-y-8">
           <SectionIntro

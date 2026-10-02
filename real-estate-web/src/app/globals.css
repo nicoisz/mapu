@@ -402,20 +402,48 @@
    las utilidades del layer que no ve escritas completas, y varias de
    estas clases se componen con estilos inline. */
 
-/* Grilla tenue del hero. Va en ::before para no pelear con el fondo
-   del section, y la máscara la desvanece en los bordes: una grilla que
-   llega hasta el borde se lee como tabla, no como textura. */
-.hero-grid::before {
-  content: '';
+/* Cartographic linework: clipped to each section, below all content. */
+.cartographic-section {
+  position: relative;
+  isolation: isolate;
+}
+.cartographic-background {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(to right, rgb(var(--outline-variant) / 0.6) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(var(--outline-variant) / 0.6) 1px, transparent 1px);
-  background-size: 72px 72px;
-  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 42%, #000 25%, transparent 78%);
-  mask-image: radial-gradient(ellipse 75% 60% at 50% 42%, #000 25%, transparent 78%);
+  z-index: -1;
+  overflow: hidden;
   pointer-events: none;
+  color: rgb(var(--on-surface) / 0.16);
+  -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+}
+.cartographic-drift {
+  position: absolute;
+  inset: -64px -6%;
+  background-color: currentColor;
+  -webkit-mask: url('/patterns/urban.svg') center / cover no-repeat;
+  mask: url('/patterns/urban.svg') center / cover no-repeat;
+}
+.cartographic-background--coastal {
+  color: rgb(var(--on-surface) / 0.19);
+}
+.cartographic-background--coastal .cartographic-drift {
+  -webkit-mask-image: url('/patterns/coastal.svg');
+  mask-image: url('/patterns/coastal.svg');
+}
+@media (max-width: 767px) {
+  .cartographic-background {
+    opacity: 0.7;
+  }
+  .cartographic-drift {
+    -webkit-mask-size: auto 100%;
+    mask-size: auto 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cartographic-drift {
+    transform: none !important;
+  }
 }
 
 /* Orbe difuminado. El tamaño, color y posición van inline en cada uso;
