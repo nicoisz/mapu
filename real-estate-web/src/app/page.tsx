@@ -12,7 +12,6 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
-import { ArchitecturalBackground } from '@/components/landing/ArchitecturalBackground'
 import {
   ActivityFeed,
   CtaCards,
@@ -420,9 +419,8 @@ export default function LandingPage() {
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
         data-hero
-        className="blueprint-section relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
+        className="relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
       >
-        <ArchitecturalBackground variant="courtyard" />
         <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-12 lg:grid-cols-2 lg:px-6">
           <div>
             <h1 className="font-display text-[2.75rem] leading-[1.04] sm:text-6xl lg:text-[3.9rem] xl:text-[4.4rem]">
