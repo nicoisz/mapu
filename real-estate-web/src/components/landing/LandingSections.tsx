@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { reviewService, Review } from '@/services/reviewService'
 import { cn } from '@/lib/utils'
+import { LandingAccents } from './LandingAccents'
 import { CartographicBackground } from './CartographicBackground'
 
 /* Secciones de la landing. Solo markup y estado local: todas las entradas
@@ -63,7 +64,10 @@ export function SectionIntro({
 }) {
   return (
     <div
-      className={cn('space-y-4', align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-xl')}
+      className={cn(
+        'relative z-10 space-y-4',
+        align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-xl'
+      )}
     >
       <span className="section-fade inline-flex items-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-lowest px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
         <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
@@ -152,8 +156,9 @@ export function ProductReel() {
   const slide = SLIDES[active]
 
   return (
-    <section className="reel-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="reel-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <CartographicBackground variant="terrain" />
+      <LandingAccents variant="contour" className="accent-reel" />
       <SectionIntro
         eyebrow="Producto"
         title="Todo el mercado en una pantalla"
@@ -295,7 +300,8 @@ const HUB_POINTS = HUB_FEATURES.map((_, i) => {
 
 export function FeatureHub() {
   return (
-    <section className="hub-trigger mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="hub-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+      <LandingAccents variant="orbit" className="accent-hub" />
       <SectionIntro
         eyebrow="Plataforma"
         title="Todo lo que necesitas, en un solo lugar"
@@ -418,8 +424,9 @@ const SELLER_POINTS = [
 
 export function ActivityFeed() {
   return (
-    <section className="activity-trigger cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="activity-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <CartographicBackground variant="neighborhood" />
+      <LandingAccents variant="orbit" className="accent-activity" />
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div className="space-y-8">
           <SectionIntro
@@ -537,13 +544,14 @@ const STATS = [
    lleva su propio parallax (ver GSAP en la página). */
 const RESULTS_IMGS = [
   { src: '/1.jpg', cls: 'left-0 top-40 w-52 -rotate-3' },
-  { src: '/2.jpg', cls: 'right-0 top-36 w-60 rotate-2' },
+  { src: '/landing/country-sunset.webp', cls: 'right-0 top-36 w-60 rotate-2' },
   { src: '/3.jpg', cls: 'left-24 bottom-24 w-44 rotate-2' },
 ]
 
 export function StatsBand() {
   return (
-    <section className="results-trigger relative mx-auto max-w-[1440px] overflow-hidden px-6 py-44 lg:px-20">
+    <section className="results-trigger relative isolate mx-auto max-w-[1440px] overflow-hidden px-6 py-44 lg:px-20">
+      <LandingAccents variant="contour" className="accent-results" />
       {RESULTS_IMGS.map((im) => (
         <div
           key={im.src}
@@ -618,20 +626,24 @@ const WHY = [
 
 export function WhyMapu() {
   return (
-    <section className="cartographic-section mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section className="why-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <CartographicBackground variant="rural" />
-      <h2 className="section-title mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
+      <LandingAccents variant="route" className="accent-why" />
+      <h2 className="section-title relative z-10 mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
         <Words text="Por qué MapU" wordClass="section-word" />
       </h2>
-      <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="relative z-10 mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {WHY.map((item) => {
           const Icon = item.icon
           return (
             <div
               key={item.title}
-              className="why-card flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
+              className="why-card why-detail relative overflow-hidden flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
             >
-              <Icon size={44} strokeWidth={1.25} className="text-on-surface" />
+              <span aria-hidden className="why-detail-orbit" />
+              <span className="why-icon relative z-10">
+                <Icon size={44} strokeWidth={1.25} className="text-on-surface" />
+              </span>
               <div className="mt-24 space-y-3">
                 <h3 className="font-display text-2xl leading-tight text-on-surface">
                   {item.title}
@@ -802,7 +814,11 @@ const FAQS = [
 
 export function FaqAccordion() {
   return (
-    <section id="faq" className="mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
+    <section
+      id="faq"
+      className="landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20"
+    >
+      <LandingAccents variant="contour" className="accent-faq" />
       <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <SectionIntro
           align="left"
