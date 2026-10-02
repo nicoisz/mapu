@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -65,19 +65,34 @@ export function Navbar() {
   const { count: favCount } = useFavoritesContext()
   const [scrolled, setScrolled] = useState(false)
 
+  // La barra se achica recién cuando el hero termina de pasar bajo el nav,
+  // no a los pocos px de scroll: mientras se ve el naranjo del hero, la barra
+  // tiene que seguir naranja y a todo el ancho.
+  const heroThreshold = useRef(40)
   useEffect(() => {
-    const handler = (e: Event) => {
-      setScrolled((e as CustomEvent<{ y: number }>).detail.y > 40)
+    setScrolled(false)
+    const measure = () => {
+      const hero = document.querySelector<HTMLElement>('[data-hero]')
+      heroThreshold.current = hero ? Math.max(160, hero.offsetHeight - 80) : 40
     }
+    const handler = (e: Event) => {
+      setScrolled((e as CustomEvent<{ y: number }>).detail.y > heroThreshold.current)
+    }
+    measure()
+    window.addEventListener('resize', measure)
     window.addEventListener('mapu:scroll', handler as EventListener)
-    return () => window.removeEventListener('mapu:scroll', handler as EventListener)
-  }, [])
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('mapu:scroll', handler as EventListener)
+    }
+  }, [pathname])
 
   const isHome = pathname === '/'
-  // En el hero la nav flota como pill centrado; al scrollear pasa a barra
-  // completa. Es solo forma y posición: los colores son los del tema en los
-  // dos estados, porque detrás del pill ya no hay foto sino el fondo.
-  const pill = isHome && !scrolled
+  // En el hero la barra es naranja a todo el ancho (mismo color que el hero);
+  // al salir del hero se achica a un pill blanco centrado. En el resto del
+  // sitio la barra queda sólida de borde a borde.
+  const floating = isHome && scrolled
+  const heroBar = isHome && !scrolled
 
   function handleLogout() {
     logout()
@@ -87,16 +102,18 @@ export function Navbar() {
   return (
     <nav
       className={cn(
-        'fixed left-0 right-0 z-50 flex transition-all duration-500',
-        pill ? 'top-4 px-4 justify-center' : 'top-0'
+        'fixed left-0 right-0 z-50 flex justify-center transition-all duration-500',
+        floating ? 'top-4 px-4' : 'top-0 px-0'
       )}
     >
       <div
         className={cn(
-          'flex items-center transition-all duration-500',
-          pill
-            ? 'glass h-14 w-auto max-w-full gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
-            : 'glass h-16 w-full gap-4 px-4 border-b border-outline-variant/30'
+          'flex w-full items-center transition-all duration-500',
+          floating
+            ? 'solid-chrome h-14 max-w-2xl gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
+            : heroBar
+              ? 'h-16 max-w-full gap-4 rounded-none bg-secondary px-4 text-on-secondary'
+              : 'solid-chrome h-16 max-w-full gap-4 rounded-none border-b border-outline-variant/30 px-4'
         )}
       >
         <Link
@@ -108,9 +125,7 @@ export function Navbar() {
           <span className="hidden text-on-surface sm:inline">{APP_CONFIG.name}</span>
           <span className="text-on-surface sm:hidden">MapU</span>
         </Link>
-
-        <div className={pill ? 'w-2' : 'flex-1'} />
-
+        <div className={floating ? 'w-2' : 'flex-1'} />
         <div className="hidden md:flex items-center gap-1">
           {commonLinks
             .filter(({ href }) => !(href === '/buscar' && pathname === '/buscar'))
@@ -122,9 +137,14 @@ export function Navbar() {
                   href={href}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
-                    isActive
-                      ? 'text-primary font-bold'
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                    href === '/buscar' && 'nav-shine',
+                    heroBar
+                      ? isActive
+                        ? 'font-bold text-on-secondary'
+                        : 'text-on-secondary/75 hover:bg-black/5 hover:text-on-secondary'
+                      : isActive
+                        ? 'font-bold text-primary'
+                        : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
                   )}
                 >
                   <Icon size={16} />
@@ -142,7 +162,6 @@ export function Navbar() {
               )
             })}
         </div>
-
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {isAuthenticated && user ? (
@@ -196,14 +215,14 @@ export function Navbar() {
               className={cn(
                 'flex items-center gap-1.5 px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-95',
                 'bg-primary text-on-primary',
-                pill ? 'rounded-full' : 'rounded-lg'
+                floating ? 'rounded-full' : 'rounded-lg'
               )}
             >
               <LogIn size={16} />
               Ingresar
             </Link>
           )}
-        </div>
+        </div>{' '}
       </div>
 
       {/* Mobile bottom nav */}
@@ -220,15 +239,22 @@ export function Navbar() {
                 isActive ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
               )}
             >
-              <div className="relative">
-                <Icon size={20} />
-                {href === '/favoritos' && favCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {favCount}
-                  </span>
+              <span
+                className={cn(
+                  'flex flex-col items-center gap-0.5',
+                  href === '/buscar' && 'nav-shine px-4 py-1'
                 )}
-              </div>
-              <span>{label === 'Mis propiedades' ? 'Panel' : label}</span>
+              >
+                <div className="relative">
+                  <Icon size={20} />
+                  {href === '/favoritos' && favCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {favCount}
+                    </span>
+                  )}
+                </div>
+                <span>{label === 'Mis propiedades' ? 'Panel' : label}</span>
+              </span>
             </Link>
           )
         })}

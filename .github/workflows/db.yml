@@ -1,0 +1,61 @@
+name: DB
+
+on:
+  pull_request:
+    paths:
+      - 'real-estate-web/supabase/**'
+      - 'real-estate-web/src/types/database.generated.ts'
+      - 'real-estate-web/package.json'
+      - 'real-estate-web/package-lock.json'
+      - 'real-estate-web/.prettierrc'
+      - '.github/workflows/db.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'real-estate-web/supabase/**'
+      - 'real-estate-web/src/types/database.generated.ts'
+      - 'real-estate-web/package.json'
+      - 'real-estate-web/package-lock.json'
+      - 'real-estate-web/.prettierrc'
+      - '.github/workflows/db.yml'
+
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: real-estate-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: real-estate-web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.119.0
+
+      - name: Start local Postgres
+        run: supabase db start
+
+      - name: Apply migrations + seed
+        run: supabase db reset
+
+      - name: Smoke tests (pgTAP)
+        run: supabase test db
+
+      - name: Check generated types are up to date
+        run: |
+          supabase gen types typescript --local > /tmp/database.generated.ts
+          npx --no-install prettier --config .prettierrc --write /tmp/database.generated.ts
+          diff -u src/types/database.generated.ts /tmp/database.generated.ts

@@ -129,7 +129,7 @@ function makePinElement(
     <div style="
       background:${bg};color:#ffffff;
       padding:4px 10px;border-radius:9999px;
-      font-size:11px;font-weight:700;white-space:nowrap;font-family:Manrope,sans-serif;
+      font-size:11px;font-weight:700;white-space:nowrap;font-family:inherit;
       box-shadow:0 3px 10px rgba(0,0,0,${isSelected ? '0.5' : '0.3'});
       border:${isSelected ? '2px' : '1.5px'} solid ${edge};
     ">${diamond}${label}</div>
@@ -157,8 +157,8 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
   wrap.style.cursor = 'pointer'
   const size = count < 10 ? 38 : count < 100 ? 46 : 56
 
-  const bg = isDark ? '#171A33' : '#ffffff'
-  const fg = isDark ? '#ECEEF7' : '#12141F'
+  const bg = isDark ? '#21211D' : '#ffffff'
+  const fg = isDark ? '#F6F6F1' : '#1D1D1B'
   const edge = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.15)'
 
   const inner = document.createElement('div')
@@ -169,7 +169,7 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
       width:${size}px;height:${size}px;border-radius:9999px;
       background:${bg};color:${fg};
       display:flex;align-items:center;justify-content:center;
-      font-size:13px;font-weight:800;font-family:Manrope,sans-serif;
+      font-size:13px;font-weight:800;font-family:inherit;
       box-shadow:0 4px 14px rgba(0,0,0,0.35);
       border:2px solid ${edge};
       transition:background 0.2s ease,color 0.2s ease,border-color 0.2s ease;

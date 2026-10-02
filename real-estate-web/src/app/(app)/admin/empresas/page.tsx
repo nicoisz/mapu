@@ -165,7 +165,7 @@ export default function AdminCompaniesPage() {
       )}
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <form
             onSubmit={handleCreate}
             className="bg-surface-container-low w-full max-w-sm rounded-2xl border border-outline-variant/40 p-5 space-y-4"

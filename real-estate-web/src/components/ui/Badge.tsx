@@ -16,7 +16,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center font-semibold rounded-full backdrop-blur-sm',
+        'inline-flex items-center font-semibold rounded-full',
         {
           'bg-primary text-on-primary': variant === 'default',
           'bg-secondary-container text-on-secondary-container': variant === 'sale',
