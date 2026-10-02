@@ -12,6 +12,7 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
+import { landingSearchUrl } from '@/lib/landingSearch'
 import {
   ActivityFeed,
   CtaCards,
@@ -49,12 +50,11 @@ const COMUNAS = [
   'Temuco',
 ]
 
-/** Pestañas del buscador, al estilo del conmutador de Casavo. Cada una
- *  antepone la palabra que `searchService` ya traduce a filtro. */
+/** Search tabs select an explicit operation filter or start a publication. */
 const HERO_TABS = [
-  { id: 'sale', label: 'Comprar', keyword: 'venta' },
-  { id: 'rent', label: 'Arrendar', keyword: 'arriendo' },
-  { id: 'publish', label: 'Publicar', keyword: '' },
+  { id: 'sale', label: 'Comprar' },
+  { id: 'rent', label: 'Arrendar' },
+  { id: 'publish', label: 'Publicar' },
 ] as const
 type HeroTab = (typeof HERO_TABS)[number]['id']
 
@@ -138,9 +138,7 @@ export default function LandingPage() {
       router.push('/publicar')
       return
     }
-    const keyword = HERO_TABS.find((t) => t.id === tab)?.keyword ?? ''
-    const parts = [keyword, searchValue.trim(), propertyType].filter(Boolean)
-    router.push(parts.length ? `/buscar?q=${encodeURIComponent(parts.join(' '))}` : '/buscar')
+    router.push(landingSearchUrl(tab, searchValue, propertyType))
   }
 
   useEffect(() => {
@@ -463,13 +461,14 @@ export default function LandingPage() {
                   <input
                     id="hero-q"
                     type="text"
-                    value={searchValue}
+                    readOnly={tab === 'publish'}
+                    value={tab === 'publish' ? '' : searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                     placeholder={
                       tab === 'rent'
                         ? '¿Dónde quieres arrendar?'
                         : tab === 'publish'
-                          ? 'Ingresa para publicar tu propiedad'
+                          ? 'Completa tu propiedad sin iniciar sesión'
                           : 'Ciudad, barrio o región...'
                     }
                     className="w-full bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
@@ -498,18 +497,20 @@ export default function LandingPage() {
               </div>
               <button
                 type="submit"
-                className="btn-shine w-full rounded-lg bg-primary py-3.5 text-[15px] font-semibold text-on-primary transition-all hover:brightness-110 active:scale-[0.99]"
+                className="search-shimmer w-full rounded-lg bg-primary py-3.5 text-[15px] font-semibold text-on-primary transition-all hover:brightness-110 active:scale-[0.99]"
               >
-                {tab === 'publish' ? 'Publicar' : tab === 'rent' ? 'Arrendar' : 'Buscar'}
+                <span className="search-shimmer-label">
+                  {tab === 'publish' ? 'Publicar' : tab === 'rent' ? 'Arrendar' : 'Buscar'}
+                </span>
               </button>
             </form>
 
             <p className="hero-reveal mt-4 text-sm text-on-secondary/65">
-              Publicar es gratis · precios por zona calculados del mercado · sin comisión
+              Una propiedad gratis para particulares · planes para corredoras y más propiedades
             </p>
 
             <p className="hero-reveal mt-16 text-sm font-medium">
-              Miles de propiedades en 14 regiones de Chile
+              Construyamos el próximo gran mapa inmobiliario de Chile
             </p>
           </div>
 
@@ -676,7 +677,7 @@ export default function LandingPage() {
                 ¿Tienes una propiedad para publicar?
               </h2>
               <p className="text-lg leading-relaxed opacity-80">
-                Publicar es gratis. Los mensajes y favoritos de cada aviso llegan a tu panel.
+                Una propiedad gratis para particulares. Los mensajes y favoritos llegan a tu panel.
               </p>
             </div>
             <Link
@@ -719,7 +720,7 @@ export default function LandingPage() {
               links: [
                 { label: 'Buscar propiedades', href: '/buscar' },
                 { label: 'Mapa interactivo', href: '/mapa' },
-                { label: 'Publicar gratis', href: '/publicar' },
+                { label: 'Publicar propiedad', href: '/publicar' },
                 { label: 'Favoritos', href: '/favoritos' },
               ],
             },

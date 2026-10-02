@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { searchService } from '@/services/searchService'
+import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { PropertySearchFilters, PropertySearchQuery, SearchSuggestion } from '@/types/search'
 
@@ -14,15 +15,25 @@ const SORT_MAP: Record<SortOption, Pick<PropertySearchQuery, 'sortBy' | 'sortOrd
   area_desc: { sortBy: 'area', sortOrder: 'desc' },
 }
 
-export function useSearch(initialQuery = '') {
+export function useSearch(initialQuery = '', initialOperation?: PropertyOperation) {
   const [query, setQuery] = useState(initialQuery)
 
   // Sync when the URL-provided query changes (e.g. navigating from the landing
   // search to /buscar?q=... while already on the page).
   useEffect(() => {
-    if (initialQuery) setQuery(initialQuery)
+    setQuery(initialQuery)
   }, [initialQuery])
-  const [filters, setFilters] = useState<PropertySearchFilters>({})
+  const [filters, setFilters] = useState<PropertySearchFilters>(() =>
+    initialOperation ? { operation: initialOperation } : {}
+  )
+  useEffect(() => {
+    setFilters((previous) => {
+      const next = { ...previous }
+      if (initialOperation) next.operation = initialOperation
+      else delete next.operation
+      return next
+    })
+  }, [initialOperation])
   const [sort, setSort] = useState<SortOption>('recent')
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [results, setResults] = useState<Property[]>([])

@@ -6,6 +6,7 @@ import { FREE_PLAN_LISTINGS_LIMIT } from '@/constants'
 import { getSupabase } from '@/lib/supabase'
 import { translateError as sharedTranslateError } from '@/lib/userMessages'
 import { propertyService } from '@/services/propertyService'
+import { safeRedirectPath } from '@/lib/redirect'
 
 /** Row in public.profiles — schema shared with the mobile app. */
 interface ProfileRow {
@@ -189,7 +190,14 @@ export const authService = {
     const { data: res, error } = await getSupabase().auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { name: data.name, user_type: data.userType ?? UserType.INDIVIDUAL } },
+      options: {
+        data: { name: data.name, user_type: data.userType ?? UserType.INDIVIDUAL },
+        emailRedirectTo:
+          typeof window !== 'undefined'
+            ? window.location.origin +
+              safeRedirectPath(new URLSearchParams(window.location.search).get('next'))
+            : undefined,
+      },
     })
     if (error) return { success: false, error: translateError(error.message) }
 
@@ -207,7 +215,13 @@ export const authService = {
   async loginWithSocial(provider: 'google' | 'apple' | 'facebook'): Promise<AuthResult> {
     const { error } = await getSupabase().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+      options: {
+        redirectTo:
+          typeof window !== 'undefined'
+            ? window.location.origin +
+              safeRedirectPath(new URLSearchParams(window.location.search).get('next'))
+            : undefined,
+      },
     })
     if (error)
       return {

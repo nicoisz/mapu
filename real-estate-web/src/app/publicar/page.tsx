@@ -20,6 +20,8 @@ import {
   GeocodeSuggestion,
 } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { loadPublishDraft, savePublishDraft, clearPublishDraft } from '@/lib/publishDraft'
 import { Input } from '@/components/ui/Input'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { GlowLoader } from '@/components/ui/GlowLoader'
@@ -109,7 +111,13 @@ export default function PublicarPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
-  const { user, isAuthenticated, hasRemainingListings, refreshUser } = useAuthContext()
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    hasRemainingListings,
+    refreshUser,
+  } = useAuthContext()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [operation, setOperation] = useState<PropertyOperation>(PropertyOperation.SALE)
@@ -133,6 +141,16 @@ export default function PublicarPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [authPrompt, setAuthPrompt] = useState(false)
+  const [publishedId, setPublishedId] = useState<string | null>(null)
+  const [draftLoaded, setDraftLoaded] = useState(false)
+  const [resumeSubmit, setResumeSubmit] = useState(false)
+  const resumeAttemptRef = useRef(false)
+  const submitLockRef = useRef(false)
+  const imagesRef = useRef(images)
+  imagesRef.current = images
+  const canPublish = !isAuthenticated || hasRemainingListings()
+  const isEditing = !!editId
   const originalPathsRef = useRef<string[]>([])
   // Idempotency key: se genera una vez por intento de publicación y se reutiliza
   // en reintentos del MISMO submit para que un doble clic/retry no duplique.
@@ -143,6 +161,51 @@ export default function PublicarPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (editId) {
+      setDraftLoaded(true)
+      return
+    }
+    let active = true
+    loadPublishDraft()
+      .then((draft) => {
+        if (!active || !draft) return
+        setForm(draft.form)
+        setOperation(draft.operation)
+        setType(draft.type)
+        setCoords(draft.coords)
+        setImages(draft.files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })))
+        clientRequestIdRef.current = draft.clientRequestId
+        setResumeSubmit(draft.resumeSubmit)
+      })
+      .catch(() => {
+        if (active) setSubmitError('No pudimos recuperar el borrador guardado en este navegador.')
+      })
+      .finally(() => {
+        if (active) setDraftLoaded(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [editId])
+
+  useEffect(() => {
+    if (
+      !draftLoaded ||
+      !resumeSubmit ||
+      authLoading ||
+      !user ||
+      !canPublish ||
+      resumeAttemptRef.current
+    )
+      return
+    const timer = setTimeout(() => {
+      resumeAttemptRef.current = true
+      ;(document.getElementById('publicar-form') as HTMLFormElement | null)?.requestSubmit()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [draftLoaded, resumeSubmit, authLoading, user, canPublish])
 
   // Aplica coordenadas y, vía reverse-geocoding, autocompleta dirección y
   // región/comuna/ciudad (los selects se actualizan según la región hallada).
@@ -234,7 +297,7 @@ export default function PublicarPage() {
   // Object URLs leak unless revoked.
   useEffect(
     () => () => {
-      images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     },
     []
   ) // eslint-disable-line react-hooks/exhaustive-deps
@@ -255,7 +318,7 @@ export default function PublicarPage() {
     )
   }
 
-  if (!isAuthenticated || !user) {
+  if (editId && (!isAuthenticated || !user)) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
@@ -266,7 +329,7 @@ export default function PublicarPage() {
           Necesitas una cuenta para crear una publicación.
         </p>
         <Link
-          href="/login"
+          href={`/login?next=${encodeURIComponent(`/publicar?edit=${editId}`)}`}
           className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
         >
           Iniciar sesión
@@ -274,9 +337,6 @@ export default function PublicarPage() {
       </div>
     )
   }
-
-  const canPublish = hasRemainingListings()
-  const isEditing = !!editId
 
   async function addFiles(list: FileList | null) {
     if (!list) return
@@ -312,7 +372,7 @@ export default function PublicarPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!user || !canPublish || submitting) return
+    if ((!canPublish && !isEditing) || submitting || submitLockRef.current || !draftLoaded) return
     setSubmitError(null)
 
     const parsed = publishSchema.safeParse(form)
@@ -328,30 +388,50 @@ export default function PublicarPage() {
     if (!parsed.success || images.length === 0) return
 
     setSubmitting(true)
-
-    // Sin coordenadas creíbles no se publica. Antes, si el pin no estaba puesto
-    // y el geocoder fallaba, el aviso caía en silencio al centro de Santiago y
-    // ensuciaba el mapa para todos. Se resuelve ANTES de subir las fotos para
-    // no dejar imágenes huérfanas en Storage cuando la dirección no se ubica.
-    const located = coords
-      ? { latitude: coords.lat, longitude: coords.lng }
-      : await geocodeAddress({
-          street: parsed.data.street,
-          commune: parsed.data.commune,
-          city: parsed.data.city,
-          region: form.region,
-        })
-    if (!located || !isInsideChile(located.latitude, located.longitude)) {
-      setErrors((e) => ({
-        ...e,
-        street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
-      }))
-      setSubmitting(false)
-      return
-    }
-
+    submitLockRef.current = true
     let uploaded: PropertyImage[] = []
     try {
+      // Sin coordenadas creíbles no se publica. Antes, si el pin no estaba puesto
+      // y el geocoder fallaba, el aviso caía en silencio al centro de Santiago y
+      // ensuciaba el mapa para todos. Se resuelve ANTES de subir las fotos para
+      // no dejar imágenes huérfanas en Storage cuando la dirección no se ubica.
+      const located = coords
+        ? { latitude: coords.lat, longitude: coords.lng }
+        : await geocodeAddress({
+            street: parsed.data.street,
+            commune: parsed.data.commune,
+            city: parsed.data.city,
+            region: form.region,
+          })
+      if (!located || !isInsideChile(located.latitude, located.longitude)) {
+        setErrors((e) => ({
+          ...e,
+          street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
+        }))
+        return
+      }
+      if (!user) {
+        const clientRequestId = (clientRequestIdRef.current ??= crypto.randomUUID())
+        try {
+          await savePublishDraft({
+            version: 1,
+            savedAt: Date.now(),
+            clientRequestId,
+            operation,
+            type,
+            form,
+            coords: { lat: located.latitude, lng: located.longitude },
+            files: images.flatMap((image) => (image.file ? [image.file] : [])),
+            resumeSubmit: true,
+          })
+          setAuthPrompt(true)
+        } catch {
+          setSubmitError(
+            'No pudimos guardar tu publicación y sus fotos en este navegador. Inténtalo de nuevo antes de continuar.'
+          )
+        }
+        return
+      }
       // New files get uploaded; existing ones keep their storage path.
       const newFiles = images.filter((i) => i.file).map((i) => i.file as File)
       if (newFiles.length) uploaded = await uploadPropertyImages(user.id, newFiles)
@@ -425,16 +505,27 @@ export default function PublicarPage() {
       } else {
         // Create vía ruta server-side (valida JWT + org + cuota en el servidor).
         const clientRequestId = (clientRequestIdRef.current ??= crypto.randomUUID())
-        await propertyService.createPropertyServer(data, user.organizationId, clientRequestId)
+        const created = await propertyService.createPropertyServer(
+          data,
+          user.organizationId,
+          clientRequestId
+        )
+        if (!created.id)
+          throw new Error('No recibimos la confirmación de la publicación. Inténtalo nuevamente.')
+        await clearPublishDraft().catch(() => {})
+        setResumeSubmit(false)
         clientRequestIdRef.current = null
+        setPublishedId(created.id)
       }
       void refreshUser()
-      router.push('/dashboard')
+      if (editId) router.push('/dashboard')
     } catch (err) {
       // Roll back orphaned uploads when the insert/update fails.
       if (uploaded.length) void deletePropertyImages(uploaded).catch(() => {})
       setSubmitError(err instanceof Error ? err.message : 'No se pudo publicar la propiedad')
+    } finally {
       setSubmitting(false)
+      submitLockRef.current = false
     }
   }
 
@@ -442,10 +533,10 @@ export default function PublicarPage() {
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 pb-32 lg:pb-8">
         <Link
-          href="/dashboard"
+          href={isAuthenticated ? '/dashboard' : '/'}
           className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-5"
         >
-          <ArrowLeft size={18} /> Volver al panel
+          <ArrowLeft size={18} /> {isAuthenticated ? 'Volver al panel' : 'Volver al inicio'}
         </Link>
 
         <div className="mb-7">
@@ -455,7 +546,7 @@ export default function PublicarPage() {
           <p className="text-on-surface-variant mt-1.5">
             {isEditing
               ? 'Actualiza los datos y guarda los cambios.'
-              : 'Completa los datos y aparecerá en el catálogo al instante.'}
+              : 'Completa los datos. Solo te pediremos acceso al momento de publicar.'}
           </p>
           <div className="mt-4 flex items-center gap-1.5">
             {['Básico', 'Ubicación', 'Características', 'Precio', 'Fotos'].map((s, i) => (
@@ -837,7 +928,9 @@ export default function PublicarPage() {
                   <Button
                     type="submit"
                     loading={submitting}
-                    disabled={!canPublish && !isEditing}
+                    disabled={
+                      (!canPublish && !isEditing) || !draftLoaded || authLoading || !!publishedId
+                    }
                     fullWidth
                   >
                     <Check size={16} />{' '}
@@ -876,7 +969,7 @@ export default function PublicarPage() {
               type="submit"
               form="publicar-form"
               loading={submitting}
-              disabled={!canPublish && !isEditing}
+              disabled={(!canPublish && !isEditing) || !draftLoaded || !!publishedId}
               className="flex-1"
             >
               {isEditing ? 'Guardar' : 'Publicar'}
@@ -884,6 +977,49 @@ export default function PublicarPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={authPrompt} onOpenChange={setAuthPrompt}>
+        <DialogContent>
+          <DialogTitle>Tu publicación está lista</DialogTitle>
+          <DialogDescription className="mt-2">
+            Guardamos los datos y las fotos en este navegador. Inicia sesión o crea tu cuenta para
+            terminar de publicar. Al volver continuaremos con el envío.
+          </DialogDescription>
+          <div className="mt-6 grid gap-3">
+            <Link
+              className="rounded-xl bg-primary px-5 py-3 text-center font-semibold text-on-primary"
+              href="/login?next=%2Fpublicar"
+            >
+              Iniciar sesión
+            </Link>
+            <Link
+              className="rounded-xl border border-outline-variant px-5 py-3 text-center font-semibold text-on-surface"
+              href="/register?next=%2Fpublicar"
+            >
+              Crear cuenta
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!publishedId}
+        onOpenChange={(open) => {
+          if (!open) router.push('/dashboard')
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>Publicación exitosa</DialogTitle>
+          <DialogDescription className="mt-2">
+            Tu propiedad ya está publicada. Puedes verla y compartirla.
+          </DialogDescription>
+          <Link
+            className="mt-6 block rounded-xl bg-primary px-5 py-3 text-center font-semibold text-on-primary"
+            href={publishedId ? '/propiedad/' + publishedId : '/dashboard'}
+          >
+            Ver mi publicación
+          </Link>
+        </DialogContent>
+      </Dialog>
 
       {submitting && (
         <div className="fixed inset-0 z-50 bg-background/60 flex items-center justify-center p-6">

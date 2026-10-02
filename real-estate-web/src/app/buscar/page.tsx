@@ -15,6 +15,7 @@ import { ExchangeIndicators } from '@/components/layout/ExchangeIndicators'
 import { useSearch } from '@/hooks/useSearch'
 import { Property } from '@/types/property'
 import { cn } from '@/lib/utils'
+import { parseSearchOperation } from '@/lib/landingSearch'
 
 type ViewMode = 'map' | 'list'
 
@@ -102,7 +103,7 @@ function SearchContent() {
     updateFilters,
     clearFilters,
     setSuggestions,
-  } = useSearch(urlQuery)
+  } = useSearch(urlQuery, parseSearchOperation(searchParams.get('operation')))
 
   // Stagger the cards in when a new result set arrives (not on map pans).
   useLayoutEffect(() => {

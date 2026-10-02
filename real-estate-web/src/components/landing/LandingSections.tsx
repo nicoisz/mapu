@@ -264,7 +264,7 @@ export function ProductReel() {
         <div className="section-fade mt-10 flex justify-center">
           <Link
             href="/mapa"
-            className="btn-shine inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 font-bold text-on-primary shadow-elevated transition-transform hover:scale-105"
+            className="map-launch-glow btn-shine inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 font-bold text-on-primary shadow-elevated transition-transform hover:scale-105"
           >
             <span className="material-symbols-outlined">explore</span>
             Abrir el mapa interactivo
@@ -526,14 +526,11 @@ export function ActivityFeed() {
 
 /* ─── Resultados concretos ─────────────────────────────────────── */
 
-/* Solo promesas verificables del producto: publicar es gratis, no hay
-   comisión, los precios por zona salen del mercado. Nada de cifras de
-   clientes inventadas — eso se infla solo cuando hay datos reales. */
+/* Condiciones del producto; no representan cifras de adopción. */
 const STATS = [
-  { value: 'Gratis', label: 'Publicar una propiedad' },
+  { value: '1 gratis', label: 'Propiedad para particulares' },
   { value: '14', label: 'Ciudades de Chile en el mapa' },
-  { value: '0%', label: 'Comisión por publicar' },
-  { value: 'En vivo', label: 'Precio por zona, calculado del mercado' },
+  { value: '0%', label: 'Comisión por venta o arriendo' },
 ]
 
 /* Fotos dispersas en los bordes, como el collage de "Concrete Results" de
@@ -571,18 +568,16 @@ export function StatsBand() {
 
       <div className="section-title relative z-10 mx-auto max-w-2xl text-center">
         <h2 className="font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
-          <Words text="Resultados concretos, historias reales" wordClass="section-word" />
+          <Words text="Un gran mapa empieza con tu propiedad" wordClass="section-word" />
         </h2>
         <p className="section-fade mx-auto mt-6 max-w-lg text-lg text-on-surface-variant">
-          Más de{' '}
-          <span className="rounded-full bg-secondary px-3 py-1 font-semibold text-on-secondary">
-            miles de propiedades
-          </span>{' '}
-          publicadas en Chile, con precios calculados del mercado.
+          Queremos que miles de propiedades encuentren su lugar aquí. Comencemos con la tuya. Tu
+          primera propiedad es gratis como particular; corredoras y quienes publican más de una
+          propiedad cuentan con planes de pago.
         </p>
       </div>
 
-      <div className="relative z-10 mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
+      <div className="relative z-10 mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-3">
         {STATS.map((s) => (
           <div key={s.label} className="stat-item text-center">
             <p className="font-display text-4xl leading-none text-on-surface sm:text-5xl">
@@ -659,8 +654,8 @@ export function WhyMapu() {
 const CTA_CARDS = [
   {
     img: '/3.jpg',
-    title: 'Publica gratis',
-    desc: 'Sube tu propiedad en minutos y llega a compradores de todo Chile.',
+    title: 'Publica tu propiedad',
+    desc: 'Una propiedad gratis para particulares. Planes para corredoras y más propiedades.',
     cta: 'Publicar ahora',
     href: '/publicar',
   },
@@ -792,7 +787,7 @@ export function Testimonials() {
 const FAQS = [
   {
     q: '¿Publicar una propiedad tiene costo?',
-    a: 'No. Publicar es gratis y no cobramos comisión: creas tu aviso, subes las fotos y lo ves en el mapa al instante.',
+    a: 'Los particulares pueden publicar una propiedad gratis. Las corredoras y quienes publican más de una propiedad necesitan un plan de pago. No cobramos comisión por la venta o el arriendo.',
   },
   {
     q: '¿De dónde salen los precios por zona?',
