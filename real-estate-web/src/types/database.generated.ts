@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   graphql_public: {
@@ -16,12 +10,7 @@ export type Database = {
     }
     Functions: {
       graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
+        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json }
         Returns: Json
       }
     }
@@ -36,7 +25,7 @@ export type Database = {
     Tables: {
       error_logs: {
         Row: {
-          context: Json
+          context: NonNullable<Json>
           created_at: string
           email: string | null
           id: string
@@ -47,7 +36,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          context?: Json
+          context?: NonNullable<Json>
           created_at?: string
           email?: string | null
           id?: string
@@ -58,7 +47,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          context?: Json
+          context?: NonNullable<Json>
           created_at?: string
           email?: string | null
           id?: string
@@ -70,11 +59,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "error_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'error_logs_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -99,18 +88,57 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "favorites_property_id_fkey"
-            columns: ["property_id"]
+            foreignKeyName: 'favorites_property_id_fkey'
+            columns: ['property_id']
             isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'favorites_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          property_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          property_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          property_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'messages_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'messages_sender_id_fkey'
+            columns: ['sender_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -122,7 +150,7 @@ export type Database = {
           expires_at: string
           id: string
           org_id: string
-          role: Database["public"]["Enums"]["org_role"]
+          role: Database['public']['Enums']['org_role']
           status: string
           token: string
         }
@@ -133,7 +161,7 @@ export type Database = {
           expires_at: string
           id?: string
           org_id: string
-          role?: Database["public"]["Enums"]["org_role"]
+          role?: Database['public']['Enums']['org_role']
           status?: string
           token: string
         }
@@ -144,24 +172,24 @@ export type Database = {
           expires_at?: string
           id?: string
           org_id?: string
-          role?: Database["public"]["Enums"]["org_role"]
+          role?: Database['public']['Enums']['org_role']
           status?: string
           token?: string
         }
         Relationships: [
           {
-            foreignKeyName: "org_invites_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'org_invites_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "org_invites_org_id_fkey"
-            columns: ["org_id"]
+            foreignKeyName: 'org_invites_org_id_fkey'
+            columns: ['org_id']
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -171,8 +199,8 @@ export type Database = {
           invited_by: string | null
           joined_at: string
           org_id: string
-          role: Database["public"]["Enums"]["org_role"]
-          status: Database["public"]["Enums"]["member_status"]
+          role: Database['public']['Enums']['org_role']
+          status: Database['public']['Enums']['member_status']
           user_id: string
         }
         Insert: {
@@ -180,8 +208,8 @@ export type Database = {
           invited_by?: string | null
           joined_at?: string
           org_id: string
-          role?: Database["public"]["Enums"]["org_role"]
-          status?: Database["public"]["Enums"]["member_status"]
+          role?: Database['public']['Enums']['org_role']
+          status?: Database['public']['Enums']['member_status']
           user_id: string
         }
         Update: {
@@ -189,31 +217,31 @@ export type Database = {
           invited_by?: string | null
           joined_at?: string
           org_id?: string
-          role?: Database["public"]["Enums"]["org_role"]
-          status?: Database["public"]["Enums"]["member_status"]
+          role?: Database['public']['Enums']['org_role']
+          status?: Database['public']['Enums']['member_status']
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "organization_members_invited_by_fkey"
-            columns: ["invited_by"]
+            foreignKeyName: 'organization_members_invited_by_fkey'
+            columns: ['invited_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "organization_members_org_id_fkey"
-            columns: ["org_id"]
+            foreignKeyName: 'organization_members_org_id_fkey'
+            columns: ['org_id']
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "organization_members_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'organization_members_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -231,7 +259,7 @@ export type Database = {
           rating: number | null
           review_count: number
           rut: string | null
-          type: Database["public"]["Enums"]["org_type"]
+          type: Database['public']['Enums']['org_type']
           updated_at: string
           website: string | null
         }
@@ -248,7 +276,7 @@ export type Database = {
           rating?: number | null
           review_count?: number
           rut?: string | null
-          type: Database["public"]["Enums"]["org_type"]
+          type: Database['public']['Enums']['org_type']
           updated_at?: string
           website?: string | null
         }
@@ -265,17 +293,17 @@ export type Database = {
           rating?: number | null
           review_count?: number
           rut?: string | null
-          type?: Database["public"]["Enums"]["org_type"]
+          type?: Database['public']['Enums']['org_type']
           updated_at?: string
           website?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "organizations_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: 'organizations_created_by_fkey'
+            columns: ['created_by']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -291,7 +319,7 @@ export type Database = {
           mp_preference_id: string | null
           paid_at: string | null
           plan: string
-          status: Database["public"]["Enums"]["payment_status"]
+          status: Database['public']['Enums']['payment_status']
           updated_at: string | null
           user_id: string
         }
@@ -306,7 +334,7 @@ export type Database = {
           mp_preference_id?: string | null
           paid_at?: string | null
           plan: string
-          status?: Database["public"]["Enums"]["payment_status"]
+          status?: Database['public']['Enums']['payment_status']
           updated_at?: string | null
           user_id: string
         }
@@ -321,19 +349,61 @@ export type Database = {
           mp_preference_id?: string | null
           paid_at?: string | null
           plan?: string
-          status?: Database["public"]["Enums"]["payment_status"]
+          status?: Database['public']['Enums']['payment_status']
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "payments_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'payments_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
+      }
+      price_cell_snapshots: {
+        Row: {
+          cell_id: string
+          center_lat: number
+          center_lng: number
+          created_at: string
+          currency: string
+          id: string
+          n: number
+          operation: string
+          period: string
+          price_per_m2_mean: number
+          price_per_m2_median: number
+        }
+        Insert: {
+          cell_id: string
+          center_lat: number
+          center_lng: number
+          created_at?: string
+          currency: string
+          id?: string
+          n: number
+          operation: string
+          period: string
+          price_per_m2_mean: number
+          price_per_m2_median: number
+        }
+        Update: {
+          cell_id?: string
+          center_lat?: number
+          center_lng?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          n?: number
+          operation?: string
+          period?: string
+          price_per_m2_mean?: number
+          price_per_m2_median?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -350,22 +420,23 @@ export type Database = {
           name: string
           notifications_email: boolean | null
           notifications_push: boolean | null
+          notifications_seen_at: string | null
           phone: string | null
           platform_role: string
-          preferred_currency: Database["public"]["Enums"]["currency"] | null
+          preferred_currency: Database['public']['Enums']['currency'] | null
           preferred_language: string | null
           push_token: string | null
           rating: number | null
           review_count: number | null
           subscription_expires_at: string | null
           subscription_started_at: string | null
-          subscription_type: Database["public"]["Enums"]["subscription_type"]
+          subscription_type: Database['public']['Enums']['subscription_type']
           total_listings: number | null
           total_views: number | null
           trial_expires_at: string | null
           trial_started_at: string | null
           updated_at: string | null
-          user_type: Database["public"]["Enums"]["user_type"]
+          user_type: Database['public']['Enums']['user_type']
           whatsapp: string | null
         }
         Insert: {
@@ -382,22 +453,23 @@ export type Database = {
           name: string
           notifications_email?: boolean | null
           notifications_push?: boolean | null
+          notifications_seen_at?: string | null
           phone?: string | null
           platform_role?: string
-          preferred_currency?: Database["public"]["Enums"]["currency"] | null
+          preferred_currency?: Database['public']['Enums']['currency'] | null
           preferred_language?: string | null
           push_token?: string | null
           rating?: number | null
           review_count?: number | null
           subscription_expires_at?: string | null
           subscription_started_at?: string | null
-          subscription_type?: Database["public"]["Enums"]["subscription_type"]
+          subscription_type?: Database['public']['Enums']['subscription_type']
           total_listings?: number | null
           total_views?: number | null
           trial_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string | null
-          user_type?: Database["public"]["Enums"]["user_type"]
+          user_type?: Database['public']['Enums']['user_type']
           whatsapp?: string | null
         }
         Update: {
@@ -414,22 +486,23 @@ export type Database = {
           name?: string
           notifications_email?: boolean | null
           notifications_push?: boolean | null
+          notifications_seen_at?: string | null
           phone?: string | null
           platform_role?: string
-          preferred_currency?: Database["public"]["Enums"]["currency"] | null
+          preferred_currency?: Database['public']['Enums']['currency'] | null
           preferred_language?: string | null
           push_token?: string | null
           rating?: number | null
           review_count?: number | null
           subscription_expires_at?: string | null
           subscription_started_at?: string | null
-          subscription_type?: Database["public"]["Enums"]["subscription_type"]
+          subscription_type?: Database['public']['Enums']['subscription_type']
           total_listings?: number | null
           total_views?: number | null
           trial_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string | null
-          user_type?: Database["public"]["Enums"]["user_type"]
+          user_type?: Database['public']['Enums']['user_type']
           whatsapp?: string | null
         }
         Relationships: []
@@ -453,7 +526,7 @@ export type Database = {
           contact_whatsapp: string | null
           contacts_count: number | null
           created_at: string | null
-          currency: Database["public"]["Enums"]["currency"]
+          currency: Database['public']['Enums']['currency']
           deposit: number | null
           description: string
           expires_at: string | null
@@ -481,22 +554,20 @@ export type Database = {
           maintenance_fee: number | null
           monthly_rent: number | null
           new_construction: boolean | null
-          operation: Database["public"]["Enums"]["property_operation"]
+          operation: Database['public']['Enums']['property_operation']
           organization_id: string | null
           owner_id: string
           parking_spots: number | null
           pet_friendly: boolean | null
-          preferred_contact:
-            | Database["public"]["Enums"]["contact_method"]
-            | null
+          preferred_contact: Database['public']['Enums']['contact_method'] | null
           price: number
           price_per_sqm: number | null
           published_at: string | null
           search_vector: unknown
-          status: Database["public"]["Enums"]["property_status"]
+          status: Database['public']['Enums']['property_status']
           tags: string[] | null
           title: string
-          type: Database["public"]["Enums"]["property_type"]
+          type: Database['public']['Enums']['property_type']
           updated_at: string | null
           videos: Json | null
           views: number | null
@@ -521,7 +592,7 @@ export type Database = {
           contact_whatsapp?: string | null
           contacts_count?: number | null
           created_at?: string | null
-          currency?: Database["public"]["Enums"]["currency"]
+          currency?: Database['public']['Enums']['currency']
           deposit?: number | null
           description: string
           expires_at?: string | null
@@ -549,22 +620,20 @@ export type Database = {
           maintenance_fee?: number | null
           monthly_rent?: number | null
           new_construction?: boolean | null
-          operation: Database["public"]["Enums"]["property_operation"]
+          operation: Database['public']['Enums']['property_operation']
           organization_id?: string | null
           owner_id: string
           parking_spots?: number | null
           pet_friendly?: boolean | null
-          preferred_contact?:
-            | Database["public"]["Enums"]["contact_method"]
-            | null
+          preferred_contact?: Database['public']['Enums']['contact_method'] | null
           price: number
           price_per_sqm?: number | null
           published_at?: string | null
-          search_vector?: unknown
-          status?: Database["public"]["Enums"]["property_status"]
+          search_vector?: never
+          status?: Database['public']['Enums']['property_status']
           tags?: string[] | null
           title: string
-          type: Database["public"]["Enums"]["property_type"]
+          type: Database['public']['Enums']['property_type']
           updated_at?: string | null
           videos?: Json | null
           views?: number | null
@@ -589,7 +658,7 @@ export type Database = {
           contact_whatsapp?: string | null
           contacts_count?: number | null
           created_at?: string | null
-          currency?: Database["public"]["Enums"]["currency"]
+          currency?: Database['public']['Enums']['currency']
           deposit?: number | null
           description?: string
           expires_at?: string | null
@@ -617,22 +686,20 @@ export type Database = {
           maintenance_fee?: number | null
           monthly_rent?: number | null
           new_construction?: boolean | null
-          operation?: Database["public"]["Enums"]["property_operation"]
+          operation?: Database['public']['Enums']['property_operation']
           organization_id?: string | null
           owner_id?: string
           parking_spots?: number | null
           pet_friendly?: boolean | null
-          preferred_contact?:
-            | Database["public"]["Enums"]["contact_method"]
-            | null
+          preferred_contact?: Database['public']['Enums']['contact_method'] | null
           price?: number
           price_per_sqm?: number | null
           published_at?: string | null
-          search_vector?: unknown
-          status?: Database["public"]["Enums"]["property_status"]
+          search_vector?: never
+          status?: Database['public']['Enums']['property_status']
           tags?: string[] | null
           title?: string
-          type?: Database["public"]["Enums"]["property_type"]
+          type?: Database['public']['Enums']['property_type']
           updated_at?: string | null
           videos?: Json | null
           views?: number | null
@@ -641,18 +708,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "properties_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: 'properties_organization_id_fkey'
+            columns: ['organization_id']
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "properties_owner_id_fkey"
-            columns: ["owner_id"]
+            foreignKeyName: 'properties_owner_id_fkey'
+            columns: ['owner_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -680,18 +747,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "property_views_property_id_fkey"
-            columns: ["property_id"]
+            foreignKeyName: 'property_views_property_id_fkey'
+            columns: ['property_id']
             isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "property_views_viewer_id_fkey"
-            columns: ["viewer_id"]
+            foreignKeyName: 'property_views_viewer_id_fkey'
+            columns: ['viewer_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -704,7 +771,7 @@ export type Database = {
           organization_id: string | null
           property_id: string | null
           rating: number
-          status: Database["public"]["Enums"]["review_status"]
+          status: Database['public']['Enums']['review_status']
           subject_id: string
           updated_at: string
         }
@@ -716,7 +783,7 @@ export type Database = {
           organization_id?: string | null
           property_id?: string | null
           rating: number
-          status?: Database["public"]["Enums"]["review_status"]
+          status?: Database['public']['Enums']['review_status']
           subject_id: string
           updated_at?: string
         }
@@ -728,38 +795,38 @@ export type Database = {
           organization_id?: string | null
           property_id?: string | null
           rating?: number
-          status?: Database["public"]["Enums"]["review_status"]
+          status?: Database['public']['Enums']['review_status']
           subject_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_author_id_fkey"
-            columns: ["author_id"]
+            foreignKeyName: 'reviews_author_id_fkey'
+            columns: ['author_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: 'reviews_organization_id_fkey'
+            columns: ['organization_id']
             isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_property_id_fkey"
-            columns: ["property_id"]
+            foreignKeyName: 'reviews_property_id_fkey'
+            columns: ['property_id']
             isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "reviews_subject_id_fkey"
-            columns: ["subject_id"]
+            foreignKeyName: 'reviews_subject_id_fkey'
+            columns: ['subject_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -768,7 +835,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_pending_invites: { Args: never; Returns: undefined }
+      accept_pending_invites: { Args: Record<PropertyKey, never>; Returns: undefined }
       admin_list_users: {
         Args: { search_term?: string }
         Returns: {
@@ -802,7 +869,7 @@ export type Database = {
         Args: { inv_email: string; inv_org_id: string; inv_role: string }
         Returns: string
       }
-      expire_stale_listings: { Args: never; Returns: number }
+      expire_stale_listings: { Args: Record<PropertyKey, never>; Returns: number }
       find_user_for_org: {
         Args: { search_email: string }
         Returns: {
@@ -835,7 +902,7 @@ export type Database = {
         }[]
       }
       get_own_profile: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           avatar_url: string | null
           company_logo: string | null
@@ -850,27 +917,28 @@ export type Database = {
           name: string
           notifications_email: boolean | null
           notifications_push: boolean | null
+          notifications_seen_at: string | null
           phone: string | null
           platform_role: string
-          preferred_currency: Database["public"]["Enums"]["currency"] | null
+          preferred_currency: Database['public']['Enums']['currency'] | null
           preferred_language: string | null
           push_token: string | null
           rating: number | null
           review_count: number | null
           subscription_expires_at: string | null
           subscription_started_at: string | null
-          subscription_type: Database["public"]["Enums"]["subscription_type"]
+          subscription_type: Database['public']['Enums']['subscription_type']
           total_listings: number | null
           total_views: number | null
           trial_expires_at: string | null
           trial_started_at: string | null
           updated_at: string | null
-          user_type: Database["public"]["Enums"]["user_type"]
+          user_type: Database['public']['Enums']['user_type']
           whatsapp: string | null
         }
         SetofOptions: {
-          from: "*"
-          to: "profiles"
+          from: '*'
+          to: 'profiles'
           isOneToOne: true
           isSetofReturn: false
         }
@@ -889,57 +957,56 @@ export type Database = {
           day: string
         }[]
       }
-      increment_property_views: {
-        Args: { property_id: string }
-        Returns: undefined
-      }
+      increment_property_views: { Args: { property_id: string }; Returns: undefined }
       is_org_admin: { Args: { org_id: string }; Returns: boolean }
-      is_org_admin_any: { Args: never; Returns: boolean }
+      is_org_admin_any: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_org_member: { Args: { org_id: string }; Returns: boolean }
       is_subscription_active: { Args: { p_user_id: string }; Returns: boolean }
-      is_superadmin: { Args: never; Returns: boolean }
+      is_superadmin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      mark_notifications_seen: { Args: Record<PropertyKey, never>; Returns: undefined }
+      owner_activity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          actor_name: string
+          body: string
+          created_at: string
+          is_new: boolean
+          kind: string
+          property_id: string
+          title: string
+        }[]
+      }
+      owner_unread_count: { Args: Record<PropertyKey, never>; Returns: number }
       set_member_role: {
         Args: { new_role: string; org_id: string; target_user_id: string }
         Returns: undefined
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
+      show_limit: { Args: Record<PropertyKey, never>; Returns: number }
+      show_trgm: { Args: { '': string }; Returns: string[] }
     }
     Enums: {
-      contact_method: "phone" | "email" | "whatsapp" | "sms"
-      currency: "CLP" | "USD"
-      member_status: "invited" | "active" | "removed"
+      contact_method: 'phone' | 'email' | 'whatsapp' | 'sms'
+      currency: 'CLP' | 'USD'
+      member_status: 'invited' | 'active' | 'removed'
       notification_type:
-        | "property_expiring"
-        | "property_expired"
-        | "new_favorite"
-        | "price_change"
-        | "new_message"
-        | "payment_success"
-        | "payment_failed"
-        | "listing_approved"
-        | "listing_rejected"
-      org_role: "owner" | "admin" | "agent"
-      org_type: "brokerage" | "company"
-      payment_status: "pending" | "completed" | "failed" | "refunded"
-      property_operation: "sale" | "rent"
-      property_status:
-        | "active"
-        | "expired"
-        | "sold"
-        | "rented"
-        | "pending_review"
-        | "rejected"
-      property_type:
-        | "house"
-        | "apartment"
-        | "land"
-        | "office"
-        | "commercial"
-        | "warehouse"
-      review_status: "published" | "flagged" | "removed"
-      subscription_type: "free" | "premium"
-      user_type: "individual" | "agent" | "company"
+        | 'property_expiring'
+        | 'property_expired'
+        | 'new_favorite'
+        | 'price_change'
+        | 'new_message'
+        | 'payment_success'
+        | 'payment_failed'
+        | 'listing_approved'
+        | 'listing_rejected'
+      org_role: 'owner' | 'admin' | 'agent'
+      org_type: 'brokerage' | 'company'
+      payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
+      property_operation: 'sale' | 'rent'
+      property_status: 'active' | 'expired' | 'sold' | 'rented' | 'pending_review' | 'rejected'
+      property_type: 'house' | 'apartment' | 'land' | 'office' | 'commercial' | 'warehouse'
+      review_status: 'published' | 'flagged' | 'removed'
+      subscription_type: 'free' | 'premium'
+      user_type: 'individual' | 'agent' | 'company'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -947,33 +1014,29 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -982,23 +1045,20 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1007,23 +1067,20 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1032,36 +1089,30 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -1070,44 +1121,29 @@ export const Constants = {
   },
   public: {
     Enums: {
-      contact_method: ["phone", "email", "whatsapp", "sms"],
-      currency: ["CLP", "USD"],
-      member_status: ["invited", "active", "removed"],
+      contact_method: ['phone', 'email', 'whatsapp', 'sms'],
+      currency: ['CLP', 'USD'],
+      member_status: ['invited', 'active', 'removed'],
       notification_type: [
-        "property_expiring",
-        "property_expired",
-        "new_favorite",
-        "price_change",
-        "new_message",
-        "payment_success",
-        "payment_failed",
-        "listing_approved",
-        "listing_rejected",
+        'property_expiring',
+        'property_expired',
+        'new_favorite',
+        'price_change',
+        'new_message',
+        'payment_success',
+        'payment_failed',
+        'listing_approved',
+        'listing_rejected',
       ],
-      org_role: ["owner", "admin", "agent"],
-      org_type: ["brokerage", "company"],
-      payment_status: ["pending", "completed", "failed", "refunded"],
-      property_operation: ["sale", "rent"],
-      property_status: [
-        "active",
-        "expired",
-        "sold",
-        "rented",
-        "pending_review",
-        "rejected",
-      ],
-      property_type: [
-        "house",
-        "apartment",
-        "land",
-        "office",
-        "commercial",
-        "warehouse",
-      ],
-      review_status: ["published", "flagged", "removed"],
-      subscription_type: ["free", "premium"],
-      user_type: ["individual", "agent", "company"],
+      org_role: ['owner', 'admin', 'agent'],
+      org_type: ['brokerage', 'company'],
+      payment_status: ['pending', 'completed', 'failed', 'refunded'],
+      property_operation: ['sale', 'rent'],
+      property_status: ['active', 'expired', 'sold', 'rented', 'pending_review', 'rejected'],
+      property_type: ['house', 'apartment', 'land', 'office', 'commercial', 'warehouse'],
+      review_status: ['published', 'flagged', 'removed'],
+      subscription_type: ['free', 'premium'],
+      user_type: ['individual', 'agent', 'company'],
     },
   },
 } as const
-

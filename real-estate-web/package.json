@@ -16,7 +16,7 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:migrate": "supabase db push",
-    "db:types": "supabase gen types typescript --local > src/types/database.generated.ts",
+    "db:types": "npx --yes supabase@2.119.0 gen types typescript --local > src/types/database.generated.ts && prettier --write src/types/database.generated.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
