@@ -768,7 +768,12 @@ export default function LandingPage() {
 
         <div className="border-t border-outline-variant/30">
           <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-on-surface-variant md:flex-row lg:px-20">
-            <p>© 2026 MapU Real Estate Chile — Todos los derechos reservados</p>
+            <div className="space-y-1">
+              <p>© 2026 MapU Real Estate Chile — Todos los derechos reservados</p>
+              <a href="https://www.openstreetmap.org/copyright" className="text-xs hover:underline">
+                Trazados urbanos © OpenStreetMap contributors
+              </a>
+            </div>
             <div className="flex gap-6">
               {['Privacidad', 'Términos', 'Mapa del Sitio'].map((link) => (
                 <a key={link} href="#" className="transition-colors hover:text-accent">
