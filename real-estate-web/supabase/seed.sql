@@ -1,18 +1,32 @@
 -- ============================================================
--- MapU — datos de demostración (generado desde src/data/mockProperties.ts)
--- Compatible con el esquema existente del proyecto (app móvil).
+-- MapU — datos de demostración LOCAL (seguro, idempotente, sin PII real)
 --
--- REQUISITO: debe existir al menos un perfil (crea una cuenta primero,
--- desde la web o la app móvil). Las propiedades demo se asignan al perfil
--- más antiguo y llevan el tag 'demo-seed' (re-ejecutar las regenera).
+-- Crea un usuario demo (email demo@mapu.local) si no existe. El trigger
+-- handle_new_user (definido en las migraciones) crea su perfil. Las
+-- propiedades demo se asignan al perfil más antiguo y llevan el tag
+-- 'demo-seed' (re-ejecutar las regenera).
+--
+-- Solo para local. NO ejecutar en staging/producción.
 -- ============================================================
 
-do $$
-begin
-  if not exists (select 1 from public.profiles) then
-    raise exception 'No hay perfiles: crea una cuenta primero y vuelve a ejecutar este seed.';
-  end if;
-end $$;
+-- 1) Usuario demo (id fija para idempotencia). El trigger crea el perfil.
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '11111111-1111-4111-8111-111111111111',
+  'authenticated',
+  'authenticated',
+  'demo@mapu.local',
+  extensions.crypt('demo-password-123', extensions.gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"Demo User"}',
+  now(),
+  now()
+)
+on conflict (id) do nothing;
 
 delete from public.properties where 'demo-seed' = any(tags);
 
