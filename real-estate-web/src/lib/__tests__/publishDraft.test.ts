@@ -26,7 +26,7 @@ function draft(): PublishDraft {
     },
     coords: { lat: -33.45, lng: -70.65 },
     files: [new File(['photo'], 'casa.jpg', { type: 'image/jpeg' })],
-    resumeSubmit: true,
+    step: 2,
   }
 }
 
@@ -38,6 +38,12 @@ describe('Publishing draft validation', () => {
   it('does not resume expired or future-dated drafts', () => {
     expect(validPublishDraft(draft(), now + 8 * 86400000)).toBeNull()
     expect(validPublishDraft({ ...draft(), savedAt: now + 1 }, now)).toBeNull()
+  })
+  it('restores legacy drafts at the first stage without automatic submission', () => {
+    const { step, ...legacy } = draft()
+    const restored = validPublishDraft({ ...legacy, resumeSubmit: true }, now)
+    expect(restored?.step).toBe(1)
+    expect(restored).not.toHaveProperty('resumeSubmit')
   })
   it('rejects incomplete drafts and unusable photo data', () => {
     expect(validPublishDraft({ resumeSubmit: true }, now)).toBeNull()

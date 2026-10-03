@@ -25,7 +25,7 @@ const draftSchema = z.object({
   files: z
     .array(z.custom<File>((value) => typeof File !== 'undefined' && value instanceof File))
     .max(10),
-  resumeSubmit: z.boolean(),
+  step: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).default(1),
 })
 
 export type PublishDraft = z.infer<typeof draftSchema>
