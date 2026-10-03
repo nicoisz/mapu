@@ -29,7 +29,6 @@ const schemas = [
   publishSchema.pick({ title: true }),
   publishSchema.pick({ street: true, commune: true, city: true }),
   publishSchema.pick({
-    description: true,
     price: true,
     area: true,
     bedrooms: true,
@@ -59,7 +58,7 @@ export function validatePublishStep(
 export function stepForPublishErrors(errors: PublishFieldErrors): PublishStep {
   if (errors.title) return 1
   if (errors.street || errors.commune || errors.city || errors.location) return 2
-  if (Object.keys(errors).some((key) => key !== 'images')) return 3
+  if (Object.keys(errors).some((key) => key !== 'images' && key !== 'description')) return 3
   return 4
 }
 

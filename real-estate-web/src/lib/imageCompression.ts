@@ -17,11 +17,11 @@ export interface ImageCompressionOptions {
 
 const DEFAULT_MAX_DIMENSION = 1600
 const DEFAULT_QUALITY = 0.8
+export const MAX_OPTIMIZED_IMAGE_BYTES = 500 * 1024
 
 /**
  * Comprime un File de imagen y devuelve un File nuevo listo para subir.
- * Si no se puede procesar (falla de API, imagen inválida) devuelve el archivo
- * original para no bloquear el upload.
+ * Rechaza imágenes que no se pueden optimizar; nunca sube originales pesados.
  */
 export async function compressImage(file: File, opts: ImageCompressionOptions = {}): Promise<File> {
   const maxDimension = opts.maxDimension ?? DEFAULT_MAX_DIMENSION
@@ -29,26 +29,41 @@ export async function compressImage(file: File, opts: ImageCompressionOptions = 
 
   try {
     const bitmap = await decodeImage(file)
-    const scaled = scaleToFit(bitmap, maxDimension)
-    const blob = await encodeToBlob(scaled, quality)
-    bitmap.close?.()
-
-    if (!blob || blob.size >= file.size) {
-      // Ya es pequeño o no ganamos nada: usar el original.
-      return file
+    try {
+      if (
+        file.type === 'image/webp' &&
+        file.size <= MAX_OPTIMIZED_IMAGE_BYTES &&
+        Math.max(bitmap.width, bitmap.height) <= Math.min(maxDimension, DEFAULT_MAX_DIMENSION)
+      )
+        return file
+      if (bitmap.width * bitmap.height > 80_000_000) throw new Error('Imagen demasiado grande')
+      let dimension = Math.min(maxDimension, DEFAULT_MAX_DIMENSION)
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const scaled = scaleToFit(bitmap, dimension)
+        const blob = await encodeToBlob(scaled, attempt === 0 ? quality : 0.72)
+        if (blob && blob.size <= MAX_OPTIMIZED_IMAGE_BYTES) {
+          const ext = blob.type.includes('webp') ? 'webp' : 'jpg'
+          const base = file.name.replace(/\.[^.]+$/, '') || 'imagen'
+          return new File([blob], `${base}.${ext}`, {
+            type: blob.type,
+            lastModified: file.lastModified,
+          })
+        }
+        dimension = Math.max(480, Math.round(dimension * 0.8))
+      }
+      throw new Error('No se pudo reducir la imagen')
+    } finally {
+      if ('close' in bitmap) bitmap.close()
     }
-
-    const ext = blob.type.includes('webp') ? 'webp' : 'jpg'
-    const base = file.name.replace(/\.[^.]+$/, '') || 'imagen'
-    const name = `${base}.${ext}`
-    return new File([blob], name, { type: blob.type, lastModified: file.lastModified })
   } catch {
-    return file
+    throw new Error(
+      `${file.name}: no pudimos optimizar la foto. Prueba con otra imagen JPG, PNG o WebP.`
+    )
   }
 }
 
 /** Decodifica el File a un ImageBitmap respetando orientación EXIF. */
-async function decodeImage(file: File): Promise<ImageBitmap> {
+async function decodeImage(file: File): Promise<ImageBitmap | HTMLImageElement> {
   if (typeof createImageBitmap === 'function') {
     try {
       const bmp = await createImageBitmap(file, {
@@ -64,21 +79,19 @@ async function decodeImage(file: File): Promise<ImageBitmap> {
     const img = new Image()
     img.src = url
     await img.decode()
-    const canvas = document.createElement('canvas')
-    canvas.width = img.naturalWidth
-    canvas.height = img.naturalHeight
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('no canvas 2d')
-    ctx.drawImage(img, 0, 0)
-    const bmp = await createImageBitmap(canvas)
-    return bmp
+    img.width = img.naturalWidth
+    img.height = img.naturalHeight
+    return img
   } finally {
     URL.revokeObjectURL(url)
   }
 }
 
 /** Redimensiona manteniendo el ratio; lado mayor <= maxDimension. */
-function scaleToFit(bitmap: ImageBitmap, maxDimension: number): HTMLCanvasElement {
+function scaleToFit(
+  bitmap: ImageBitmap | HTMLImageElement,
+  maxDimension: number
+): HTMLCanvasElement {
   const { width, height } = bitmap
   const scale = Math.min(1, maxDimension / Math.max(width, height))
   const canvas = document.createElement('canvas')
@@ -92,9 +105,8 @@ function scaleToFit(bitmap: ImageBitmap, maxDimension: number): HTMLCanvasElemen
 
 /** Re-encoda el canvas a WebP (fallback JPEG). */
 async function encodeToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob | null> {
-  const isWebpSupported = canvas.toDataURL('image/webp', 0.1).startsWith('data:image/webp')
-  const type = isWebpSupported ? 'image/webp' : 'image/jpeg'
-  return new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, type, quality)
-  })
+  const encode = (type: string) =>
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality))
+  const webp = await encode('image/webp')
+  return webp?.type === 'image/webp' ? webp : encode('image/jpeg')
 }

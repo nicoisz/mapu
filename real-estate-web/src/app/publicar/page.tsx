@@ -22,6 +22,8 @@ import {
   deletePropertyImages,
 } from '@/services/storageService'
 import { compressImage } from '@/lib/imageCompression'
+import { getSupabase } from '@/lib/supabase'
+import { basicPropertyDescription, descriptionInputSchema } from '@/lib/propertyDescription'
 import { reverseGeocode } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -132,6 +134,10 @@ export default function PublicarPage() {
   const [draftLoaded, setDraftLoaded] = useState(false)
   const [step, setStep] = useState<PublishStep>(1)
   const [advancing, setAdvancing] = useState(false)
+  const [processingImages, setProcessingImages] = useState(false)
+  const [descriptionBusy, setDescriptionBusy] = useState(false)
+  const [descriptionMessage, setDescriptionMessage] = useState('')
+  const descriptionRequest = useRef(0)
   const pageScrollRef = useRef<HTMLDivElement>(null)
   const currentStep = accessiblePublishStep(step, !!user && isAuthenticated)
   const submitLockRef = useRef(false)
@@ -188,6 +194,57 @@ export default function PublicarPage() {
     locationRequest.current++
     setLocationBusy(false)
   }, [currentStep])
+
+  async function generateDescription() {
+    const input = descriptionInputSchema.safeParse({ ...form, operation, type })
+    if (!input.success) return
+    const request = ++descriptionRequest.current
+    set('description', basicPropertyDescription(input.data))
+    setDescriptionBusy(true)
+    setDescriptionMessage('Preparando la descripción… Puedes editarla cuando quieras.')
+    try {
+      const { data } = await getSupabase().auth.getSession()
+      const response = await fetch('/api/property-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify(input.data),
+        signal: AbortSignal.timeout(15_000),
+      })
+      const result = await response.json()
+      if (descriptionRequest.current !== request) return
+      if (
+        !response.ok ||
+        typeof result.description !== 'string' ||
+        result.description.length > 2000
+      )
+        throw new Error('No se pudo generar')
+      set('description', result.description)
+      setDescriptionMessage(
+        result.source === 'ai'
+          ? 'Borrador generado con IA. Revísalo y ajusta lo que necesites.'
+          : 'Borrador creado con tus datos. Revísalo y agrega lo que quieras destacar.'
+      )
+    } catch {
+      if (descriptionRequest.current === request)
+        setDescriptionMessage(
+          'Conservamos el borrador creado con tus datos. Puedes editarlo o volver a generar.'
+        )
+    } finally {
+      if (descriptionRequest.current === request) setDescriptionBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    if (currentStep === 4 && draftLoaded && user && !form.description.trim())
+      void generateDescription()
+    return () => {
+      descriptionRequest.current++
+      setDescriptionBusy(false)
+    }
+  }, [currentStep, draftLoaded, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function persistStep(next: PublishStep, location = coords) {
     if (editId) return
@@ -382,16 +439,24 @@ export default function PublicarPage() {
   }
 
   async function addFiles(list: FileList | null) {
-    if (!list) return
+    if (!list || processingImages) return
+    setProcessingImages(true)
     const errorsFound: string[] = []
     // Compresión client-side antes de subir (reduce ancho de banda/storage).
     for (const file of Array.from(list)) {
+      if (imagesRef.current.length >= MAX_IMAGES) break
       const problem = validateImageFile(file)
       if (problem) {
         errorsFound.push(problem)
         continue
       }
-      const processed = await compressImage(file)
+      let processed: File
+      try {
+        processed = await compressImage(file)
+      } catch (error) {
+        errorsFound.push(error instanceof Error ? error.message : 'No pudimos optimizar la foto')
+        continue
+      }
       setImages((prev) => {
         const next = [...prev, { file: processed, previewUrl: URL.createObjectURL(processed) }]
         // Revoke previews of files dropped past the limit.
@@ -399,6 +464,7 @@ export default function PublicarPage() {
         return next.slice(0, MAX_IMAGES)
       })
     }
+    setProcessingImages(false)
     setErrors((e) => ({ ...e, images: errorsFound.length ? errorsFound.join(' · ') : undefined }))
   }
 
@@ -424,7 +490,15 @@ export default function PublicarPage() {
       setAuthPrompt(true)
       return
     }
-    if ((!canPublish && !isEditing) || submitting || submitLockRef.current || !draftLoaded) return
+    if (
+      (!canPublish && !isEditing) ||
+      submitting ||
+      processingImages ||
+      descriptionBusy ||
+      submitLockRef.current ||
+      !draftLoaded
+    )
+      return
     setSubmitError(null)
 
     const parsed = publishSchema.safeParse(form)
@@ -722,20 +796,6 @@ export default function PublicarPage() {
           {currentStep === 3 && user && (
             <>
               <Section step={3} title="Detalles y precio">
-                <div>
-                  <label className={labelCls} htmlFor="desc">
-                    Descripción
-                  </label>
-                  <textarea
-                    id="desc"
-                    value={form.description}
-                    onChange={(e) => set('description', e.target.value)}
-                    rows={4}
-                    placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  {errors.description && <p className={errorCls}>{errors.description}</p>}
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Input
@@ -807,7 +867,7 @@ export default function PublicarPage() {
               <Section
                 step={4}
                 title="Fotos y revisión"
-                desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}
+                desc={`Sube hasta ${MAX_IMAGES} fotos. Las optimizamos automáticamente para que carguen rápido. La primera es la principal.`}
               >
                 <input
                   ref={fileInputRef}
@@ -863,12 +923,17 @@ export default function PublicarPage() {
                 {images.length < MAX_IMAGES && (
                   <button
                     type="button"
+                    disabled={processingImages || submitting}
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
                   >
                     <ImagePlus size={22} />
                     <span className="text-sm font-medium">
-                      {images.length ? 'Agregar más fotos' : 'Seleccionar fotos'}
+                      {processingImages
+                        ? 'Optimizando fotos…'
+                        : images.length
+                          ? 'Agregar más fotos'
+                          : 'Seleccionar fotos'}
                     </span>
                     <span className="text-xs">
                       {images.length}/{MAX_IMAGES}
@@ -876,6 +941,47 @@ export default function PublicarPage() {
                   </button>
                 )}
                 {errors.images && <p className={errorCls}>{errors.images}</p>}
+                <div className="space-y-2">
+                  <label className={labelCls} htmlFor="desc">
+                    Descripción de tu publicación
+                  </label>
+                  <p className="text-xs text-on-surface-variant" role="status">
+                    {descriptionMessage || 'Revisa la descripción y edítala antes de publicar.'}
+                  </p>
+                  <textarea
+                    id="desc"
+                    value={form.description}
+                    onChange={(e) => {
+                      descriptionRequest.current++
+                      setDescriptionBusy(false)
+                      setDescriptionMessage('Tu descripción está lista para revisar.')
+                      set('description', e.target.value)
+                    }}
+                    maxLength={2000}
+                    rows={6}
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      disabled={descriptionBusy || submitting}
+                      onClick={() => {
+                        if (
+                          !form.description.trim() ||
+                          window.confirm('¿Reemplazar la descripción actual por un nuevo borrador?')
+                        )
+                          void generateDescription()
+                      }}
+                      className="text-sm text-primary underline underline-offset-4 disabled:opacity-50"
+                    >
+                      {descriptionBusy ? 'Generando…' : 'Volver a generar'}
+                    </button>
+                    <span className="text-xs text-on-surface-variant">
+                      {form.description.length}/2000
+                    </span>
+                  </div>
+                  {errors.description && <p className={errorCls}>{errors.description}</p>}
+                </div>
                 <div className="rounded-xl border border-outline-variant/40 p-4 space-y-2 text-sm text-on-surface">
                   <h3 className="font-semibold">Revisa tu publicación</h3>
                   <p>{form.title}</p>
@@ -908,7 +1014,7 @@ export default function PublicarPage() {
               <Button
                 type="button"
                 variant="outline"
-                disabled={submitting || advancing}
+                disabled={submitting || advancing || processingImages || descriptionBusy}
                 onClick={() => {
                   setStep((currentStep - 1) as PublishStep)
                   setSubmitError(null)
@@ -926,6 +1032,8 @@ export default function PublicarPage() {
                 !draftLoaded ||
                 authLoading ||
                 locationBusy ||
+                processingImages ||
+                descriptionBusy ||
                 !!publishedId ||
                 (currentStep === 4 && !canPublish && !isEditing)
               }

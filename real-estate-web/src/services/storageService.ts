@@ -1,14 +1,13 @@
 import { getSupabase, PROPERTY_IMAGES_BUCKET } from '@/lib/supabase'
 import { translateError } from '@/lib/userMessages'
 import { PropertyImage } from '@/types/property'
+import { compressImage } from '@/lib/imageCompression'
 
-const MAX_FILE_MB = 8
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
 
 export function validateImageFile(file: File): string | null {
   if (!ALLOWED_TYPES.includes(file.type))
     return `${file.name}: formato no soportado (usa JPG, PNG, WebP o AVIF)`
-  if (file.size > MAX_FILE_MB * 1024 * 1024) return `${file.name}: supera los ${MAX_FILE_MB} MB`
   return null
 }
 
@@ -22,7 +21,13 @@ export async function uploadPropertyImages(
   files: File[]
 ): Promise<PropertyImage[]> {
   const supabase = getSupabase()
-  const uploads = files.map(async (file, i) => {
+  const optimized: File[] = []
+  for (const file of files) {
+    const error = validateImageFile(file)
+    if (error) throw new Error(error)
+    optimized.push(await compressImage(file))
+  }
+  const uploads = optimized.map(async (file, i) => {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const path = `${userId}/${crypto.randomUUID()}.${ext}`
     const { error } = await supabase.storage.from(PROPERTY_IMAGES_BUCKET).upload(path, file, {
