@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
-import { z } from 'zod'
+import {
+  publishSchema,
+  PUBLISH_STEPS,
+  validatePublishStep,
+  stepForPublishErrors,
+  accessiblePublishStep,
+  type PublishStep,
+  type PublishFieldErrors,
+} from '@/lib/publishWizard'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { propertyService } from '@/services/propertyService'
 import {
@@ -20,6 +28,8 @@ import {
   GeocodeSuggestion,
 } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { loadPublishDraft, savePublishDraft, clearPublishDraft } from '@/lib/publishDraft'
 import { Input } from '@/components/ui/Input'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { GlowLoader } from '@/components/ui/GlowLoader'
@@ -47,20 +57,7 @@ const TYPES = [
 const DEFAULT_REGION = REGIONS.find((r) => r.includes('Metropolitana')) ?? REGIONS[0]
 const MAX_IMAGES = 10
 
-const publishSchema = z.object({
-  title: z.string().trim().min(8, 'El título debe tener al menos 8 caracteres'),
-  description: z.string().trim().max(2000, 'Máximo 2000 caracteres'),
-  price: z.coerce.number().positive('Ingresa un precio mayor a 0'),
-  area: z.coerce.number().positive('Ingresa la superficie en m²'),
-  street: z.string().trim(),
-  commune: z.string().trim().min(2, 'Ingresa la comuna'),
-  city: z.string().trim(),
-  bedrooms: z.coerce.number().int().min(0).optional(),
-  bathrooms: z.coerce.number().int().min(0).optional(),
-  parkingSpots: z.coerce.number().int().min(0).optional(),
-})
-
-type FieldErrors = Partial<Record<keyof z.infer<typeof publishSchema> | 'images', string>>
+type FieldErrors = PublishFieldErrors
 
 interface PendingImage {
   file: File | null
@@ -109,7 +106,13 @@ export default function PublicarPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
-  const { user, isAuthenticated, hasRemainingListings, refreshUser } = useAuthContext()
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    hasRemainingListings,
+    refreshUser,
+  } = useAuthContext()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [operation, setOperation] = useState<PropertyOperation>(PropertyOperation.SALE)
@@ -133,6 +136,18 @@ export default function PublicarPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [authPrompt, setAuthPrompt] = useState(false)
+  const [publishedId, setPublishedId] = useState<string | null>(null)
+  const [draftLoaded, setDraftLoaded] = useState(false)
+  const [step, setStep] = useState<PublishStep>(1)
+  const [advancing, setAdvancing] = useState(false)
+  const pageScrollRef = useRef<HTMLDivElement>(null)
+  const currentStep = accessiblePublishStep(step, !!user && isAuthenticated)
+  const submitLockRef = useRef(false)
+  const imagesRef = useRef(images)
+  imagesRef.current = images
+  const canPublish = !isAuthenticated || hasRemainingListings()
+  const isEditing = !!editId
   const originalPathsRef = useRef<string[]>([])
   // Idempotency key: se genera una vez por intento de publicación y se reutiliza
   // en reintentos del MISMO submit para que un doble clic/retry no duplique.
@@ -143,6 +158,97 @@ export default function PublicarPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (editId) {
+      setDraftLoaded(true)
+      return
+    }
+    let active = true
+    loadPublishDraft()
+      .then((draft) => {
+        if (!active || !draft) return
+        setForm(draft.form)
+        setOperation(draft.operation)
+        setType(draft.type)
+        setCoords(draft.coords)
+        setImages(draft.files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })))
+        clientRequestIdRef.current = draft.clientRequestId
+        setStep(draft.step)
+      })
+      .catch(() => {
+        if (active) setSubmitError('No pudimos recuperar el borrador guardado en este navegador.')
+      })
+      .finally(() => {
+        if (active) setDraftLoaded(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [editId])
+
+  useEffect(() => {
+    pageScrollRef.current?.scrollTo({ top: 0 })
+  }, [currentStep])
+
+  async function persistStep(next: PublishStep, location = coords) {
+    if (editId) return
+    const clientRequestId = (clientRequestIdRef.current ??= crypto.randomUUID())
+    await savePublishDraft({
+      version: 1,
+      savedAt: Date.now(),
+      clientRequestId,
+      operation,
+      type,
+      form,
+      coords: location,
+      files: images.flatMap((image) => (image.file ? [image.file] : [])),
+      step: next,
+    })
+  }
+
+  async function continueStep() {
+    if (authLoading || !draftLoaded || submitLockRef.current) return
+    const validation = validatePublishStep(currentStep, form, images.length)
+    setErrors(validation)
+    if (Object.keys(validation).length) return
+    submitLockRef.current = true
+    setAdvancing(true)
+    setSubmitError(null)
+    try {
+      let location = coords
+      if (currentStep === 2) {
+        const located = coords
+          ? { latitude: coords.lat, longitude: coords.lng }
+          : await geocodeAddress({
+              street: form.street,
+              commune: form.commune,
+              city: form.city,
+              region: form.region,
+            })
+        if (!located || !isInsideChile(located.latitude, located.longitude)) {
+          setErrors({
+            street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
+          })
+          return
+        }
+        location = { lat: located.latitude, lng: located.longitude }
+        setCoords(location)
+      }
+      const next = Math.min(4, currentStep + 1) as PublishStep
+      await persistStep(next, location)
+      if (!user || !isAuthenticated) {
+        setAuthPrompt(true)
+        return
+      }
+      setStep(next)
+    } catch {
+      setSubmitError('No pudimos guardar esta etapa. Inténtalo de nuevo para conservar tus datos.')
+    } finally {
+      submitLockRef.current = false
+      setAdvancing(false)
+    }
+  }
 
   // Aplica coordenadas y, vía reverse-geocoding, autocompleta dirección y
   // región/comuna/ciudad (los selects se actualizan según la región hallada).
@@ -234,7 +340,7 @@ export default function PublicarPage() {
   // Object URLs leak unless revoked.
   useEffect(
     () => () => {
-      images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     },
     []
   ) // eslint-disable-line react-hooks/exhaustive-deps
@@ -255,7 +361,7 @@ export default function PublicarPage() {
     )
   }
 
-  if (!isAuthenticated || !user) {
+  if (editId && (!isAuthenticated || !user)) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-background">
         <Lock size={48} className="text-on-surface-variant/40 mb-4" />
@@ -266,7 +372,7 @@ export default function PublicarPage() {
           Necesitas una cuenta para crear una publicación.
         </p>
         <Link
-          href="/login"
+          href={`/login?next=${encodeURIComponent(`/publicar?edit=${editId}`)}`}
           className="mt-6 bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all"
         >
           Iniciar sesión
@@ -274,9 +380,6 @@ export default function PublicarPage() {
       </div>
     )
   }
-
-  const canPublish = hasRemainingListings()
-  const isEditing = !!editId
 
   async function addFiles(list: FileList | null) {
     if (!list) return
@@ -312,7 +415,16 @@ export default function PublicarPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!user || !canPublish || submitting) return
+    if (currentStep < 4) {
+      await continueStep()
+      return
+    }
+    if (!user || !isAuthenticated) {
+      setStep(1)
+      setAuthPrompt(true)
+      return
+    }
+    if ((!canPublish && !isEditing) || submitting || submitLockRef.current || !draftLoaded) return
     setSubmitError(null)
 
     const parsed = publishSchema.safeParse(form)
@@ -325,33 +437,36 @@ export default function PublicarPage() {
     }
     if (images.length === 0) newErrors.images = 'Agrega al menos una foto'
     setErrors(newErrors)
-    if (!parsed.success || images.length === 0) return
-
-    setSubmitting(true)
-
-    // Sin coordenadas creíbles no se publica. Antes, si el pin no estaba puesto
-    // y el geocoder fallaba, el aviso caía en silencio al centro de Santiago y
-    // ensuciaba el mapa para todos. Se resuelve ANTES de subir las fotos para
-    // no dejar imágenes huérfanas en Storage cuando la dirección no se ubica.
-    const located = coords
-      ? { latitude: coords.lat, longitude: coords.lng }
-      : await geocodeAddress({
-          street: parsed.data.street,
-          commune: parsed.data.commune,
-          city: parsed.data.city,
-          region: form.region,
-        })
-    if (!located || !isInsideChile(located.latitude, located.longitude)) {
-      setErrors((e) => ({
-        ...e,
-        street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
-      }))
-      setSubmitting(false)
+    if (!parsed.success || images.length === 0) {
+      setStep(stepForPublishErrors(newErrors))
       return
     }
 
+    setSubmitting(true)
+    submitLockRef.current = true
     let uploaded: PropertyImage[] = []
     try {
+      await persistStep(4)
+      // Sin coordenadas creíbles no se publica. Antes, si el pin no estaba puesto
+      // y el geocoder fallaba, el aviso caía en silencio al centro de Santiago y
+      // ensuciaba el mapa para todos. Se resuelve ANTES de subir las fotos para
+      // no dejar imágenes huérfanas en Storage cuando la dirección no se ubica.
+      const located = coords
+        ? { latitude: coords.lat, longitude: coords.lng }
+        : await geocodeAddress({
+            street: parsed.data.street,
+            commune: parsed.data.commune,
+            city: parsed.data.city,
+            region: form.region,
+          })
+      if (!located || !isInsideChile(located.latitude, located.longitude)) {
+        setErrors((e) => ({
+          ...e,
+          street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
+        }))
+        setStep(2)
+        return
+      }
       // New files get uploaded; existing ones keep their storage path.
       const newFiles = images.filter((i) => i.file).map((i) => i.file as File)
       if (newFiles.length) uploaded = await uploadPropertyImages(user.id, newFiles)
@@ -425,27 +540,37 @@ export default function PublicarPage() {
       } else {
         // Create vía ruta server-side (valida JWT + org + cuota en el servidor).
         const clientRequestId = (clientRequestIdRef.current ??= crypto.randomUUID())
-        await propertyService.createPropertyServer(data, user.organizationId, clientRequestId)
+        const created = await propertyService.createPropertyServer(
+          data,
+          user.organizationId,
+          clientRequestId
+        )
+        if (!created.id)
+          throw new Error('No recibimos la confirmación de la publicación. Inténtalo nuevamente.')
+        await clearPublishDraft().catch(() => {})
         clientRequestIdRef.current = null
+        setPublishedId(created.id)
       }
       void refreshUser()
-      router.push('/dashboard')
+      if (editId) router.push('/dashboard')
     } catch (err) {
       // Roll back orphaned uploads when the insert/update fails.
       if (uploaded.length) void deletePropertyImages(uploaded).catch(() => {})
       setSubmitError(err instanceof Error ? err.message : 'No se pudo publicar la propiedad')
+    } finally {
       setSubmitting(false)
+      submitLockRef.current = false
     }
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 pb-32 lg:pb-8">
+    <div ref={pageScrollRef} className="h-full overflow-y-auto bg-background">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 pb-44 lg:pb-8">
         <Link
-          href="/dashboard"
+          href={isAuthenticated ? '/dashboard' : '/'}
           className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-5"
         >
-          <ArrowLeft size={18} /> Volver al panel
+          <ArrowLeft size={18} /> {isAuthenticated ? 'Volver al panel' : 'Volver al inicio'}
         </Link>
 
         <div className="mb-7">
@@ -455,17 +580,25 @@ export default function PublicarPage() {
           <p className="text-on-surface-variant mt-1.5">
             {isEditing
               ? 'Actualiza los datos y guarda los cambios.'
-              : 'Completa los datos y aparecerá en el catálogo al instante.'}
+              : 'Empieza con lo básico. Tu publicación será visible solo después de completar todas las etapas.'}
           </p>
-          <div className="mt-4 flex items-center gap-1.5">
-            {['Básico', 'Ubicación', 'Características', 'Precio', 'Fotos'].map((s, i) => (
-              <span
-                key={s}
-                className="h-1.5 flex-1 max-w-16 rounded-full bg-primary/25"
-                title={`Paso ${i + 1}: ${s}`}
-              />
+          <p aria-live="polite" className="mt-4 text-sm font-semibold text-primary">
+            Etapa {currentStep} de 4 · {PUBLISH_STEPS[currentStep - 1]}
+          </p>
+          <ol aria-label="Etapas de publicación" className="mt-3 flex gap-2">
+            {PUBLISH_STEPS.map((label, index) => (
+              <li
+                key={label}
+                aria-current={index + 1 === currentStep ? 'step' : undefined}
+                className={
+                  'h-1.5 flex-1 rounded-full ' +
+                  (index + 1 <= currentStep ? 'bg-primary' : 'bg-primary/15')
+                }
+              >
+                <span className="sr-only">{label}</span>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
 
         {!canPublish && !isEditing && (
@@ -481,8 +614,8 @@ export default function PublicarPage() {
         )}
 
         <form id="publicar-form" onSubmit={handleSubmit} className="space-y-5">
-          <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
-            <div className="space-y-5 min-w-0">
+          {currentStep === 1 && (
+            <>
               <Section step={1} title="Lo básico" desc="Define qué estás publicando">
                 {/* Operation */}
                 <div>
@@ -528,22 +661,11 @@ export default function PublicarPage() {
                   />
                   {errors.title && <p className={errorCls}>{errors.title}</p>}
                 </div>
-                <div>
-                  <label className={labelCls} htmlFor="desc">
-                    Descripción
-                  </label>
-                  <textarea
-                    id="desc"
-                    value={form.description}
-                    onChange={(e) => set('description', e.target.value)}
-                    rows={4}
-                    placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  {errors.description && <p className={errorCls}>{errors.description}</p>}
-                </div>
               </Section>
-
+            </>
+          )}
+          {currentStep === 2 && user && (
+            <>
               <Section step={2} title="Ubicación">
                 <div>
                   <label className={labelCls} htmlFor="region">
@@ -655,8 +777,25 @@ export default function PublicarPage() {
                   </div>
                 )}
               </Section>
-
-              <Section step={3} title="Características">
+            </>
+          )}
+          {currentStep === 3 && user && (
+            <>
+              <Section step={3} title="Detalles y precio">
+                <div>
+                  <label className={labelCls} htmlFor="desc">
+                    Descripción
+                  </label>
+                  <textarea
+                    id="desc"
+                    value={form.description}
+                    onChange={(e) => set('description', e.target.value)}
+                    rows={4}
+                    placeholder="Describe la propiedad, su entorno y lo que la hace especial..."
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  {errors.description && <p className={errorCls}>{errors.description}</p>}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Input
@@ -695,9 +834,6 @@ export default function PublicarPage() {
                     onChange={(e) => set('bathrooms', e.target.value)}
                   />
                 </div>
-              </Section>
-
-              <Section step={4} title="Precio">
                 <div>
                   <Input
                     label={
@@ -724,10 +860,13 @@ export default function PublicarPage() {
                   Precio negociable
                 </label>
               </Section>
-
+            </>
+          )}
+          {currentStep === 4 && user && (
+            <>
               <Section
-                step={5}
-                title="Fotos"
+                step={4}
+                title="Fotos y revisión"
                 desc={`Sube hasta ${MAX_IMAGES} fotos (JPG, PNG o WebP). La primera es la principal.`}
               >
                 <input
@@ -797,93 +936,107 @@ export default function PublicarPage() {
                   </button>
                 )}
                 {errors.images && <p className={errorCls}>{errors.images}</p>}
+                <div className="rounded-xl border border-outline-variant/40 p-4 space-y-2 text-sm text-on-surface">
+                  <h3 className="font-semibold">Revisa tu publicación</h3>
+                  <p>{form.title}</p>
+                  <p className="text-on-surface-variant">
+                    {OPERATION_LABELS[operation]} · {PROPERTY_TYPE_LABELS[type]} · {form.area} m²
+                  </p>
+                  <p>{[form.street, form.commune, form.city].filter(Boolean).join(', ')}</p>
+                  <p className="font-semibold">
+                    {formatPriceShort(Number(form.price), Currency.CLP)}
+                  </p>
+                  {form.description && (
+                    <p className="text-on-surface-variant whitespace-pre-wrap">
+                      {form.description}
+                    </p>
+                  )}
+                  <p className="text-xs text-on-surface-variant">
+                    Tu propiedad aparecerá en el mapa cuando confirmes la publicación.
+                  </p>
+                </div>
               </Section>
-
-              {submitError && (
-                <div className="bg-error/10 border border-error/40 rounded-xl p-3 text-error text-sm">
-                  {submitError}
-                </div>
-              )}
-            </div>
-
-            {/* Sticky rail (desktop): resumen + acción */}
-            <aside className="hidden lg:block lg:sticky lg:top-6">
-              <div className="rounded-2xl border border-outline-variant/40 bg-surface-container-low p-5 space-y-4">
-                <p className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">
-                  Resumen
-                </p>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      operation === PropertyOperation.RENT
-                        ? 'bg-rent/10 text-rent'
-                        : 'bg-primary/10 text-primary'
-                    }`}
-                  >
-                    {OPERATION_LABELS[operation]}
-                  </span>
-                  <span className="font-headline font-bold text-on-surface text-lg truncate">
-                    {form.price ? formatPriceShort(Number(form.price), Currency.CLP) : '—'}
-                  </span>
-                </div>
-                <p className="text-sm text-on-surface-variant line-clamp-2">
-                  {form.title || 'Sin título'}
-                </p>
-                <p className="text-xs text-on-surface-variant">
-                  {[form.commune, form.city, form.region].filter(Boolean).join(' · ') ||
-                    'Sin ubicación'}
-                </p>
-                <div className="pt-2 space-y-2 border-t border-outline-variant/30">
-                  <Button
-                    type="submit"
-                    loading={submitting}
-                    disabled={!canPublish && !isEditing}
-                    fullWidth
-                  >
-                    <Check size={16} />{' '}
-                    {submitting
-                      ? 'Subiendo fotos…'
-                      : isEditing
-                        ? 'Guardar cambios'
-                        : 'Publicar propiedad'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push('/dashboard')}
-                    fullWidth
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            </aside>
-          </div>
-        </form>
-
-        {/* Mobile sticky action bar */}
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-3 bg-surface-container-low/95 border-t border-outline-variant/60 shadow-xl">
-          <div className="flex items-center gap-3">
-            <div className="min-w-0">
-              <p className="font-headline font-bold text-on-surface text-base leading-tight truncate">
-                {form.price ? formatPriceShort(Number(form.price), Currency.CLP) : 'Sin precio'}
-              </p>
-              <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">
-                {OPERATION_LABELS[operation]}
-              </p>
-            </div>
+            </>
+          )}
+          {submitError && (
+            <p role="alert" className="rounded-xl bg-error/10 p-3 text-sm text-error">
+              {submitError}
+            </p>
+          )}
+          <div className="fixed bottom-16 inset-x-0 z-40 flex items-center justify-between gap-3 border-t border-outline-variant/40 bg-background/95 p-4 lg:static lg:rounded-xl lg:border lg:mt-6">
+            {currentStep > 1 ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting || advancing}
+                onClick={() => {
+                  setStep((currentStep - 1) as PublishStep)
+                  setSubmitError(null)
+                }}
+              >
+                Anterior
+              </Button>
+            ) : (
+              <span className="text-sm text-on-surface-variant">Un paso a la vez</span>
+            )}
             <Button
               type="submit"
-              form="publicar-form"
-              loading={submitting}
-              disabled={!canPublish && !isEditing}
-              className="flex-1"
+              loading={submitting || advancing}
+              disabled={
+                !draftLoaded ||
+                authLoading ||
+                !!publishedId ||
+                (currentStep === 4 && !canPublish && !isEditing)
+              }
             >
-              {isEditing ? 'Guardar' : 'Publicar'}
+              {currentStep < 4 ? 'Continuar' : isEditing ? 'Guardar cambios' : 'Publicar propiedad'}
             </Button>
           </div>
-        </div>
+        </form>
       </div>
+
+      <Dialog open={authPrompt} onOpenChange={setAuthPrompt}>
+        <DialogContent>
+          <DialogTitle>Continúa con tu cuenta</DialogTitle>
+          <DialogDescription className="mt-2">
+            Guardamos lo que ingresaste. Inicia sesión o crea tu cuenta para continuar con la
+            ubicación de tu propiedad. Todavía no se publicará nada.
+          </DialogDescription>
+          <div className="mt-6 grid gap-3">
+            <Link
+              className="rounded-xl bg-primary px-5 py-3 text-center font-semibold text-on-primary"
+              href="/login?next=%2Fpublicar"
+            >
+              Iniciar sesión
+            </Link>
+            <Link
+              className="rounded-xl border border-outline-variant px-5 py-3 text-center font-semibold text-on-surface"
+              href="/register?next=%2Fpublicar"
+            >
+              Crear cuenta
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!publishedId}
+        onOpenChange={(open) => {
+          if (!open) router.push('/dashboard')
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>Publicación exitosa</DialogTitle>
+          <DialogDescription className="mt-2">
+            Tu propiedad ya está publicada. Puedes verla y compartirla.
+          </DialogDescription>
+          <Link
+            className="mt-6 block rounded-xl bg-primary px-5 py-3 text-center font-semibold text-on-primary"
+            href={publishedId ? '/propiedad/' + publishedId : '/dashboard'}
+          >
+            Ver mi publicación
+          </Link>
+        </DialogContent>
+      </Dialog>
 
       {submitting && (
         <div className="fixed inset-0 z-50 bg-background/60 flex items-center justify-center p-6">

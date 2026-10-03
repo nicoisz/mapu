@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -15,7 +15,6 @@ import {
 import { reviewService, Review } from '@/services/reviewService'
 import { cn } from '@/lib/utils'
 import { LandingAccents } from './LandingAccents'
-import { CartographicBackground } from './CartographicBackground'
 
 /* Secciones de la landing. Solo markup y estado local: todas las entradas
    al hacer scroll las registra la página en un único gsap.context, por
@@ -156,8 +155,7 @@ export function ProductReel() {
   const slide = SLIDES[active]
 
   return (
-    <section className="reel-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="terrain" />
+    <section className="reel-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <LandingAccents variant="contour" className="accent-reel" />
       <SectionIntro
         eyebrow="Producto"
@@ -266,7 +264,7 @@ export function ProductReel() {
         <div className="section-fade mt-10 flex justify-center">
           <Link
             href="/mapa"
-            className="btn-shine inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 font-bold text-on-primary shadow-elevated transition-transform hover:scale-105"
+            className="map-launch-glow btn-shine inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 font-bold text-on-secondary shadow-elevated transition-transform hover:scale-105"
           >
             <span className="material-symbols-outlined">explore</span>
             Abrir el mapa interactivo
@@ -424,8 +422,7 @@ const SELLER_POINTS = [
 
 export function ActivityFeed() {
   return (
-    <section className="activity-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="neighborhood" />
+    <section className="activity-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <LandingAccents variant="orbit" className="accent-activity" />
       <div className="grid items-center gap-16 lg:grid-cols-2">
         <div className="space-y-8">
@@ -529,14 +526,11 @@ export function ActivityFeed() {
 
 /* ─── Resultados concretos ─────────────────────────────────────── */
 
-/* Solo promesas verificables del producto: publicar es gratis, no hay
-   comisión, los precios por zona salen del mercado. Nada de cifras de
-   clientes inventadas — eso se infla solo cuando hay datos reales. */
+/* Condiciones del producto; no representan cifras de adopción. */
 const STATS = [
-  { value: 'Gratis', label: 'Publicar una propiedad' },
+  { value: '1 gratis', label: 'Propiedad para particulares' },
   { value: '14', label: 'Ciudades de Chile en el mapa' },
-  { value: '0%', label: 'Comisión por publicar' },
-  { value: 'En vivo', label: 'Precio por zona, calculado del mercado' },
+  { value: '0%', label: 'Comisión por venta o arriendo' },
 ]
 
 /* Fotos dispersas en los bordes, como el collage de "Concrete Results" de
@@ -574,18 +568,16 @@ export function StatsBand() {
 
       <div className="section-title relative z-10 mx-auto max-w-2xl text-center">
         <h2 className="font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
-          <Words text="Resultados concretos, historias reales" wordClass="section-word" />
+          <Words text="Un gran mapa empieza con tu propiedad" wordClass="section-word" />
         </h2>
         <p className="section-fade mx-auto mt-6 max-w-lg text-lg text-on-surface-variant">
-          Más de{' '}
-          <span className="rounded-full bg-secondary px-3 py-1 font-semibold text-on-secondary">
-            miles de propiedades
-          </span>{' '}
-          publicadas en Chile, con precios calculados del mercado.
+          Queremos que miles de propiedades encuentren su lugar aquí. Comencemos con la tuya. Tu
+          primera propiedad es gratis como particular; corredoras y quienes publican más de una
+          propiedad cuentan con planes de pago.
         </p>
       </div>
 
-      <div className="relative z-10 mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
+      <div className="relative z-10 mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-3">
         {STATS.map((s) => (
           <div key={s.label} className="stat-item text-center">
             <p className="font-display text-4xl leading-none text-on-surface sm:text-5xl">
@@ -626,8 +618,7 @@ const WHY = [
 
 export function WhyMapu() {
   return (
-    <section className="why-trigger landing-section cartographic-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
-      <CartographicBackground variant="rural" />
+    <section className="why-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <LandingAccents variant="route" className="accent-why" />
       <h2 className="section-title relative z-10 mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
         <Words text="Por qué MapU" wordClass="section-word" />
@@ -638,7 +629,7 @@ export function WhyMapu() {
           return (
             <div
               key={item.title}
-              className="why-card why-detail relative overflow-hidden flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
+              className="why-card card-motion why-detail relative overflow-hidden flex min-h-[340px] flex-col rounded-2xl bg-surface-container p-7"
             >
               <span aria-hidden className="why-detail-orbit" />
               <span className="why-icon relative z-10">
@@ -663,8 +654,8 @@ export function WhyMapu() {
 const CTA_CARDS = [
   {
     img: '/3.jpg',
-    title: 'Publica gratis',
-    desc: 'Sube tu propiedad en minutos y llega a compradores de todo Chile.',
+    title: 'Publica tu propiedad',
+    desc: 'Una propiedad gratis para particulares. Planes para corredoras y más propiedades.',
     cta: 'Publicar ahora',
     href: '/publicar',
   },
@@ -692,14 +683,14 @@ export function CtaCards() {
           <Link
             key={card.title}
             href={card.href}
-            className="group relative flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[1.75rem]"
+            className="card-motion card-reveal group relative flex min-h-[440px] flex-col justify-end overflow-hidden rounded-[1.75rem]"
           >
             <Image
               src={card.img}
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              className="object-cover"
             />
             <span
               aria-hidden
@@ -712,7 +703,7 @@ export function CtaCards() {
               <p className="text-sm text-white/80">{card.desc}</p>
               <span className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-on-secondary">
                 {card.cta}
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                <ArrowRight size={16} />
               </span>
             </div>
           </Link>
@@ -757,7 +748,7 @@ export function Testimonials() {
         {reviews.map((r) => (
           <figure
             key={r.id}
-            className="flex h-full flex-col gap-6 rounded-3xl border border-outline-variant/40 bg-surface-container-lowest p-7"
+            className="card-motion flex h-full flex-col gap-6 rounded-3xl border border-outline-variant/40 bg-surface-container-lowest p-7"
           >
             <div className="flex gap-0.5" aria-label={`${r.rating} de 5 estrellas`}>
               {Array.from({ length: 5 }).map((_, i) => (
@@ -796,7 +787,7 @@ export function Testimonials() {
 const FAQS = [
   {
     q: '¿Publicar una propiedad tiene costo?',
-    a: 'No. Publicar es gratis y no cobramos comisión: creas tu aviso, subes las fotos y lo ves en el mapa al instante.',
+    a: 'Los particulares pueden publicar una propiedad gratis. Las corredoras y quienes publican más de una propiedad necesitan un plan de pago. No cobramos comisión por la venta o el arriendo.',
   },
   {
     q: '¿De dónde salen los precios por zona?',
@@ -813,6 +804,9 @@ const FAQS = [
 ]
 
 export function FaqAccordion() {
+  const id = useId()
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({})
+
   return (
     <section
       id="faq"
@@ -827,20 +821,45 @@ export function FaqAccordion() {
           sub="Y si queda algo, escríbenos: estamos para ayudarte con tu propiedad."
         />
         <div className="divide-y divide-outline-variant/50 border-y border-outline-variant/50">
-          {FAQS.map((faq) => (
-            <details key={faq.q} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left">
-                <span className="font-headline text-base font-semibold text-on-surface sm:text-lg">
-                  {faq.q}
-                </span>
-                <ChevronDown
-                  size={20}
-                  className="shrink-0 text-on-surface-variant transition-transform duration-300 group-open:rotate-180"
-                />
-              </summary>
-              <p className="mt-3 max-w-2xl leading-relaxed text-on-surface-variant">{faq.a}</p>
-            </details>
-          ))}
+          {FAQS.map((faq, index) => {
+            const open = !!expanded[index]
+            const panelId = id + '-answer-' + index
+            return (
+              <div key={faq.q} className="py-5">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={panelId}
+                  onClick={() =>
+                    setExpanded((current) => ({ ...current, [index]: !current[index] }))
+                  }
+                  className="flex w-full items-center justify-between gap-4 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                >
+                  <span className="font-headline text-base font-semibold text-on-surface sm:text-lg">
+                    {faq.q}
+                  </span>
+                  <ChevronDown
+                    size={20}
+                    className="faq-chevron shrink-0 text-on-surface-variant"
+                    data-open={open}
+                  />
+                </button>
+                <div
+                  id={panelId}
+                  className="faq-panel"
+                  data-open={open}
+                  aria-hidden={!open}
+                  inert={!open}
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    <p className="pt-3 max-w-2xl leading-relaxed text-on-surface-variant">
+                      {faq.a}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}{' '}
         </div>
       </div>
     </section>

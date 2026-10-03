@@ -12,7 +12,7 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
-import { CartographicBackground } from '@/components/landing/CartographicBackground'
+import { landingSearchUrl } from '@/lib/landingSearch'
 import {
   ActivityFeed,
   CtaCards,
@@ -50,12 +50,11 @@ const COMUNAS = [
   'Temuco',
 ]
 
-/** Pestañas del buscador, al estilo del conmutador de Casavo. Cada una
- *  antepone la palabra que `searchService` ya traduce a filtro. */
+/** Search tabs select an explicit operation filter or start a publication. */
 const HERO_TABS = [
-  { id: 'sale', label: 'Comprar', keyword: 'venta' },
-  { id: 'rent', label: 'Arrendar', keyword: 'arriendo' },
-  { id: 'publish', label: 'Publicar', keyword: '' },
+  { id: 'sale', label: 'Comprar' },
+  { id: 'rent', label: 'Arrendar' },
+  { id: 'publish', label: 'Publicar' },
 ] as const
 type HeroTab = (typeof HERO_TABS)[number]['id']
 
@@ -139,9 +138,7 @@ export default function LandingPage() {
       router.push('/publicar')
       return
     }
-    const keyword = HERO_TABS.find((t) => t.id === tab)?.keyword ?? ''
-    const parts = [keyword, searchValue.trim(), propertyType].filter(Boolean)
-    router.push(parts.length ? `/buscar?q=${encodeURIComponent(parts.join(' '))}` : '/buscar')
+    router.push(landingSearchUrl(tab, searchValue, propertyType))
   }
 
   useEffect(() => {
@@ -171,24 +168,6 @@ export default function LandingPage() {
             { y: 24, opacity: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out' },
             0.25
           )
-
-        // Move only the oversized decorative layer, using the existing scroller.
-        gsap.utils.toArray<HTMLElement>('.cartographic-drift').forEach((layer) => {
-          gsap.fromTo(
-            layer,
-            { y: -24 },
-            {
-              y: 24,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: layer.closest('.cartographic-section'),
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: true,
-              },
-            }
-          )
-        })
 
         if (scroller.querySelector('.property-card'))
           gsap.from('.property-card', {
@@ -310,6 +289,20 @@ export default function LandingPage() {
           ease: 'power3.out',
         })
 
+        // Animate complete action cards; individual CSS translate handles hover separately.
+        gsap.utils.toArray<HTMLElement>('.card-reveal').forEach((card, index) => {
+          gsap.from(card, {
+            y: 24,
+            scale: 0.985,
+            opacity: 0,
+            duration: 0.75,
+            delay: (index % 3) * 0.07,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+            scrollTrigger: { trigger: card, start: 'top 90%', once: true },
+          })
+        })
+
         // Resultados: el collage con parallax. Cada foto recorre una distancia
         // grande y distinta (±170/±220/±140 px) para que las capas se muevan a
         // velocidad muy distinta; esa diferencia es la profundidad. Las cifras
@@ -419,9 +412,8 @@ export default function LandingPage() {
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
         data-hero
-        className="cartographic-section relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
+        className="relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
       >
-        <CartographicBackground variant="urban" />
         <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-12 lg:grid-cols-2 lg:px-6">
           <div>
             <h1 className="font-display text-[2.75rem] leading-[1.04] sm:text-6xl lg:text-[3.9rem] xl:text-[4.4rem]">
@@ -469,13 +461,14 @@ export default function LandingPage() {
                   <input
                     id="hero-q"
                     type="text"
-                    value={searchValue}
+                    readOnly={tab === 'publish'}
+                    value={tab === 'publish' ? '' : searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                     placeholder={
                       tab === 'rent'
                         ? '¿Dónde quieres arrendar?'
                         : tab === 'publish'
-                          ? 'Ingresa para publicar tu propiedad'
+                          ? 'Completa tu propiedad sin iniciar sesión'
                           : 'Ciudad, barrio o región...'
                     }
                     className="w-full bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
@@ -504,18 +497,20 @@ export default function LandingPage() {
               </div>
               <button
                 type="submit"
-                className="btn-shine w-full rounded-lg bg-primary py-3.5 text-[15px] font-semibold text-on-primary transition-all hover:brightness-110 active:scale-[0.99]"
+                className="search-shimmer w-full rounded-lg bg-primary py-3.5 text-[15px] font-semibold text-on-primary transition-all hover:brightness-110 active:scale-[0.99]"
               >
-                {tab === 'publish' ? 'Publicar' : tab === 'rent' ? 'Arrendar' : 'Buscar'}
+                <span className="search-light-label">
+                  {tab === 'publish' ? 'Publicar' : tab === 'rent' ? 'Arrendar' : 'Buscar'}
+                </span>
               </button>
             </form>
 
             <p className="hero-reveal mt-4 text-sm text-on-secondary/65">
-              Publicar es gratis · precios por zona calculados del mercado · sin comisión
+              Una propiedad gratis para particulares · planes para corredoras y más propiedades
             </p>
 
             <p className="hero-reveal mt-16 text-sm font-medium">
-              Miles de propiedades en 14 regiones de Chile
+              Construyamos el próximo gran mapa inmobiliario de Chile
             </p>
           </div>
 
@@ -590,14 +585,14 @@ export default function LandingPage() {
 
             return (
               <Link key={property.id} href={`/propiedad/${property.id}`} className="group block">
-                <div className="property-card spotlight accent-glow h-full overflow-hidden rounded-3xl border border-outline-variant/50 bg-surface-container-lowest transition-all duration-300 group-hover:-translate-y-1.5">
+                <div className="property-card card-motion spotlight accent-glow h-full overflow-hidden rounded-3xl border border-outline-variant/50 bg-surface-container-lowest">
                   <div className="relative h-60 overflow-hidden">
                     {mainImg && (
                       <Image
                         src={mainImg.url}
                         alt={property.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     )}
@@ -664,8 +659,7 @@ export default function LandingPage() {
 
       {/* ─── CTA ──────────────────────────────────────────── */}
       <section className="cta-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
-        <div className="cta-card cartographic-section relative overflow-hidden rounded-3xl bg-primary p-10 text-on-primary md:p-14">
-          <CartographicBackground variant="coastal" />
+        <div className="cta-card relative overflow-hidden rounded-3xl bg-primary p-10 text-on-primary md:p-14">
           <span
             aria-hidden
             className="orb"
@@ -683,7 +677,7 @@ export default function LandingPage() {
                 ¿Tienes una propiedad para publicar?
               </h2>
               <p className="text-lg leading-relaxed opacity-80">
-                Publicar es gratis. Los mensajes y favoritos de cada aviso llegan a tu panel.
+                Una propiedad gratis para particulares. Los mensajes y favoritos llegan a tu panel.
               </p>
             </div>
             <Link
@@ -726,7 +720,7 @@ export default function LandingPage() {
               links: [
                 { label: 'Buscar propiedades', href: '/buscar' },
                 { label: 'Mapa interactivo', href: '/mapa' },
-                { label: 'Publicar gratis', href: '/publicar' },
+                { label: 'Publicar propiedad', href: '/publicar' },
                 { label: 'Favoritos', href: '/favoritos' },
               ],
             },

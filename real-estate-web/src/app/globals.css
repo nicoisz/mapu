@@ -398,74 +398,6 @@
    las utilidades del layer que no ve escritas completas, y varias de
    estas clases se componen con estilos inline. */
 
-/* Each territory has its own composition and generous empty space. */
-.cartographic-section {
-  position: relative;
-  isolation: isolate;
-}
-.cartographic-background {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-  color: rgb(var(--on-surface) / 0.13);
-  -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
-  mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
-}
-.cartographic-drift {
-  position: absolute;
-  inset: -48px 0;
-  background-color: currentColor;
-  -webkit-mask: var(--cartographic-art) center / 100% 100% no-repeat;
-  mask: var(--cartographic-art) center / 100% 100% no-repeat;
-}
-.cartographic-background--urban {
-  --cartographic-art: url('/patterns/urban.svg');
-}
-.cartographic-background--terrain {
-  --cartographic-art: url('/patterns/terrain.svg');
-}
-.cartographic-background--rural {
-  --cartographic-art: url('/patterns/rural.svg');
-}
-.cartographic-background--neighborhood {
-  --cartographic-art: url('/patterns/neighborhood.svg');
-}
-.cartographic-background--coastal {
-  --cartographic-art: url('/patterns/coastal.svg');
-}
-[data-hero] .cartographic-background {
-  color: rgb(var(--on-secondary) / 0.12);
-}
-.cta-card .cartographic-background {
-  color: rgb(var(--on-primary) / 0.15);
-}
-@media (max-width: 767px) {
-  .cartographic-background {
-    opacity: 0.65;
-  }
-  .cartographic-drift {
-    -webkit-mask-size: 900px 100%;
-    mask-size: 900px 100%;
-  }
-  .cartographic-background--urban .cartographic-drift,
-  .cartographic-background--rural .cartographic-drift {
-    -webkit-mask-position: left center;
-    mask-position: left center;
-  }
-  .cartographic-background--neighborhood .cartographic-drift,
-  .cartographic-background--coastal .cartographic-drift {
-    -webkit-mask-position: right center;
-    mask-position: right center;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cartographic-drift {
-    transform: none !important;
-  }
-}
-
 /* Orbe difuminado. El tamaño, color y posición van inline en cada uso;
    acá solo vive el comportamiento común. */
 @keyframes orbFloat {
@@ -692,55 +624,6 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Nav "Buscar": brillo en movimiento ─────────────────────────
-   Una banda de luz barre el texto y el icono (mix-blend overlay para que
-   aclare lo que pase por debajo) y el pill late con un halo cálido. El
-   overflow oculta mantiene la banda dentro del link, así no invade los
-   ítems vecinos. */
-@keyframes navShineSweep {
-  0% {
-    transform: translateX(-150%) skewX(-18deg);
-  }
-  60%,
-  100% {
-    transform: translateX(260%) skewX(-18deg);
-  }
-}
-@keyframes navShineGlow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgb(255 168 56 / 0);
-  }
-  50% {
-    box-shadow: 0 0 14px 1px rgb(255 168 56 / 0.75);
-  }
-}
-.nav-shine {
-  position: relative;
-  overflow: hidden;
-  border-radius: 9999px;
-  animation: navShineGlow 3.2s ease-in-out infinite;
-}
-.nav-shine::after {
-  content: '';
-  position: absolute;
-  top: -30%;
-  bottom: -30%;
-  left: 0;
-  width: 45%;
-  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.85), transparent);
-  transform: translateX(-150%) skewX(-18deg);
-  animation: navShineSweep 3.2s ease-in-out infinite;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-}
-@media (prefers-reduced-motion: reduce) {
-  .nav-shine,
-  .nav-shine::after {
-    animation: none;
-  }
-}
-
 /* The photo moves with scroll; its inner layer handles the slow camera drift. */
 .hero-photo-frame {
   height: clamp(640px, calc(100svh - 174px), 826px);
@@ -849,15 +732,6 @@
   width: 490px;
   height: 490px;
 }
-.why-detail {
-  transition:
-    transform 400ms ease,
-    background-color 400ms ease;
-}
-.why-detail:hover {
-  transform: translateY(-7px);
-  background: rgb(var(--secondary-container));
-}
 .why-detail-orbit {
   position: absolute;
   top: -82px;
@@ -866,7 +740,6 @@
   height: 215px;
   border: 1px solid rgb(var(--primary) / 0.2);
   border-radius: 50%;
-  transition: transform 800ms ease;
 }
 .why-detail-orbit::after {
   content: '';
@@ -875,15 +748,8 @@
   border: 1px solid rgb(var(--primary) / 0.12);
   border-radius: inherit;
 }
-.why-detail:hover .why-detail-orbit {
-  transform: translate(-10px, 16px) scale(1.08);
-}
 .why-icon {
   width: fit-content;
-  transition: transform 400ms ease;
-}
-.why-detail:hover .why-icon {
-  transform: rotate(-7deg) translateY(-3px);
 }
 @media (max-width: 1023px) {
   .hero-photo-frame {
@@ -927,5 +793,207 @@
   .why-detail:hover .why-detail-orbit,
   .why-detail:hover .why-icon {
     transform: none;
+  }
+}
+
+/* Override the individual-transform reset GSAP applies during scroll reveals. */
+@media (prefers-reduced-motion: no-preference) {
+  .card-motion {
+    transition:
+      translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      rotate 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-motion:focus-visible,
+  .card-motion:focus-within,
+  .group:focus-visible > .card-motion {
+    translate: 0 -5px !important;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .card-motion:hover {
+      translate: 0 -5px !important;
+      rotate: -0.3deg !important;
+    }
+    .card-motion:nth-child(even):hover {
+      rotate: 0.3deg !important;
+    }
+  }
+  a.card-motion:active {
+    translate: 0 -1px !important;
+    rotate: 0deg !important;
+    transition-duration: 140ms;
+  }
+}
+
+/* A grid track animates to the answer's natural height in both directions. */
+.faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease;
+}
+.faq-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.faq-chevron {
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.faq-chevron[data-open='true'] {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-panel,
+  .faq-chevron {
+    transition: none;
+  }
+}
+
+/* One shared cycle for both search controls: a slow 3s sweep, then 3s dark. */
+@keyframes searchLightSweep {
+  0% {
+    background-position: 140% 50%;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    background-position: -40% 50%;
+    opacity: 0;
+  }
+}
+@keyframes searchLightText {
+  0% {
+    background-position: 140% 50%;
+    text-shadow: none;
+  }
+  25% {
+    text-shadow: 0 0 8px rgb(165 206 255 / 0.65);
+  }
+  50%,
+  100% {
+    background-position: -40% 50%;
+    text-shadow: none;
+  }
+}
+@keyframes searchLightHalo {
+  0%,
+  50%,
+  100% {
+    box-shadow: 0 0 0 rgb(110 174 255 / 0);
+  }
+  25% {
+    box-shadow: 0 0 14px rgb(110 174 255 / 0.45);
+  }
+}
+@keyframes searchLightIcon {
+  0%,
+  50%,
+  100% {
+    filter: none;
+  }
+  25% {
+    filter: drop-shadow(0 0 4px #a9ceff) brightness(1.5);
+  }
+}
+.nav-shine,
+.search-shimmer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  animation: searchLightHalo 6s linear infinite;
+}
+.nav-shine {
+  border-radius: 9999px;
+}
+.nav-shine::after,
+.search-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.28) 50%, transparent 60%)
+    140% 50% / 300% 100%;
+  animation: searchLightSweep 6s linear infinite;
+}
+.nav-shine::before,
+.search-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(105deg, transparent 40%, #d2e6ff 50%, transparent 60%) 140% 50% / 300%
+    100%;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: searchLightSweep 6s linear infinite;
+}
+.search-light-label {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(105deg, currentColor 40%, #c7e4ff 50%, currentColor 60%) 140% 50% /
+    300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: searchLightText 6s linear infinite;
+}
+.search-light-icon {
+  animation: searchLightIcon 6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-shine,
+  .search-shimmer {
+    animation: none;
+  }
+  .nav-shine::before,
+  .nav-shine::after,
+  .search-shimmer::before,
+  .search-shimmer::after {
+    display: none;
+  }
+  .search-light-label {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+  .search-light-icon {
+    animation: none;
+  }
+}
+.map-launch-glow {
+  border: 2px solid rgb(var(--secondary));
+  transition:
+    transform 300ms ease,
+    box-shadow 400ms ease,
+    border-color 400ms ease;
+}
+.map-launch-glow:hover,
+.map-launch-glow:focus-visible {
+  border-color: rgb(var(--secondary));
+  box-shadow:
+    0 0 0 1px rgb(87 151 255 / 0.25),
+    0 0 25px rgb(65 133 245 / 0.4),
+    0 8px 30px rgb(65 133 245 / 0.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-shimmer::before,
+  .search-shimmer::after {
+    display: none;
+  }
+  .map-launch-glow {
+    transition: none;
   }
 }

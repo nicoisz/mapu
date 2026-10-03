@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
@@ -18,15 +18,10 @@ export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const next = useMemo(
-    () =>
-      safeRedirectPath(
-        typeof window === 'undefined'
-          ? null
-          : new URLSearchParams(window.location.search).get('next')
-      ),
-    []
-  )
+  const [next, setNext] = useState('/')
+  useEffect(() => {
+    setNext(safeRedirectPath(new URLSearchParams(window.location.search).get('next')))
+  }, [])
 
   // Vuelve a ?next (p.ej. /admin) si vino de ahí; si no, al mapa /buscar.
   const destination = next && next !== '/' ? next : DEFAULT_DESTINATION
@@ -122,7 +117,10 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-on-surface-variant mt-6">
         ¿No tienes cuenta?{' '}
-        <Link href="/register" className="text-primary font-medium hover:underline">
+        <Link
+          href={next && next !== '/' ? `/register?next=${encodeURIComponent(next)}` : '/register'}
+          className="text-primary font-medium hover:underline"
+        >
           Regístrate gratis
         </Link>
       </p>

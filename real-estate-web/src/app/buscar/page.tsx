@@ -15,6 +15,7 @@ import { ExchangeIndicators } from '@/components/layout/ExchangeIndicators'
 import { useSearch } from '@/hooks/useSearch'
 import { Property } from '@/types/property'
 import { cn } from '@/lib/utils'
+import { parseSearchOperation } from '@/lib/landingSearch'
 
 type ViewMode = 'map' | 'list'
 
@@ -83,9 +84,9 @@ function SearchContent() {
   // Pop the floating detail card in when a property is picked.
   useLayoutEffect(() => {
     const el = cardRef.current
-    if (!selected || !el || prefersReducedMotion) return
+    if (viewMode !== 'map' || !selected || !el || prefersReducedMotion) return
     gsap.fromTo(el, { x: 24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: 'power3.out' })
-  }, [selected?.id, prefersReducedMotion])
+  }, [selected?.id, viewMode, prefersReducedMotion])
 
   const {
     query,
@@ -102,7 +103,7 @@ function SearchContent() {
     updateFilters,
     clearFilters,
     setSuggestions,
-  } = useSearch(urlQuery)
+  } = useSearch(urlQuery, parseSearchOperation(searchParams.get('operation')))
 
   // Stagger the cards in when a new result set arrives (not on map pans).
   useLayoutEffect(() => {
@@ -131,15 +132,38 @@ function SearchContent() {
     [results, bounds]
   )
 
+  // Selecting a map pin in list mode filters only the list, never the map pins.
+  const listed = useMemo(
+    () =>
+      viewMode === 'list' && selected
+        ? results.filter((property) => property.id === selected.id)
+        : visible,
+    [viewMode, selected, results, visible]
+  )
+
+  useEffect(() => {
+    if (selected && !results.some((property) => property.id === selected.id)) setSelected(null)
+  }, [results, selected])
+
+  function changeViewMode(next: ViewMode) {
+    setSelected(null)
+    setViewMode(next)
+    if (next === 'list') setFitToken((token) => token + 1)
+  }
+
+  function selectMapProperty(property: Property) {
+    setSelected((current) => (viewMode === 'list' && current?.id === property.id ? null : property))
+  }
+
   // Paginate the list client-side (the map still clusters the full result set).
   // La lista llena hasta 4 columnas, así que 8 tarjetas no alcanzan a llenar
   // ni dos filas; la columna del mapa sigue siendo de una sola tarjeta de ancho.
   const PAGE_SIZE = viewMode === 'list' ? 24 : 8
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const pageItems = useMemo(() => visible.slice(0, visibleCount), [visible, visibleCount])
+  const pageItems = useMemo(() => listed.slice(0, visibleCount), [listed, visibleCount])
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [visible, PAGE_SIZE])
+  }, [listed, PAGE_SIZE])
 
   // Counts per operation — the chips double as the map-pin color legend.
   const opCounts = useMemo(
@@ -180,7 +204,7 @@ function SearchContent() {
         />
         <div className="hidden md:flex items-center gap-1 bg-surface-container rounded-lg p-1 shrink-0">
           <button
-            onClick={() => setViewMode('map')}
+            onClick={() => changeViewMode('map')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all',
               viewMode === 'map'
@@ -191,11 +215,7 @@ function SearchContent() {
             <MapIcon size={14} /> Mapa
           </button>
           <button
-            onClick={() => {
-              setViewMode('list')
-              setSelected(null)
-              setFitToken((t) => t + 1)
-            }}
+            onClick={() => changeViewMode('list')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all',
               viewMode === 'list'
@@ -264,7 +284,8 @@ function SearchContent() {
           <DynamicMapView
             properties={results}
             selectedId={selected?.id}
-            onPropertySelect={setSelected}
+            focusOnSelection={viewMode === 'map'}
+            onPropertySelect={selectMapProperty}
             onMapClick={closeDetail}
             onBoundsChange={setBounds}
             fitToken={fitToken}
@@ -272,9 +293,10 @@ function SearchContent() {
           />
 
           {/* Floating detail card over the map (the list collapses behind it). */}
-          {selected && (
+          {viewMode === 'map' && selected && (
             <div
               ref={cardRef}
+              data-testid="map-property-detail"
               className="absolute top-2 right-3 bottom-2 w-[440px] max-w-[calc(100%-1.5rem)] z-20"
             >
               <div className="h-full overflow-y-auto rounded-2xl">
@@ -294,6 +316,7 @@ function SearchContent() {
         {/* Right column: the property list. Collapses (width → 0) while a
             property is selected so the map gets the full width. */}
         <div
+          data-testid="search-property-list"
           ref={listColRef}
           className={cn(
             'relative bg-surface-container-low border-l border-outline-variant/40 overflow-hidden shrink-0',
@@ -303,7 +326,21 @@ function SearchContent() {
           <div
             className={cn('h-full overflow-y-auto', viewMode === 'list' ? 'w-full' : 'w-[380px]')}
           >
-            {isSearching && visible.length === 0 ? (
+            {viewMode === 'list' && selected && (
+              <div className="flex items-center justify-between gap-3 border-b border-outline-variant/40 px-4 py-3 text-sm">
+                <span className="truncate text-on-surface">
+                  Propiedad seleccionada: {selected.title}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="shrink-0 font-semibold text-primary hover:underline"
+                >
+                  Ver todas
+                </button>
+              </div>
+            )}
+            {isSearching && listed.length === 0 ? (
               <div
                 className={cn(
                   'p-3 gap-3',
@@ -316,7 +353,7 @@ function SearchContent() {
                   <PropertyCardSkeleton key={i} dense={viewMode === 'list'} />
                 ))}
               </div>
-            ) : visible.length === 0 ? (
+            ) : listed.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center text-on-surface-variant">
                 <Building2 size={40} className="mb-3 opacity-50" />
                 <p className="font-medium text-on-surface">Sin propiedades en esta zona</p>
@@ -345,12 +382,12 @@ function SearchContent() {
                     />
                   </div>
                 ))}
-                {visible.length > pageItems.length && (
+                {listed.length > pageItems.length && (
                   <button
                     onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                     className="col-span-full w-full py-2.5 text-sm font-medium text-primary hover:underline"
                   >
-                    Ver más ({visible.length - pageItems.length} restantes)
+                    Ver más ({listed.length - pageItems.length} restantes)
                   </button>
                 )}
               </div>
@@ -362,7 +399,7 @@ function SearchContent() {
       {/* Mobile view toggle */}
       <div className="md:hidden fixed bottom-16 right-4 z-20">
         <button
-          onClick={() => setViewMode((v) => (v === 'map' ? 'list' : 'map'))}
+          onClick={() => changeViewMode(viewMode === 'map' ? 'list' : 'map')}
           className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-full shadow-elevated text-sm font-semibold"
         >
           {viewMode === 'map' ? (

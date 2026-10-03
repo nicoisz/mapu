@@ -83,6 +83,8 @@ type BaseLayer = 'streets' | 'satellite' | 'hybrid'
 interface MapViewProps {
   properties: Property[]
   selectedId?: string | null
+  /** Keep the current map extent when selection only filters a list. */
+  focusOnSelection?: boolean
   onPropertySelect?: (property: Property) => void
   onMapClick?: () => void
   onBoundsChange?: (bounds: maplibregl.LngLatBounds) => void
@@ -195,6 +197,7 @@ function makeClusterElement(count: number, isDark: boolean, animate: boolean): H
 export default function MapView({
   properties,
   selectedId,
+  focusOnSelection = true,
   onPropertySelect,
   onMapClick,
   onBoundsChange,
@@ -518,7 +521,7 @@ export default function MapView({
   // ── Fly to the selected property ─────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !selectedId) return
+    if (!map || !selectedId || !focusOnSelection) return
     const p = properties.find((x) => x.id === selectedId)
     if (p)
       map.flyTo({
@@ -528,7 +531,7 @@ export default function MapView({
         essential: true,
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId])
+  }, [selectedId, focusOnSelection])
 
   // ── Encuadrar los resultados visibles (vista lista) ─────────────
   useEffect(() => {

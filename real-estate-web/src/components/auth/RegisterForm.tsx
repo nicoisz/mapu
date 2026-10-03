@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Lock, Mail, User } from 'lucide-react'
@@ -8,6 +8,7 @@ import { useAuthContext } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { UserType } from '@/types/enums'
+import { safeRedirectPath } from '@/lib/redirect'
 
 const USER_TYPE_OPTIONS = [
   { value: UserType.INDIVIDUAL, label: 'Particular', desc: 'Vendedor o comprador particular' },
@@ -17,6 +18,10 @@ const USER_TYPE_OPTIONS = [
 
 export function RegisterForm() {
   const router = useRouter()
+  const [next, setNext] = useState('/')
+  useEffect(() => {
+    setNext(safeRedirectPath(new URLSearchParams(window.location.search).get('next')))
+  }, [])
   const { register, isLoading, error } = useAuthContext()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -30,7 +35,7 @@ export function RegisterForm() {
     if (!result.success) return
     // With email confirmation enabled there is no session yet: show the notice.
     if (result.info && !result.user) setInfo(result.info)
-    else router.push('/')
+    else router.push(next)
   }
 
   return (
@@ -125,7 +130,10 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-on-surface-variant mt-6">
         ¿Ya tienes cuenta?{' '}
-        <Link href="/login" className="text-primary font-medium hover:underline">
+        <Link
+          href={next !== '/' ? `/login?next=${encodeURIComponent(next)}` : '/login'}
+          className="text-primary font-medium hover:underline"
+        >
           Iniciar sesión
         </Link>
       </p>
