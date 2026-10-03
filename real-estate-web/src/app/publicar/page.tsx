@@ -8,6 +8,7 @@ import {
   publishSchema,
   PUBLISH_STEPS,
   validatePublishStep,
+  validatePublishLocation,
   stepForPublishErrors,
   accessiblePublishStep,
   type PublishStep,
@@ -22,10 +23,10 @@ import {
 } from '@/services/storageService'
 import { compressImage } from '@/lib/imageCompression'
 import {
-  geocodeAddress,
   searchAddress,
   reverseGeocode,
   GeocodeSuggestion,
+  ReverseGeocodeResult,
 } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -42,8 +43,8 @@ import {
   titleCase,
 } from '@/data/chileanLocations'
 import { formatPriceShort } from '@/lib/utils'
-import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
-import { isInsideChile } from '@/lib/geo'
+import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
+
 import { ContactMethod, Currency, PropertyOperation, PropertyType } from '@/types/enums'
 import type { Property, PropertyImage } from '@/types/property'
 
@@ -158,7 +159,11 @@ export default function PublicarPage() {
   // ── Ubicación: geocoder + pin ───────────────────────────────────
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [locationConfirmed, setLocationConfirmed] = useState(false)
+  const [locationBusy, setLocationBusy] = useState(false)
+  const [locationMessage, setLocationMessage] = useState<string | null>(null)
+  const [suggestedAddress, setSuggestedAddress] = useState<ReverseGeocodeResult | null>(null)
+  const locationRequest = useRef(0)
 
   useEffect(() => {
     if (editId) {
@@ -173,6 +178,7 @@ export default function PublicarPage() {
         setOperation(draft.operation)
         setType(draft.type)
         setCoords(draft.coords)
+        setLocationConfirmed(draft.locationConfirmed)
         setImages(draft.files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })))
         clientRequestIdRef.current = draft.clientRequestId
         setStep(draft.step)
@@ -203,6 +209,7 @@ export default function PublicarPage() {
       type,
       form,
       coords: location,
+      locationConfirmed,
       files: images.flatMap((image) => (image.file ? [image.file] : [])),
       step: next,
     })
@@ -217,27 +224,15 @@ export default function PublicarPage() {
     setAdvancing(true)
     setSubmitError(null)
     try {
-      let location = coords
       if (currentStep === 2) {
-        const located = coords
-          ? { latitude: coords.lat, longitude: coords.lng }
-          : await geocodeAddress({
-              street: form.street,
-              commune: form.commune,
-              city: form.city,
-              region: form.region,
-            })
-        if (!located || !isInsideChile(located.latitude, located.longitude)) {
-          setErrors({
-            street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
-          })
+        const locationErrors = validatePublishLocation(coords, locationConfirmed)
+        if (locationErrors.location) {
+          setErrors(locationErrors)
           return
         }
-        location = { lat: located.latitude, lng: located.longitude }
-        setCoords(location)
       }
       const next = Math.min(4, currentStep + 1) as PublishStep
-      await persistStep(next, location)
+      await persistStep(next)
       if (!user || !isAuthenticated) {
         setAuthPrompt(true)
         return
@@ -251,42 +246,96 @@ export default function PublicarPage() {
     }
   }
 
-  // Aplica coordenadas y, vía reverse-geocoding, autocompleta dirección y
-  // región/comuna/ciudad (los selects se actualizan según la región hallada).
-  async function applyCoords(lat: number, lng: number) {
-    setCoords({ lat, lng })
+  function invalidateLocation() {
+    locationRequest.current++
+    setLocationConfirmed(false)
+    setLocationBusy(false)
     setSuggestions([])
-    const rev = await reverseGeocode(lat, lng)
-    if (!rev) return
-    setForm((f) => {
-      const commune = rev.commune || f.commune
-      const region = regionForCommune(commune) ?? f.region
-      return {
-        ...f,
-        street: [rev.street, rev.number].filter(Boolean).join(' ') || f.street,
-        region,
-        commune,
-        city: rev.city || f.city,
-      }
-    })
+    setSuggestedAddress(null)
+    setLocationMessage(null)
+    setErrors((previous) => ({ ...previous, location: undefined }))
   }
 
   function handleStreetChange(value: string) {
     set('street', value)
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
-    if (value.trim().length < 3) {
-      setSuggestions([])
-      return
-    }
-    searchTimerRef.current = setTimeout(() => {
-      void searchAddress(value, { commune: form.commune }).then((res) => setSuggestions(res))
-    }, 450)
+    invalidateLocation()
+    setCoords(null)
   }
 
   function handleMapPick(lat: number, lng: number) {
-    void applyCoords(lat, lng)
+    invalidateLocation()
+    setCoords({ lat, lng })
   }
 
+  async function searchLocation() {
+    const query = form.street.trim() || form.commune
+    if (!query) return
+    invalidateLocation()
+    const request = locationRequest.current
+    setLocationBusy(true)
+    try {
+      const results = await searchAddress(query, {
+        commune: form.commune,
+        city: form.city,
+        region: form.region,
+      })
+      if (request !== locationRequest.current) return
+      setSuggestions(results)
+      if (!results.length)
+        setLocationMessage(
+          'Sin resultados. Puedes seleccionar la propiedad directamente en el mapa.'
+        )
+    } catch {
+      if (request === locationRequest.current)
+        setLocationMessage('No pudimos buscar la dirección. Puedes ubicar el pin manualmente.')
+    } finally {
+      if (request === locationRequest.current) setLocationBusy(false)
+    }
+  }
+
+  async function suggestPinAddress() {
+    if (!coords) return
+    const request = ++locationRequest.current
+    setLocationBusy(true)
+    setLocationMessage(null)
+    try {
+      const result = await reverseGeocode(coords.lat, coords.lng)
+      if (request !== locationRequest.current) return
+      setSuggestedAddress(result)
+      if (!result)
+        setLocationMessage(
+          'No encontramos una dirección para este pin. Escribe una dirección o referencia.'
+        )
+    } catch {
+      if (request === locationRequest.current)
+        setLocationMessage(
+          'No pudimos consultar la dirección del pin. Puedes escribirla manualmente.'
+        )
+    } finally {
+      if (request === locationRequest.current) setLocationBusy(false)
+    }
+  }
+
+  function useSuggestedAddress() {
+    if (!suggestedAddress) return
+    const suggestion = suggestedAddress
+    const region = suggestion.commune ? regionForCommune(suggestion.commune) : undefined
+    const commune = region ? suggestion.commune! : form.commune
+    const city =
+      suggestion.city && localitiesForCommune(commune).includes(suggestion.city)
+        ? suggestion.city
+        : commune === form.commune
+          ? form.city
+          : ''
+    setForm((previous) => ({
+      ...previous,
+      street: [suggestion.street, suggestion.number].filter(Boolean).join(' ') || previous.street,
+      region: region ?? previous.region,
+      commune,
+      city,
+    }))
+    invalidateLocation()
+  }
   // Edit mode: load the property and prefill the form + existing images.
   useEffect(() => {
     if (!editId || !user) return
@@ -437,8 +486,9 @@ export default function PublicarPage() {
       })
     }
     if (images.length === 0) newErrors.images = 'Agrega al menos una foto'
+    Object.assign(newErrors, validatePublishLocation(coords, locationConfirmed))
     setErrors(newErrors)
-    if (!parsed.success || images.length === 0) {
+    if (!parsed.success || Object.keys(newErrors).length) {
       setStep(stepForPublishErrors(newErrors))
       return
     }
@@ -448,26 +498,7 @@ export default function PublicarPage() {
     let uploaded: PropertyImage[] = []
     try {
       await persistStep(4)
-      // Sin coordenadas creíbles no se publica. Antes, si el pin no estaba puesto
-      // y el geocoder fallaba, el aviso caía en silencio al centro de Santiago y
-      // ensuciaba el mapa para todos. Se resuelve ANTES de subir las fotos para
-      // no dejar imágenes huérfanas en Storage cuando la dirección no se ubica.
-      const located = coords
-        ? { latitude: coords.lat, longitude: coords.lng }
-        : await geocodeAddress({
-            street: parsed.data.street,
-            commune: parsed.data.commune,
-            city: parsed.data.city,
-            region: form.region,
-          })
-      if (!located || !isInsideChile(located.latitude, located.longitude)) {
-        setErrors((e) => ({
-          ...e,
-          street: 'No pudimos ubicar esta dirección en Chile. Ajusta el pin en el mapa.',
-        }))
-        setStep(2)
-        return
-      }
+      const located = { latitude: coords!.lat, longitude: coords!.lng }
       // New files get uploaded; existing ones keep their storage path.
       const newFiles = images.filter((i) => i.file).map((i) => i.file as File)
       if (newFiles.length) uploaded = await uploadPropertyImages(user.id, newFiles)
@@ -679,6 +710,7 @@ export default function PublicarPage() {
                       set('region', e.target.value)
                       set('commune', '')
                       set('city', '')
+                      invalidateLocation()
                       setCoords(null)
                     }}
                     className={selectCls}
@@ -700,6 +732,7 @@ export default function PublicarPage() {
                     onChange={(e) => {
                       set('commune', e.target.value)
                       set('city', '')
+                      invalidateLocation()
                       setCoords(null)
                     }}
                     className={selectCls}
@@ -721,6 +754,7 @@ export default function PublicarPage() {
                     value={form.city}
                     onChange={(e) => {
                       set('city', e.target.value)
+                      invalidateLocation()
                       setCoords(null)
                     }}
                     className={selectCls}
@@ -738,11 +772,11 @@ export default function PublicarPage() {
                 {/* Address geocoder */}
                 <div className="relative">
                   <label className={labelCls} htmlFor="street">
-                    Calle y número
+                    Calle y número / referencia
                   </label>
                   <Input
                     id="street"
-                    placeholder="Escribe la dirección… (ej: Av. Irarrázaval 1234)"
+                    placeholder="Calle y número, o referencia para parcelas"
                     value={form.street}
                     onChange={(e) => handleStreetChange(e.target.value)}
                   />
@@ -752,7 +786,7 @@ export default function PublicarPage() {
                         <li key={s.label}>
                           <button
                             type="button"
-                            onClick={() => applyCoords(s.latitude, s.longitude)}
+                            onClick={() => handleMapPick(s.latitude, s.longitude)}
                             className="w-full text-left px-3 py-2 text-sm hover:bg-surface-container-highest"
                           >
                             {s.label}
@@ -763,20 +797,80 @@ export default function PublicarPage() {
                   )}
                 </div>
 
-                {/* Map with draggable pin */}
-                {coords && (
-                  <div>
-                    <span className={labelCls}>Pin de ubicación</span>
-                    <LocationPicker
-                      latitude={coords.lat}
-                      longitude={coords.lng}
-                      onChange={handleMapPick}
-                    />
-                    <p className="text-xs text-on-surface-variant mt-1.5">
-                      Arrastra el pin para ajustar la ubicación exacta.
-                    </p>
-                  </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={searchLocation}
+                  loading={locationBusy}
+                  disabled={!form.street.trim() && !form.commune}
+                >
+                  Buscar dirección
+                </Button>
+                {locationMessage && (
+                  <p role="status" className="text-sm text-on-surface-variant">
+                    {locationMessage}
+                  </p>
                 )}
+                <div>
+                  <h3 className={labelCls}>Ubicación exacta en el mapa</h3>
+                  <p className="mb-3 text-sm text-on-surface-variant">
+                    Haz clic sobre tu propiedad o arrastra el pin hasta su entrada. También puedes
+                    moverlo con las flechas del teclado.
+                  </p>
+                  <LocationPicker
+                    latitude={coords?.lat ?? DEFAULT_MAP_CENTER.latitude}
+                    longitude={coords?.lng ?? DEFAULT_MAP_CENTER.longitude}
+                    selected={!!coords}
+                    onChange={handleMapPick}
+                  />
+                  {coords && (
+                    <div className="mt-3 space-y-3">
+                      <p className="text-xs text-on-surface-variant">
+                        Latitud {coords.lat.toFixed(6)} · Longitud {coords.lng.toFixed(6)}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={locationBusy}
+                        onClick={suggestPinAddress}
+                        className="text-sm font-medium text-accent underline underline-offset-4 disabled:opacity-50"
+                      >
+                        Sugerir dirección de este punto
+                      </button>
+                      {suggestedAddress && (
+                        <div className="rounded-lg bg-surface-container p-3 text-sm">
+                          <p>{suggestedAddress.label}</p>
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            Dirección aproximada. Revisa calle y número antes de usarla.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={useSuggestedAddress}
+                            className="mt-2 font-semibold text-accent underline underline-offset-4"
+                          >
+                            Usar dirección sugerida
+                          </button>
+                        </div>
+                      )}
+                      <label className="flex items-start gap-2 rounded-lg border border-outline-variant p-3 text-sm text-on-surface">
+                        <input
+                          type="checkbox"
+                          checked={locationConfirmed}
+                          onChange={(event) => {
+                            setLocationConfirmed(event.target.checked)
+                            setErrors((previous) => ({ ...previous, location: undefined }))
+                          }}
+                          className="mt-0.5 h-4 w-4 accent-[rgb(var(--primary))]"
+                        />
+                        Aquí está mi propiedad. Este es el punto que se mostrará en el mapa.
+                      </label>
+                    </div>
+                  )}
+                  {errors.location && (
+                    <p role="alert" className={errorCls}>
+                      {errors.location}
+                    </p>
+                  )}
+                </div>
               </Section>
             </>
           )}

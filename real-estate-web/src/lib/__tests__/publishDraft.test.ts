@@ -25,6 +25,7 @@ function draft(): PublishDraft {
       negotiable: true,
     },
     coords: { lat: -33.45, lng: -70.65 },
+    locationConfirmed: true,
     files: [new File(['photo'], 'casa.jpg', { type: 'image/jpeg' })],
     step: 2,
   }
@@ -48,5 +49,9 @@ describe('Publishing draft validation', () => {
   it('rejects incomplete drafts and unusable photo data', () => {
     expect(validPublishDraft({ resumeSubmit: true }, now)).toBeNull()
     expect(validPublishDraft({ ...draft(), files: ['blob:expired'] }, now)).toBeNull()
+  })
+  it('requires a fresh confirmation for drafts saved before pin confirmation existed', () => {
+    const { locationConfirmed, ...legacy } = draft()
+    expect(validPublishDraft(legacy, now)?.locationConfirmed).toBe(false)
   })
 })

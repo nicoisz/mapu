@@ -13,9 +13,10 @@ interface Props {
   latitude: number
   longitude: number
   onChange: (lat: number, lng: number) => void
+  selected: boolean
 }
 
-export default function LocationPickerInner({ latitude, longitude, onChange }: Props) {
+export default function LocationPickerInner({ latitude, longitude, onChange, selected }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markerRef = useRef<maplibregl.Marker | null>(null)
@@ -40,7 +41,9 @@ export default function LocationPickerInner({ latitude, longitude, onChange }: P
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
-    const pin = document.createElement('div')
+    const pin = document.createElement('button')
+    pin.type = 'button'
+    pin.setAttribute('aria-label', 'Mover pin de ubicación con las flechas del teclado')
     pin.innerHTML = `<div style="
       width:18px;height:18px;background:${SALE_COLOR};
       border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);
@@ -53,6 +56,36 @@ export default function LocationPickerInner({ latitude, longitude, onChange }: P
       .setLngLat([longitude, latitude])
       .addTo(map)
     markerRef.current = marker
+
+    const canvas = map.getCanvas()
+    canvas.setAttribute(
+      'aria-label',
+      'Mapa de ubicación: presiona Enter para colocar el pin en el centro'
+    )
+    canvas.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return
+      event.preventDefault()
+      const center = map.getCenter()
+      marker.setLngLat(center)
+      onChangeRef.current(center.lat, center.lng)
+    })
+
+    pin.addEventListener('keydown', (event) => {
+      const shifts: Record<string, [number, number]> = {
+        ArrowUp: [0, -8],
+        ArrowDown: [0, 8],
+        ArrowLeft: [-8, 0],
+        ArrowRight: [8, 0],
+      }
+      const shift = shifts[event.key]
+      if (!shift) return
+      event.preventDefault()
+      event.stopPropagation()
+      const point = map.project(marker.getLngLat())
+      const next = map.unproject([point.x + shift[0], point.y + shift[1]])
+      marker.setLngLat(next)
+      onChangeRef.current(next.lat, next.lng)
+    })
 
     marker.on('dragend', () => {
       const lngLat = marker.getLngLat()
@@ -73,7 +106,18 @@ export default function LocationPickerInner({ latitude, longitude, onChange }: P
       markerRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latitude, longitude])
+  }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    const marker = markerRef.current
+    if (!map || !marker) return
+    const old = marker.getLngLat()
+    const changed = old.lat !== latitude || old.lng !== longitude
+    marker.setLngLat([longitude, latitude])
+    marker.getElement().hidden = !selected
+    if (selected && changed) map.easeTo({ center: [longitude, latitude], duration: 300 })
+  }, [latitude, longitude, selected])
 
   useEffect(() => {
     const map = mapRef.current

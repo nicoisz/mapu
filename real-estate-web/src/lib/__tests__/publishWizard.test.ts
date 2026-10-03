@@ -3,6 +3,7 @@ import {
   accessiblePublishStep,
   stepForPublishErrors,
   validatePublishStep,
+  validatePublishLocation,
 } from '@/lib/publishWizard'
 
 const form = {
@@ -44,5 +45,21 @@ describe('Publishing stages', () => {
     expect(stepForPublishErrors({ street: 'Ubica el pin', images: 'Falta' })).toBe(2)
     expect(stepForPublishErrors({ price: 'Falta', images: 'Falta' })).toBe(3)
     expect(stepForPublishErrors({ images: 'Falta' })).toBe(4)
+  })
+})
+
+describe('Confirmed publishing location', () => {
+  it('accepts only a confirmed valid pin and routes location errors to stage 2', () => {
+    const pin = { lat: -33.45, lng: -70.65 }
+    expect(validatePublishLocation(pin, true)).toEqual({})
+    for (const errors of [
+      validatePublishLocation(pin, false),
+      validatePublishLocation(null, true),
+      validatePublishLocation({ lat: NaN, lng: -70 }, true),
+      validatePublishLocation({ lat: 0, lng: 0 }, true),
+    ]) {
+      expect(errors.location).toBeTruthy()
+      expect(stepForPublishErrors(errors)).toBe(2)
+    }
   })
 })

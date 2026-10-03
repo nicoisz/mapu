@@ -10,6 +10,7 @@
  */
 
 import { GEOCODING_MIN_INTERVAL_MS } from '@/constants'
+import { isInsideChile } from '@/lib/geo'
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_GEOCODING_URL?.replace(/\/$/, '') || 'https://nominatim.openstreetmap.org'
@@ -18,30 +19,20 @@ const USER_AGENT = 'mapu-real-estate-web (contact: mapu.app.admin@gmail.com)'
 
 /** Throttle simple: encola y espacia las llamadas GEOCODING_MIN_INTERVAL_MS. */
 let lastCallAt = 0
-const queue: Array<() => void> = []
+let pending: Promise<unknown> = Promise.resolve()
 function throttle<T>(fn: () => Promise<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const run = async () => {
-      try {
-        resolve(await fn())
-      } catch (e) {
-        reject(e)
-      } finally {
-        lastCallAt = Date.now()
-        const next = queue.shift()
-        if (next) setTimeout(next, GEOCODING_MIN_INTERVAL_MS)
-      }
+  const result = pending.then(async () => {
+    const wait = lastCallAt + GEOCODING_MIN_INTERVAL_MS - Date.now()
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
+    try {
+      return await fn()
+    } finally {
+      lastCallAt = Date.now()
     }
-    const schedule = () => {
-      const wait = lastCallAt + GEOCODING_MIN_INTERVAL_MS - Date.now()
-      if (wait > 0) setTimeout(run, wait)
-      else run()
-    }
-    if (queue.length === 0) schedule()
-    else queue.push(() => schedule())
   })
+  pending = result.catch(() => undefined)
+  return result
 }
-
 /** Cache en memoria de resultados por clave (evita requests repetidos). */
 const cache = new Map<string, unknown>()
 const CACHE_MAX = 300
@@ -79,24 +70,6 @@ const reverseUrl = (lat: number, lng: number): string => {
   return url.toString()
 }
 
-export async function geocodeAddress(address: {
-  street?: string
-  commune?: string
-  city?: string
-  region?: string
-}): Promise<{ latitude: number; longitude: number } | null> {
-  const parts = [address.street, address.commune, address.city, 'Chile'].filter(Boolean)
-  if (!parts.length) return null
-  const q = parts.join(', ')
-  return cached(`geo:${q}`, () =>
-    throttle(async () => {
-      const data = await fetchJson<{ lat: string; lon: string }[]>(searchUrl(q, 1))
-      if (!data?.length) return null
-      return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }
-    })
-  )
-}
-
 export interface GeocodeSuggestion {
   latitude: number
   longitude: number
@@ -105,20 +78,24 @@ export interface GeocodeSuggestion {
 
 export async function searchAddress(
   query: string,
-  opts?: { commune?: string }
+  opts?: { commune?: string; city?: string; region?: string }
 ): Promise<GeocodeSuggestion[]> {
   if (!query.trim()) return []
-  const q = opts?.commune ? `${query}, ${opts.commune}` : query
+  const q = Array.from(
+    new Set([query.trim(), opts?.commune, opts?.city, opts?.region, 'Chile'].filter(Boolean))
+  ).join(', ')
   return cached(`sug:${q}`, () =>
     throttle(async () => {
       const data = await fetchJson<{ lat: string; lon: string; display_name: string }[]>(
         searchUrl(q, 6)
       )
-      return (data ?? []).map((d) => ({
-        latitude: parseFloat(d.lat),
-        longitude: parseFloat(d.lon),
-        label: d.display_name,
-      }))
+      return (data ?? [])
+        .map((d) => ({
+          latitude: parseFloat(d.lat),
+          longitude: parseFloat(d.lon),
+          label: d.display_name,
+        }))
+        .filter((suggestion) => isInsideChile(suggestion.latitude, suggestion.longitude))
     })
   )
 }
