@@ -1,12 +1,26 @@
 import { LoginForm } from '@/components/auth/LoginForm'
+import { AuthVisual } from '@/components/auth/AuthVisual'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export const metadata = { title: 'Iniciar sesión | MapU Real Estate' }
 
 export default function LoginPage() {
   return (
-    <div className="h-full flex items-center justify-center p-4 bg-surface overflow-y-auto">
-      <div className="w-full max-w-sm bg-surface-container-low rounded-2xl shadow-sm border border-outline-variant/60 p-8">
-        <LoginForm />
+    <div data-auth-scroll className="h-full overflow-y-auto bg-background">
+      <div data-auth-parallax className="auth-layout">
+        <section className="auth-form-panel">
+          <div className="w-full max-w-[420px] mx-auto">
+            <Link
+              href="/"
+              className="mb-8 inline-flex items-center gap-2 text-sm text-on-surface-variant transition-colors hover:text-on-surface"
+            >
+              <ArrowLeft size={16} /> Volver al inicio
+            </Link>
+            <LoginForm />
+          </div>
+        </section>
+        <AuthVisual />
       </div>
     </div>
   )
