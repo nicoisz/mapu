@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "cf:types": "wrangler types --env-interface CloudflareEnv && node scripts/scope-cloudflare-types.cjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
