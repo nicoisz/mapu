@@ -22,6 +22,8 @@ import {
   deletePropertyImages,
 } from '@/services/storageService'
 import { compressImage } from '@/lib/imageCompression'
+import { getSupabase } from '@/lib/supabase'
+import { basicPropertyDescription, descriptionInputSchema } from '@/lib/propertyDescription'
 import { reverseGeocode } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -133,6 +135,9 @@ export default function PublicarPage() {
   const [step, setStep] = useState<PublishStep>(1)
   const [advancing, setAdvancing] = useState(false)
   const [processingImages, setProcessingImages] = useState(false)
+  const [descriptionBusy, setDescriptionBusy] = useState(false)
+  const [descriptionMessage, setDescriptionMessage] = useState('')
+  const descriptionRequest = useRef(0)
   const pageScrollRef = useRef<HTMLDivElement>(null)
   const currentStep = accessiblePublishStep(step, !!user && isAuthenticated)
   const submitLockRef = useRef(false)
@@ -189,6 +194,57 @@ export default function PublicarPage() {
     locationRequest.current++
     setLocationBusy(false)
   }, [currentStep])
+
+  async function generateDescription() {
+    const input = descriptionInputSchema.safeParse({ ...form, operation, type })
+    if (!input.success) return
+    const request = ++descriptionRequest.current
+    set('description', basicPropertyDescription(input.data))
+    setDescriptionBusy(true)
+    setDescriptionMessage('Preparando la descripción… Puedes editarla cuando quieras.')
+    try {
+      const { data } = await getSupabase().auth.getSession()
+      const response = await fetch('/api/property-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify(input.data),
+        signal: AbortSignal.timeout(15_000),
+      })
+      const result = await response.json()
+      if (descriptionRequest.current !== request) return
+      if (
+        !response.ok ||
+        typeof result.description !== 'string' ||
+        result.description.length > 2000
+      )
+        throw new Error('No se pudo generar')
+      set('description', result.description)
+      setDescriptionMessage(
+        result.source === 'ai'
+          ? 'Borrador generado con IA. Revísalo y ajusta lo que necesites.'
+          : 'Borrador creado con tus datos. Revísalo y agrega lo que quieras destacar.'
+      )
+    } catch {
+      if (descriptionRequest.current === request)
+        setDescriptionMessage(
+          'Conservamos el borrador creado con tus datos. Puedes editarlo o volver a generar.'
+        )
+    } finally {
+      if (descriptionRequest.current === request) setDescriptionBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    if (currentStep === 4 && draftLoaded && user && !form.description.trim())
+      void generateDescription()
+    return () => {
+      descriptionRequest.current++
+      setDescriptionBusy(false)
+    }
+  }, [currentStep, draftLoaded, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function persistStep(next: PublishStep, location = coords) {
     if (editId) return
@@ -438,6 +494,7 @@ export default function PublicarPage() {
       (!canPublish && !isEditing) ||
       submitting ||
       processingImages ||
+      descriptionBusy ||
       submitLockRef.current ||
       !draftLoaded
     )
@@ -888,21 +945,41 @@ export default function PublicarPage() {
                   <label className={labelCls} htmlFor="desc">
                     Descripción de tu publicación
                   </label>
-                  <p className="text-xs text-on-surface-variant">
-                    Describe la propiedad y lo que quieras destacar.
+                  <p className="text-xs text-on-surface-variant" role="status">
+                    {descriptionMessage || 'Revisa la descripción y edítala antes de publicar.'}
                   </p>
                   <textarea
                     id="desc"
                     value={form.description}
-                    onChange={(e) => set('description', e.target.value)}
-                    placeholder="Escribe la descripción de tu propiedad…"
+                    onChange={(e) => {
+                      descriptionRequest.current++
+                      setDescriptionBusy(false)
+                      setDescriptionMessage('Tu descripción está lista para revisar.')
+                      set('description', e.target.value)
+                    }}
                     maxLength={2000}
                     rows={6}
                     className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <p className="text-xs text-on-surface-variant text-right">
-                    {form.description.length}/2000
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      disabled={descriptionBusy || submitting}
+                      onClick={() => {
+                        if (
+                          !form.description.trim() ||
+                          window.confirm('¿Reemplazar la descripción actual por un nuevo borrador?')
+                        )
+                          void generateDescription()
+                      }}
+                      className="text-sm text-primary underline underline-offset-4 disabled:opacity-50"
+                    >
+                      {descriptionBusy ? 'Generando…' : 'Volver a generar'}
+                    </button>
+                    <span className="text-xs text-on-surface-variant">
+                      {form.description.length}/2000
+                    </span>
+                  </div>
                   {errors.description && <p className={errorCls}>{errors.description}</p>}
                 </div>
                 <div className="rounded-xl border border-outline-variant/40 p-4 space-y-2 text-sm text-on-surface">
@@ -937,7 +1014,7 @@ export default function PublicarPage() {
               <Button
                 type="button"
                 variant="outline"
-                disabled={submitting || advancing || processingImages}
+                disabled={submitting || advancing || processingImages || descriptionBusy}
                 onClick={() => {
                   setStep((currentStep - 1) as PublishStep)
                   setSubmitError(null)
@@ -956,6 +1033,7 @@ export default function PublicarPage() {
                 authLoading ||
                 locationBusy ||
                 processingImages ||
+                descriptionBusy ||
                 !!publishedId ||
                 (currentStep === 4 && !canPublish && !isEditing)
               }
