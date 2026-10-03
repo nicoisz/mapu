@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { loadPublishDraft, savePublishDraft, clearPublishDraft } from '@/lib/publishDraft'
 import { Input } from '@/components/ui/Input'
+import { PublishAuthPrompt } from '@/components/auth/PublishAuthPrompt'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { GlowLoader } from '@/components/ui/GlowLoader'
 import {
@@ -995,29 +996,7 @@ export default function PublicarPage() {
         </form>
       </div>
 
-      <Dialog open={authPrompt} onOpenChange={setAuthPrompt}>
-        <DialogContent>
-          <DialogTitle>Continúa con tu cuenta</DialogTitle>
-          <DialogDescription className="mt-2">
-            Guardamos lo que ingresaste. Inicia sesión o crea tu cuenta para continuar con la
-            ubicación de tu propiedad. Todavía no se publicará nada.
-          </DialogDescription>
-          <div className="mt-6 grid gap-3">
-            <Link
-              className="rounded-xl bg-primary px-5 py-3 text-center font-semibold text-on-primary"
-              href="/login?next=%2Fpublicar"
-            >
-              Iniciar sesión
-            </Link>
-            <Link
-              className="rounded-xl border border-outline-variant px-5 py-3 text-center font-semibold text-on-surface"
-              href="/register?next=%2Fpublicar"
-            >
-              Crear cuenta
-            </Link>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PublishAuthPrompt open={authPrompt} onOpenChange={setAuthPrompt} />
       <Dialog
         open={!!publishedId}
         onOpenChange={(open) => {
