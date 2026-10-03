@@ -264,7 +264,7 @@ export function ProductReel() {
         <div className="section-fade mt-10 flex justify-center">
           <Link
             href="/mapa"
-            className="map-launch-glow btn-shine inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 font-bold text-on-primary shadow-elevated transition-transform hover:scale-105"
+            className="map-launch-glow btn-shine inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 font-bold text-on-secondary shadow-elevated transition-transform hover:scale-105"
           >
             <span className="material-symbols-outlined">explore</span>
             Abrir el mapa interactivo
