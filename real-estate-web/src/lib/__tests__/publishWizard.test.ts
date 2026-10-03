@@ -45,6 +45,14 @@ describe('Publishing stages', () => {
     expect(stepForPublishErrors({ street: 'Ubica el pin', images: 'Falta' })).toBe(2)
     expect(stepForPublishErrors({ price: 'Falta', images: 'Falta' })).toBe(3)
     expect(stepForPublishErrors({ images: 'Falta' })).toBe(4)
+    expect(stepForPublishErrors({ description: 'Demasiado larga' })).toBe(4)
+    expect(
+      validatePublishStep(
+        3,
+        { ...form, area: '120', price: '850000', description: 'x'.repeat(2001) },
+        0
+      )
+    ).toEqual({})
   })
 })
 
