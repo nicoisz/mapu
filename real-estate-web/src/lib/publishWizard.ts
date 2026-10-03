@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isInsideChile } from '@/lib/geo'
 
 export type PublishStep = 1 | 2 | 3 | 4
 export const PUBLISH_STEPS = [
@@ -22,7 +23,7 @@ export const publishSchema = z.object({
 })
 
 export type PublishFieldErrors = Partial<
-  Record<keyof z.infer<typeof publishSchema> | 'images', string>
+  Record<keyof z.infer<typeof publishSchema> | 'images' | 'location', string>
 >
 const schemas = [
   publishSchema.pick({ title: true }),
@@ -57,11 +58,21 @@ export function validatePublishStep(
 
 export function stepForPublishErrors(errors: PublishFieldErrors): PublishStep {
   if (errors.title) return 1
-  if (errors.street || errors.commune || errors.city) return 2
+  if (errors.street || errors.commune || errors.city || errors.location) return 2
   if (Object.keys(errors).some((key) => key !== 'images')) return 3
   return 4
 }
 
 export function accessiblePublishStep(step: PublishStep, authenticated: boolean): PublishStep {
   return authenticated ? step : 1
+}
+
+export function validatePublishLocation(
+  coords: { lat: number; lng: number } | null,
+  confirmed: boolean
+): PublishFieldErrors {
+  if (!coords || !isInsideChile(coords.lat, coords.lng)) {
+    return { location: 'Selecciona la ubicación de tu propiedad en el mapa de Chile.' }
+  }
+  return confirmed ? {} : { location: 'Confirma el pin: aquí aparecerá tu propiedad en el mapa.' }
 }
