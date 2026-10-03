@@ -11,6 +11,7 @@
 
 import { GEOCODING_MIN_INTERVAL_MS } from '@/constants'
 import { isInsideChile } from '@/lib/geo'
+import { REGIONS, communesForRegion, regionForCommune } from '@/data/chileanLocations'
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_GEOCODING_URL?.replace(/\/$/, '') || 'https://nominatim.openstreetmap.org'
@@ -42,7 +43,7 @@ function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
   if (hit !== undefined) return Promise.resolve(hit)
   return fn().then((value) => {
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string)
-    cache.set(key, value)
+    if (value !== null) cache.set(key, value)
     return value
   })
 }
@@ -53,51 +54,12 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   return (await res.json()) as T
 }
 
-const searchUrl = (q: string, limit: number): string => {
-  const url = new URL(`${BASE_URL}/search`)
-  url.searchParams.set('q', q)
-  url.searchParams.set('format', 'json')
-  url.searchParams.set('limit', String(limit))
-  url.searchParams.set('countrycodes', 'cl')
-  return url.toString()
-}
-
 const reverseUrl = (lat: number, lng: number): string => {
   const url = new URL(`${BASE_URL}/reverse`)
   url.searchParams.set('lat', String(lat))
   url.searchParams.set('lon', String(lng))
   url.searchParams.set('format', 'json')
   return url.toString()
-}
-
-export interface GeocodeSuggestion {
-  latitude: number
-  longitude: number
-  label: string
-}
-
-export async function searchAddress(
-  query: string,
-  opts?: { commune?: string; city?: string; region?: string }
-): Promise<GeocodeSuggestion[]> {
-  if (!query.trim()) return []
-  const q = Array.from(
-    new Set([query.trim(), opts?.commune, opts?.city, opts?.region, 'Chile'].filter(Boolean))
-  ).join(', ')
-  return cached(`sug:${q}`, () =>
-    throttle(async () => {
-      const data = await fetchJson<{ lat: string; lon: string; display_name: string }[]>(
-        searchUrl(q, 6)
-      )
-      return (data ?? [])
-        .map((d) => ({
-          latitude: parseFloat(d.lat),
-          longitude: parseFloat(d.lon),
-          label: d.display_name,
-        }))
-        .filter((suggestion) => isInsideChile(suggestion.latitude, suggestion.longitude))
-    })
-  )
 }
 
 export interface ReverseGeocodeResult {
@@ -108,12 +70,14 @@ export interface ReverseGeocodeResult {
   number?: string
   commune?: string
   city?: string
+  region?: string
 }
 
 export async function reverseGeocode(
   latitude: number,
   longitude: number
 ): Promise<ReverseGeocodeResult | null> {
+  if (!isInsideChile(latitude, longitude)) return null
   const key = `rev:${latitude.toFixed(5)},${longitude.toFixed(5)}`
   return cached(key, () =>
     throttle(async () => {
@@ -127,10 +91,35 @@ export async function reverseGeocode(
           village?: string
           municipality?: string
           county?: string
+          city_district?: string
+          suburb?: string
+          country_code?: string
         }
       }>(reverseUrl(latitude, longitude))
       if (!data) return null
       const a = data.address ?? {}
+      if (a.country_code && a.country_code !== 'cl') return null
+      const candidates = [
+        a.municipality,
+        a.city,
+        a.town,
+        a.village,
+        a.city_district,
+        a.suburb,
+        a.county,
+      ].filter((value): value is string => !!value)
+      const names = REGIONS.flatMap(communesForRegion)
+      const normalize = (value: string) =>
+        value
+          .replace(/^(comuna|municipalidad)\s+(de\s+)?/i, '')
+          .trim()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+      const commune = candidates
+        .map((candidate) => names.find((name) => normalize(name) === normalize(candidate)))
+        .find(Boolean)
+      if (!commune) return null
       const city = a.city ?? a.town ?? a.village ?? a.municipality
       return {
         latitude,
@@ -138,7 +127,8 @@ export async function reverseGeocode(
         label: data.display_name ?? '',
         street: a.road ?? '',
         number: a.house_number,
-        commune: a.county ?? city,
+        commune,
+        region: regionForCommune(commune),
         city,
       }
     })

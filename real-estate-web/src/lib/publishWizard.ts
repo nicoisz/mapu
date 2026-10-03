@@ -74,5 +74,5 @@ export function validatePublishLocation(
   if (!coords || !isInsideChile(coords.lat, coords.lng)) {
     return { location: 'Selecciona la ubicación de tu propiedad en el mapa de Chile.' }
   }
-  return confirmed ? {} : { location: 'Confirma el pin: aquí aparecerá tu propiedad en el mapa.' }
+  return confirmed ? {} : { location: 'Selecciona un punto y espera su dirección para continuar.' }
 }

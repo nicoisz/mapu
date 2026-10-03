@@ -23,6 +23,7 @@ const draftSchema = z.object({
   }),
   coords: z.object({ lat: z.number(), lng: z.number() }).nullable(),
   locationConfirmed: z.boolean().default(false),
+  locationSource: z.literal('map').optional(),
   files: z
     .array(z.custom<File>((value) => typeof File !== 'undefined' && value instanceof File))
     .max(10),

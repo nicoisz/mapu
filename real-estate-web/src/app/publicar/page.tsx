@@ -22,12 +22,7 @@ import {
   deletePropertyImages,
 } from '@/services/storageService'
 import { compressImage } from '@/lib/imageCompression'
-import {
-  searchAddress,
-  reverseGeocode,
-  GeocodeSuggestion,
-  ReverseGeocodeResult,
-} from '@/services/geocodingService'
+import { reverseGeocode } from '@/services/geocodingService'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { loadPublishDraft, savePublishDraft, clearPublishDraft } from '@/lib/publishDraft'
@@ -35,13 +30,7 @@ import { Input } from '@/components/ui/Input'
 import { PublishAuthPrompt } from '@/components/auth/PublishAuthPrompt'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { GlowLoader } from '@/components/ui/GlowLoader'
-import {
-  REGIONS,
-  communesForRegion,
-  localitiesForCommune,
-  regionForCommune,
-  titleCase,
-} from '@/data/chileanLocations'
+import { REGIONS } from '@/data/chileanLocations'
 import { formatPriceShort } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS, DEFAULT_MAP_CENTER } from '@/constants'
 
@@ -158,11 +147,10 @@ export default function PublicarPage() {
 
   // ── Ubicación: geocoder + pin ───────────────────────────────────
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
   const [locationConfirmed, setLocationConfirmed] = useState(false)
   const [locationBusy, setLocationBusy] = useState(false)
   const [locationMessage, setLocationMessage] = useState<string | null>(null)
-  const [suggestedAddress, setSuggestedAddress] = useState<ReverseGeocodeResult | null>(null)
+  const [mapAddress, setMapAddress] = useState('')
   const locationRequest = useRef(0)
 
   useEffect(() => {
@@ -178,10 +166,11 @@ export default function PublicarPage() {
         setOperation(draft.operation)
         setType(draft.type)
         setCoords(draft.coords)
-        setLocationConfirmed(draft.locationConfirmed)
+        const fromMap = draft.locationSource === 'map' && draft.locationConfirmed
+        setLocationConfirmed(fromMap)
         setImages(draft.files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })))
         clientRequestIdRef.current = draft.clientRequestId
-        setStep(draft.step)
+        setStep(draft.step > 2 && !fromMap ? 2 : draft.step)
       })
       .catch(() => {
         if (active) setSubmitError('No pudimos recuperar el borrador guardado en este navegador.')
@@ -196,6 +185,8 @@ export default function PublicarPage() {
 
   useEffect(() => {
     pageScrollRef.current?.scrollTo({ top: 0 })
+    locationRequest.current++
+    setLocationBusy(false)
   }, [currentStep])
 
   async function persistStep(next: PublishStep, location = coords) {
@@ -210,13 +201,21 @@ export default function PublicarPage() {
       form,
       coords: location,
       locationConfirmed,
+      locationSource: locationConfirmed ? 'map' : undefined,
       files: images.flatMap((image) => (image.file ? [image.file] : [])),
       step: next,
     })
   }
 
   async function continueStep() {
-    if (authLoading || !draftLoaded || submitLockRef.current) return
+    if (authLoading || !draftLoaded || submitLockRef.current || locationBusy) return
+    if (currentStep === 2) {
+      const locationErrors = validatePublishLocation(coords, locationConfirmed)
+      if (locationErrors.location) {
+        setErrors(locationErrors)
+        return
+      }
+    }
     const validation = validatePublishStep(currentStep, form, images.length)
     setErrors(validation)
     if (Object.keys(validation).length) return
@@ -224,13 +223,6 @@ export default function PublicarPage() {
     setAdvancing(true)
     setSubmitError(null)
     try {
-      if (currentStep === 2) {
-        const locationErrors = validatePublishLocation(coords, locationConfirmed)
-        if (locationErrors.location) {
-          setErrors(locationErrors)
-          return
-        }
-      }
       const next = Math.min(4, currentStep + 1) as PublishStep
       await persistStep(next)
       if (!user || !isAuthenticated) {
@@ -246,95 +238,53 @@ export default function PublicarPage() {
     }
   }
 
-  function invalidateLocation() {
-    locationRequest.current++
+  async function handleMapPick(lat: number, lng: number) {
+    const request = ++locationRequest.current
+    setCoords({ lat, lng })
     setLocationConfirmed(false)
-    setLocationBusy(false)
-    setSuggestions([])
-    setSuggestedAddress(null)
+    setMapAddress('')
     setLocationMessage(null)
     setErrors((previous) => ({ ...previous, location: undefined }))
-  }
-
-  function handleStreetChange(value: string) {
-    set('street', value)
-    invalidateLocation()
-    setCoords(null)
-  }
-
-  function handleMapPick(lat: number, lng: number) {
-    invalidateLocation()
-    setCoords({ lat, lng })
-  }
-
-  async function searchLocation() {
-    const query = form.street.trim() || form.commune
-    if (!query) return
-    invalidateLocation()
-    const request = locationRequest.current
-    setLocationBusy(true)
-    try {
-      const results = await searchAddress(query, {
-        commune: form.commune,
-        city: form.city,
-        region: form.region,
-      })
-      if (request !== locationRequest.current) return
-      setSuggestions(results)
-      if (!results.length)
-        setLocationMessage(
-          'Sin resultados. Puedes seleccionar la propiedad directamente en el mapa.'
-        )
-    } catch {
-      if (request === locationRequest.current)
-        setLocationMessage('No pudimos buscar la dirección. Puedes ubicar el pin manualmente.')
-    } finally {
-      if (request === locationRequest.current) setLocationBusy(false)
+    setForm((previous) => ({ ...previous, street: '', commune: '', city: '', region: '' }))
+    const invalid = validatePublishLocation({ lat, lng }, true)
+    if (invalid.location) {
+      setErrors(invalid)
+      setLocationBusy(false)
+      return
     }
-  }
-
-  async function suggestPinAddress() {
-    if (!coords) return
-    const request = ++locationRequest.current
     setLocationBusy(true)
-    setLocationMessage(null)
     try {
-      const result = await reverseGeocode(coords.lat, coords.lng)
+      await new Promise((resolve) => setTimeout(resolve, 300))
       if (request !== locationRequest.current) return
-      setSuggestedAddress(result)
-      if (!result)
+      const result = await reverseGeocode(lat, lng)
+      if (request !== locationRequest.current) return
+      if (!result?.commune || !result.region) {
         setLocationMessage(
-          'No encontramos una dirección para este pin. Escribe una dirección o referencia.'
+          'No pudimos identificar la comuna de este punto. Ajusta el pin o vuelve a intentar.'
+        )
+        return
+      }
+      setForm((previous) => ({
+        ...previous,
+        street: [result.street, result.number].filter(Boolean).join(' '),
+        commune: result.commune!,
+        city: result.city ?? '',
+        region: result.region!,
+      }))
+      setMapAddress(result.label)
+      setLocationConfirmed(true)
+      if (!result.street || !result.number)
+        setLocationMessage(
+          'El mapa no registra calle o número completos. Se guardará el punto seleccionado y la dirección disponible.'
         )
     } catch {
       if (request === locationRequest.current)
         setLocationMessage(
-          'No pudimos consultar la dirección del pin. Puedes escribirla manualmente.'
+          'No pudimos consultar la dirección. Vuelve a intentar; el pin se conserva.'
         )
     } finally {
       if (request === locationRequest.current) setLocationBusy(false)
     }
-  }
-
-  function useSuggestedAddress() {
-    if (!suggestedAddress) return
-    const suggestion = suggestedAddress
-    const region = suggestion.commune ? regionForCommune(suggestion.commune) : undefined
-    const commune = region ? suggestion.commune! : form.commune
-    const city =
-      suggestion.city && localitiesForCommune(commune).includes(suggestion.city)
-        ? suggestion.city
-        : commune === form.commune
-          ? form.city
-          : ''
-    setForm((previous) => ({
-      ...previous,
-      street: [suggestion.street, suggestion.number].filter(Boolean).join(' ') || previous.street,
-      region: region ?? previous.region,
-      commune,
-      city,
-    }))
-    invalidateLocation()
   }
   // Edit mode: load the property and prefill the form + existing images.
   useEffect(() => {
@@ -697,182 +647,77 @@ export default function PublicarPage() {
             </>
           )}
           {currentStep === 2 && user && (
-            <>
-              <Section step={2} title="Ubicación">
-                <div>
-                  <label className={labelCls} htmlFor="region">
-                    Región
-                  </label>
-                  <select
-                    id="region"
-                    value={form.region}
-                    onChange={(e) => {
-                      set('region', e.target.value)
-                      set('commune', '')
-                      set('city', '')
-                      invalidateLocation()
-                      setCoords(null)
-                    }}
-                    className={selectCls}
-                  >
-                    {REGIONS.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls} htmlFor="commune">
-                    Comuna
-                  </label>
-                  <select
-                    id="commune"
-                    value={form.commune}
-                    onChange={(e) => {
-                      set('commune', e.target.value)
-                      set('city', '')
-                      invalidateLocation()
-                      setCoords(null)
-                    }}
-                    className={selectCls}
-                  >
-                    <option value="">Selecciona una comuna</option>
-                    {communesForRegion(form.region).map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls} htmlFor="city">
-                    Ciudad / Localidad
-                  </label>
-                  <select
-                    id="city"
-                    value={form.city}
-                    onChange={(e) => {
-                      set('city', e.target.value)
-                      invalidateLocation()
-                      setCoords(null)
-                    }}
-                    className={selectCls}
-                  >
-                    <option value="">Selecciona una ciudad</option>
-                    {localitiesForCommune(form.commune).map((c) => (
-                      <option key={c} value={c}>
-                        {titleCase(c)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.commune && <p className={errorCls}>{errors.commune}</p>}
-                </div>
-
-                {/* Address geocoder */}
-                <div className="relative">
-                  <label className={labelCls} htmlFor="street">
-                    Calle y número / referencia
-                  </label>
-                  <Input
-                    id="street"
-                    placeholder="Calle y número, o referencia para parcelas"
-                    value={form.street}
-                    onChange={(e) => handleStreetChange(e.target.value)}
-                  />
-                  {suggestions.length > 0 && (
-                    <ul className="absolute z-20 mt-1 w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-elevated max-h-56 overflow-y-auto">
-                      {suggestions.map((s) => (
-                        <li key={s.label}>
-                          <button
-                            type="button"
-                            onClick={() => handleMapPick(s.latitude, s.longitude)}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-container-highest"
-                          >
-                            {s.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
+            <Section
+              step={2}
+              title="Selecciona tu propiedad en el mapa"
+              desc="Acerca el mapa y haz clic sobre la propiedad o su entrada. La dirección se obtiene del punto que elijas."
+            >
+              <LocationPicker
+                latitude={coords?.lat ?? DEFAULT_MAP_CENTER.latitude}
+                longitude={coords?.lng ?? DEFAULT_MAP_CENTER.longitude}
+                selected={!!coords}
+                onChange={handleMapPick}
+              />
+              <p className="text-xs text-on-surface-variant">
+                Arrastra el pin para ajustar. Con teclado: Enter coloca el pin y las flechas lo
+                mueven.
+              </p>
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="rounded-xl border border-outline-variant bg-surface p-4"
+              >
+                <h3 className="font-semibold text-sm text-on-surface">Dirección del pin</h3>
+                {locationBusy ? (
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    Obteniendo dirección del mapa…
+                  </p>
+                ) : locationConfirmed ? (
+                  <>
+                    <p className="mt-2 text-sm text-on-surface">
+                      {mapAddress ||
+                        [form.street, form.commune, form.city].filter(Boolean).join(', ')}
+                    </p>
+                    <p className="mt-2 text-xs text-on-surface-variant">
+                      {form.commune} · {form.region}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    Selecciona un punto para obtener su dirección.
+                  </p>
+                )}
+                {coords && (
+                  <p className="mt-2 text-xs text-on-surface-variant">
+                    Latitud {coords.lat.toFixed(6)} · Longitud {coords.lng.toFixed(6)}
+                  </p>
+                )}
+              </div>
+              {locationMessage && (
+                <p role="status" className="text-sm text-on-surface-variant">
+                  {locationMessage}
+                </p>
+              )}
+              {coords && !locationBusy && !locationConfirmed && (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={searchLocation}
-                  loading={locationBusy}
-                  disabled={!form.street.trim() && !form.commune}
+                  onClick={() => handleMapPick(coords.lat, coords.lng)}
                 >
-                  Buscar dirección
+                  Reintentar dirección
                 </Button>
-                {locationMessage && (
-                  <p role="status" className="text-sm text-on-surface-variant">
-                    {locationMessage}
-                  </p>
-                )}
-                <div>
-                  <h3 className={labelCls}>Ubicación exacta en el mapa</h3>
-                  <p className="mb-3 text-sm text-on-surface-variant">
-                    Haz clic sobre tu propiedad o arrastra el pin hasta su entrada. También puedes
-                    moverlo con las flechas del teclado.
-                  </p>
-                  <LocationPicker
-                    latitude={coords?.lat ?? DEFAULT_MAP_CENTER.latitude}
-                    longitude={coords?.lng ?? DEFAULT_MAP_CENTER.longitude}
-                    selected={!!coords}
-                    onChange={handleMapPick}
-                  />
-                  {coords && (
-                    <div className="mt-3 space-y-3">
-                      <p className="text-xs text-on-surface-variant">
-                        Latitud {coords.lat.toFixed(6)} · Longitud {coords.lng.toFixed(6)}
-                      </p>
-                      <button
-                        type="button"
-                        disabled={locationBusy}
-                        onClick={suggestPinAddress}
-                        className="text-sm font-medium text-accent underline underline-offset-4 disabled:opacity-50"
-                      >
-                        Sugerir dirección de este punto
-                      </button>
-                      {suggestedAddress && (
-                        <div className="rounded-lg bg-surface-container p-3 text-sm">
-                          <p>{suggestedAddress.label}</p>
-                          <p className="mt-1 text-xs text-on-surface-variant">
-                            Dirección aproximada. Revisa calle y número antes de usarla.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={useSuggestedAddress}
-                            className="mt-2 font-semibold text-accent underline underline-offset-4"
-                          >
-                            Usar dirección sugerida
-                          </button>
-                        </div>
-                      )}
-                      <label className="flex items-start gap-2 rounded-lg border border-outline-variant p-3 text-sm text-on-surface">
-                        <input
-                          type="checkbox"
-                          checked={locationConfirmed}
-                          onChange={(event) => {
-                            setLocationConfirmed(event.target.checked)
-                            setErrors((previous) => ({ ...previous, location: undefined }))
-                          }}
-                          className="mt-0.5 h-4 w-4 accent-[rgb(var(--primary))]"
-                        />
-                        Aquí está mi propiedad. Este es el punto que se mostrará en el mapa.
-                      </label>
-                    </div>
-                  )}
-                  {errors.location && (
-                    <p role="alert" className={errorCls}>
-                      {errors.location}
-                    </p>
-                  )}
-                </div>
-              </Section>
-            </>
+              )}
+              {errors.location && (
+                <p role="alert" className={errorCls}>
+                  {errors.location}
+                </p>
+              )}
+              {errors.commune && (
+                <p role="alert" className={errorCls}>
+                  {errors.commune}
+                </p>
+              )}
+            </Section>
           )}
           {currentStep === 3 && user && (
             <>
@@ -1080,6 +925,7 @@ export default function PublicarPage() {
               disabled={
                 !draftLoaded ||
                 authLoading ||
+                locationBusy ||
                 !!publishedId ||
                 (currentStep === 4 && !canPublish && !isEditing)
               }
