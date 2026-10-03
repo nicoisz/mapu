@@ -1197,116 +1197,116 @@
   }
 }
 
-/* Architectural sheets stay outside the form, in their own quiet blue field. */
+/* Transparent drafting lines drift behind the publishing flow. */
 .publish-page {
-  container-type: inline-size;
+  position: relative;
+  isolation: isolate;
 }
 .publish-layout {
-  display: flex;
-  flex-direction: column;
-  max-width: 1280px;
-  margin: 0 auto;
-}
-.publish-form-panel {
-  order: 1;
-  width: 100%;
+  position: relative;
+  z-index: 1;
   max-width: 768px;
   margin: 0 auto;
 }
-.publish-blueprints {
-  order: 0;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  height: 128px;
-  margin: 20px 16px 0;
-  border-radius: 16px;
-  background: #123f67;
+.publish-form-panel {
+  width: 100%;
+}
+.publish-background-anchor {
+  position: sticky;
+  top: 0;
+  height: 0;
+  pointer-events: none;
 }
 .publish-blueprints-scene {
   position: absolute;
-  inset: -8px;
-  pointer-events: none;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: calc(100dvh - 64px);
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, #000, #000 15%, #0002 35%, #0002 65%, #000 85%, #000);
 }
 .publish-blueprint-sheet {
-  object-fit: cover;
-  object-position: center 55%;
-  opacity: 0;
-  animation: publish-blueprint-cycle 36s linear infinite;
-  animation-delay: var(--sheet-delay);
-  will-change: transform, opacity;
+  position: absolute;
+  width: 560px;
+  height: auto;
+  max-width: none;
+  opacity: 0.5;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(56%) saturate(1260%) hue-rotate(173deg)
+    brightness(93%) contrast(94%);
+  animation: publish-blueprint-drift 44s linear infinite alternate;
+  will-change: transform;
 }
-.publish-blueprint-sheet:first-child {
-  opacity: 1;
+.dark .publish-blueprint-sheet {
+  filter: brightness(0) invert(1);
+  opacity: 0.34;
+}
+.publish-blueprint-sheet:nth-child(1) {
+  left: -140px;
+  top: -240px;
+  animation-delay: -14s;
+}
+.publish-blueprint-sheet:nth-child(2) {
+  right: -150px;
+  top: -180px;
+  animation-duration: 52s;
+  animation-delay: -32s;
+}
+.publish-blueprint-sheet:nth-child(3) {
+  left: calc(50% - 280px);
+  top: 520px;
+  animation-duration: 60s;
+  animation-delay: -18s;
 }
 .publish-blueprints-pause {
   position: absolute;
-  bottom: 16px;
-  right: 16px;
+  z-index: 2;
+  top: 18px;
+  right: 18px;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  color: white;
-  background: rgb(8 36 63 / 75%);
-  border: 1px solid rgb(255 255 255 / 35%);
+  width: 32px;
+  height: 32px;
+  color: rgb(var(--on-surface-variant));
+  background: rgb(var(--surface));
+  border: 1px solid rgb(var(--border));
   border-radius: 50%;
-  transition: background 180ms ease;
+  pointer-events: auto;
 }
 .publish-blueprints-pause:hover {
-  background: #08243f;
+  color: rgb(var(--on-surface));
 }
 .publish-blueprints-pause:focus-visible {
-  outline: 2px solid white;
+  outline: 2px solid rgb(var(--secondary));
   outline-offset: 3px;
 }
-.publish-blueprints[data-paused='true'] .publish-blueprint-sheet {
+.publish-background-anchor[data-paused='true'] .publish-blueprint-sheet {
   animation-play-state: paused;
 }
-@keyframes publish-blueprint-cycle {
-  0% {
-    opacity: 1;
-    transform: translate(-5px, -9px) scale(1.035);
+@keyframes publish-blueprint-drift {
+  from {
+    transform: translate3d(-100px, -150px, 0);
   }
-  25% {
-    opacity: 1;
-  }
-  33.333%,
-  92% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-    transform: translate(6px, 10px) scale(1.065);
+  to {
+    transform: translate3d(100px, 150px, 0);
   }
 }
-@container (min-width: 960px) {
-  .publish-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-    align-items: start;
-    gap: 40px;
-    padding: 0 24px;
-  }
-  .publish-form-panel {
-    grid-column: 1;
-    grid-row: 1;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  .publish-blueprints {
-    grid-column: 2;
-    grid-row: 1;
-    position: sticky;
-    top: 24px;
-    margin: 24px 0;
-    height: min(820px, calc(100svh - 112px));
-    min-height: 420px;
-    border-radius: 20px;
-  }
+@media (max-width: 767px) {
   .publish-blueprint-sheet {
-    object-fit: contain;
-    object-position: center;
+    width: 420px;
+    opacity: 0.28;
+  }
+  .dark .publish-blueprint-sheet {
+    opacity: 0.2;
+  }
+  .publish-blueprints-scene {
+    mask-image: linear-gradient(90deg, #0008, #0002 25%, #0002 75%, #0008);
+  }
+  .publish-blueprint-sheet:nth-child(1) {
+    left: -250px;
+  }
+  .publish-blueprint-sheet:nth-child(2) {
+    right: -260px;
+    top: 120px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1314,9 +1314,6 @@
     animation: none;
     transform: none;
     will-change: auto;
-  }
-  .publish-blueprint-sheet:not(:first-child) {
-    opacity: 0;
   }
   .publish-blueprints-pause {
     display: none;

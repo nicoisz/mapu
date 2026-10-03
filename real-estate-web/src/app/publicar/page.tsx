@@ -565,6 +565,7 @@ export default function PublicarPage() {
 
   return (
     <div ref={pageScrollRef} className="publish-page h-full overflow-y-auto bg-background">
+      <PublishBlueprints />
       <div className="publish-layout">
         <div className="publish-form-panel min-w-0 px-4 md:px-6 py-6 pb-44 lg:pb-8">
           <Link
@@ -973,7 +974,6 @@ export default function PublicarPage() {
             </div>
           </form>
         </div>
-        <PublishBlueprints />
       </div>
 
       <PublishAuthPrompt open={authPrompt} onOpenChange={setAuthPrompt} />

@@ -4,9 +4,9 @@ Generados con la herramienta integrada de imágenes, usando cada fotografía adj
 
 ## Archivos finales
 
-- [Casa rural](C:/Users/HARCHA/projects/mapu/real-estate-web/public/images/publish-blueprints/casa-rural.webp)
-- [Galpón junto al lago](C:/Users/HARCHA/projects/mapu/real-estate-web/public/images/publish-blueprints/galpon-lago.webp)
-- [Casa urbana](C:/Users/HARCHA/projects/mapu/real-estate-web/public/images/publish-blueprints/casa-urbana.webp)
+- [Casa rural](C:/Users/HARCHA/projects/mapu/real-estate-web/public/images/publish-blueprints/casa-rural-lines.webp)
+- [Galpón junto al lago](C:/Users/HARCHA/projects/mapu/real-estate-web/public/images/publish-blueprints/galpon-lago-lines.webp)
+- [Casa urbana](C:/Users/HARCHA/projects/mapu/real-estate-web/public/images/publish-blueprints/casa-urbana-lines.webp)
 
 ## Referencia 1
 
@@ -20,3 +20,11 @@ Use case: style-transfer. Asset type: refined architectural blueprint illustrati
 
 Use case: style-transfer. Asset type: refined architectural blueprint illustration for the side of a real-estate publishing form. Input image: architectural and landscape reference, preserve its recognizable building masses and roof silhouette. Reinterpret the suburban two-storey Chilean stucco house: asymmetric intersecting clay-tile gable roofs, taller central rear volume with paired windows, wooden entrance door, hedge at left, stepping stone approach and driveway at right. Main drawing axonometric building, exploded roof subtly lifted; secondary front elevation and small site plan showing hedge, path and driveway. in the style of professional early twentieth-century industrial patent sheets. Portrait composition, approximately 2:3, with one generous main axonometric drawing in the middle and two small orthographic technical views above and below. Crisp precise white and pale-blue ink linework on a completely uniform deep Prussian blueprint-blue background #123f67; fine varying line weights, technical hatching, restrained construction guides, exploded views, sparse angular leader annotations, small stamped diagram codes 'FIG. 03' and 'MAPU / ESTUDIO'. Precise measured drafting character, sophisticated and authentic, clean print, generous negative space and 10% safe margins. All lines clean and thin, no childish hand-drawing, no cartoon, no photographic textures, no gradients, no decorative compass rose, no giant headings, no border frame, no watermarks, no shadows, no photo collage. The supplied photo is a reference only, not an inset photo. Produce one finished blueprint sheet.
 
+
+## Edición: trazos transparentes
+
+Las tres láminas se editaron con la herramienta integrada de imágenes y transparencia real. El sitio muestra los trazos azules en tema claro y blancos en oscuro, desplazándose simultáneamente en diagonal, sin slideshow.
+
+Prompt aplicado a cada lámina:
+
+Edit this architectural blueprint: remove the entire blue paper/background and make it fully transparent. Preserve only the fine WHITE architectural drafting lines, contours, hatching, dimension lines and existing tiny diagram markings. Preserve the exact house/building composition and professional technical drawing character. No blue fill, no opaque paper, no rectangular background, no shadows or photographic colors. Clean white line art on genuine alpha transparency, including transparent negative space between every line. Keep thin but readable precise strokes.

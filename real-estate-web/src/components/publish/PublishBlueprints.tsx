@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import { Pause, Play } from 'lucide-react'
 
@@ -10,21 +10,17 @@ export function PublishBlueprints() {
   const [paused, setPaused] = useState(false)
 
   return (
-    <aside
-      className="publish-blueprints"
-      data-paused={paused}
-      aria-label="Ilustraciones arquitectónicas de MapU"
-    >
+    <div className="publish-background-anchor" data-paused={paused}>
       <div className="publish-blueprints-scene" aria-hidden="true">
-        {SHEETS.map((sheet, index) => (
+        {SHEETS.map((sheet) => (
           <Image
             key={sheet}
-            src={`/images/publish-blueprints/${sheet}.webp`}
+            src={`/images/publish-blueprints/${sheet}-lines.webp`}
             alt=""
-            fill
-            sizes="(max-width: 1023px) 740px, 480px"
+            width={960}
+            height={1440}
+            sizes="(max-width: 767px) 420px, 560px"
             className="publish-blueprint-sheet"
-            style={{ '--sheet-delay': `${index === 0 ? 0 : (index - 3) * 12}s` } as CSSProperties}
             draggable={false}
           />
         ))}
@@ -38,6 +34,6 @@ export function PublishBlueprints() {
       >
         {paused ? <Play size={15} /> : <Pause size={15} />}
       </button>
-    </aside>
+    </div>
   )
 }
