@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { loadPublishDraft, savePublishDraft, clearPublishDraft } from '@/lib/publishDraft'
 import { Input } from '@/components/ui/Input'
 import { PublishAuthPrompt } from '@/components/auth/PublishAuthPrompt'
+import { PublishBlueprints } from '@/components/publish/PublishBlueprints'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { GlowLoader } from '@/components/ui/GlowLoader'
 import { REGIONS } from '@/data/chileanLocations'
@@ -563,407 +564,416 @@ export default function PublicarPage() {
   }
 
   return (
-    <div ref={pageScrollRef} className="h-full overflow-y-auto bg-background">
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 pb-44 lg:pb-8">
-        <Link
-          href={isAuthenticated ? '/dashboard' : '/'}
-          className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-5"
-        >
-          <ArrowLeft size={18} /> {isAuthenticated ? 'Volver al panel' : 'Volver al inicio'}
-        </Link>
+    <div ref={pageScrollRef} className="publish-page h-full overflow-y-auto bg-background">
+      <div className="publish-layout">
+        <div className="publish-form-panel min-w-0 px-4 md:px-6 py-6 pb-44 lg:pb-8">
+          <Link
+            href={isAuthenticated ? '/dashboard' : '/'}
+            className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm mb-5"
+          >
+            <ArrowLeft size={18} /> {isAuthenticated ? 'Volver al panel' : 'Volver al inicio'}
+          </Link>
 
-        <div className="mb-7">
-          <h1 className="font-headline text-3xl md:text-4xl font-bold text-on-surface tracking-tight">
-            {isEditing ? 'Edita tu propiedad' : 'Publica tu propiedad'}
-          </h1>
-          <p className="text-on-surface-variant mt-1.5">
-            {isEditing
-              ? 'Actualiza los datos y guarda los cambios.'
-              : 'Empieza con lo básico. Tu publicación será visible solo después de completar todas las etapas.'}
-          </p>
-          <p aria-live="polite" className="mt-4 text-sm font-semibold text-primary">
-            Etapa {currentStep} de 4 · {PUBLISH_STEPS[currentStep - 1]}
-          </p>
-          <ol aria-label="Etapas de publicación" className="mt-3 flex gap-2">
-            {PUBLISH_STEPS.map((label, index) => (
-              <li
-                key={label}
-                aria-current={index + 1 === currentStep ? 'step' : undefined}
-                className={
-                  'h-1.5 flex-1 rounded-full ' +
-                  (index + 1 <= currentStep ? 'bg-primary' : 'bg-primary/15')
-                }
-              >
-                <span className="sr-only">{label}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {!canPublish && !isEditing && (
-          <div className="mb-5 flex items-start gap-3 bg-error-container/40 border border-error/40 rounded-xl p-3 text-sm">
-            <Lock size={16} className="text-error shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-on-surface">Alcanzaste el límite del plan gratuito</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">
-                Actualiza a Premium para publicar sin límites.
-              </p>
-            </div>
+          <div className="mb-7">
+            <h1 className="font-headline text-3xl md:text-4xl font-bold text-on-surface tracking-tight">
+              {isEditing ? 'Edita tu propiedad' : 'Publica tu propiedad'}
+            </h1>
+            <p className="text-on-surface-variant mt-1.5">
+              {isEditing
+                ? 'Actualiza los datos y guarda los cambios.'
+                : 'Empieza con lo básico. Tu publicación será visible solo después de completar todas las etapas.'}
+            </p>
+            <p aria-live="polite" className="mt-4 text-sm font-semibold text-primary">
+              Etapa {currentStep} de 4 · {PUBLISH_STEPS[currentStep - 1]}
+            </p>
+            <ol aria-label="Etapas de publicación" className="mt-3 flex gap-2">
+              {PUBLISH_STEPS.map((label, index) => (
+                <li
+                  key={label}
+                  aria-current={index + 1 === currentStep ? 'step' : undefined}
+                  className={
+                    'h-1.5 flex-1 rounded-full ' +
+                    (index + 1 <= currentStep ? 'bg-primary' : 'bg-primary/15')
+                  }
+                >
+                  <span className="sr-only">{label}</span>
+                </li>
+              ))}
+            </ol>
           </div>
-        )}
 
-        <form id="publicar-form" onSubmit={handleSubmit} className="space-y-5">
-          {currentStep === 1 && (
-            <>
-              <Section step={1} title="Lo básico" desc="Define qué estás publicando">
-                {/* Operation */}
-                <div>
-                  <span className={labelCls}>Operación</span>
-                  <div className="flex gap-2">
-                    {[PropertyOperation.SALE, PropertyOperation.RENT].map((op) => (
-                      <button
-                        key={op}
-                        type="button"
-                        onClick={() => setOperation(op)}
-                        className={`flex-1 py-2.5 text-sm font-medium rounded-lg border transition-all ${operation === op ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'}`}
-                      >
-                        {OPERATION_LABELS[op]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Type */}
-                <div>
-                  <label className={labelCls} htmlFor="type">
-                    Tipo de propiedad
-                  </label>
-                  <select
-                    id="type"
-                    value={type}
-                    onChange={(e) => setType(e.target.value as PropertyType)}
-                    className={selectCls}
-                  >
-                    {TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {PROPERTY_TYPE_LABELS[t]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <Input
-                    label="Título"
-                    placeholder="Ej: Casa luminosa con jardín en Ñuñoa"
-                    value={form.title}
-                    onChange={(e) => set('title', e.target.value)}
-                    required
-                  />
-                  {errors.title && <p className={errorCls}>{errors.title}</p>}
-                </div>
-              </Section>
-            </>
-          )}
-          {currentStep === 2 && user && (
-            <Section
-              step={2}
-              title="Selecciona tu propiedad en el mapa"
-              desc="Acerca el mapa y haz clic sobre la propiedad o su entrada. La dirección se obtiene del punto que elijas."
-            >
-              <LocationPicker
-                latitude={coords?.lat ?? DEFAULT_MAP_CENTER.latitude}
-                longitude={coords?.lng ?? DEFAULT_MAP_CENTER.longitude}
-                selected={!!coords}
-                onChange={handleMapPick}
-              />
-              <p className="text-xs text-on-surface-variant">
-                Arrastra el pin para ajustar. Con teclado: Enter coloca el pin y las flechas lo
-                mueven.
-              </p>
-              <div
-                aria-live="polite"
-                aria-atomic="true"
-                className="rounded-xl border border-outline-variant bg-surface p-4"
-              >
-                <h3 className="font-semibold text-sm text-on-surface">Dirección del pin</h3>
-                {locationBusy ? (
-                  <p className="mt-2 text-sm text-on-surface-variant">
-                    Obteniendo dirección del mapa…
-                  </p>
-                ) : locationConfirmed ? (
-                  <>
-                    <p className="mt-2 text-sm text-on-surface">
-                      {mapAddress ||
-                        [form.street, form.commune, form.city].filter(Boolean).join(', ')}
-                    </p>
-                    <p className="mt-2 text-xs text-on-surface-variant">
-                      {form.commune} · {form.region}
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-2 text-sm text-on-surface-variant">
-                    Selecciona un punto para obtener su dirección.
-                  </p>
-                )}
-                {coords && (
-                  <p className="mt-2 text-xs text-on-surface-variant">
-                    Latitud {coords.lat.toFixed(6)} · Longitud {coords.lng.toFixed(6)}
-                  </p>
-                )}
-              </div>
-              {locationMessage && (
-                <p role="status" className="text-sm text-on-surface-variant">
-                  {locationMessage}
+          {!canPublish && !isEditing && (
+            <div className="mb-5 flex items-start gap-3 bg-error-container/40 border border-error/40 rounded-xl p-3 text-sm">
+              <Lock size={16} className="text-error shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-on-surface">
+                  Alcanzaste el límite del plan gratuito
                 </p>
-              )}
-              {coords && !locationBusy && !locationConfirmed && (
+                <p className="text-on-surface-variant text-xs mt-0.5">
+                  Actualiza a Premium para publicar sin límites.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <form id="publicar-form" onSubmit={handleSubmit} className="space-y-5">
+            {currentStep === 1 && (
+              <>
+                <Section step={1} title="Lo básico" desc="Define qué estás publicando">
+                  {/* Operation */}
+                  <div>
+                    <span className={labelCls}>Operación</span>
+                    <div className="flex gap-2">
+                      {[PropertyOperation.SALE, PropertyOperation.RENT].map((op) => (
+                        <button
+                          key={op}
+                          type="button"
+                          onClick={() => setOperation(op)}
+                          className={`flex-1 py-2.5 text-sm font-medium rounded-lg border transition-all ${operation === op ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant/60 text-on-surface-variant hover:border-primary'}`}
+                        >
+                          {OPERATION_LABELS[op]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Type */}
+                  <div>
+                    <label className={labelCls} htmlFor="type">
+                      Tipo de propiedad
+                    </label>
+                    <select
+                      id="type"
+                      value={type}
+                      onChange={(e) => setType(e.target.value as PropertyType)}
+                      className={selectCls}
+                    >
+                      {TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {PROPERTY_TYPE_LABELS[t]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Input
+                      label="Título"
+                      placeholder="Ej: Casa luminosa con jardín en Ñuñoa"
+                      value={form.title}
+                      onChange={(e) => set('title', e.target.value)}
+                      required
+                    />
+                    {errors.title && <p className={errorCls}>{errors.title}</p>}
+                  </div>
+                </Section>
+              </>
+            )}
+            {currentStep === 2 && user && (
+              <Section
+                step={2}
+                title="Selecciona tu propiedad en el mapa"
+                desc="Acerca el mapa y haz clic sobre la propiedad o su entrada. La dirección se obtiene del punto que elijas."
+              >
+                <LocationPicker
+                  latitude={coords?.lat ?? DEFAULT_MAP_CENTER.latitude}
+                  longitude={coords?.lng ?? DEFAULT_MAP_CENTER.longitude}
+                  selected={!!coords}
+                  onChange={handleMapPick}
+                />
+                <p className="text-xs text-on-surface-variant">
+                  Arrastra el pin para ajustar. Con teclado: Enter coloca el pin y las flechas lo
+                  mueven.
+                </p>
+                <div
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="rounded-xl border border-outline-variant bg-surface p-4"
+                >
+                  <h3 className="font-semibold text-sm text-on-surface">Dirección del pin</h3>
+                  {locationBusy ? (
+                    <p className="mt-2 text-sm text-on-surface-variant">
+                      Obteniendo dirección del mapa…
+                    </p>
+                  ) : locationConfirmed ? (
+                    <>
+                      <p className="mt-2 text-sm text-on-surface">
+                        {mapAddress ||
+                          [form.street, form.commune, form.city].filter(Boolean).join(', ')}
+                      </p>
+                      <p className="mt-2 text-xs text-on-surface-variant">
+                        {form.commune} · {form.region}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-on-surface-variant">
+                      Selecciona un punto para obtener su dirección.
+                    </p>
+                  )}
+                  {coords && (
+                    <p className="mt-2 text-xs text-on-surface-variant">
+                      Latitud {coords.lat.toFixed(6)} · Longitud {coords.lng.toFixed(6)}
+                    </p>
+                  )}
+                </div>
+                {locationMessage && (
+                  <p role="status" className="text-sm text-on-surface-variant">
+                    {locationMessage}
+                  </p>
+                )}
+                {coords && !locationBusy && !locationConfirmed && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleMapPick(coords.lat, coords.lng)}
+                  >
+                    Reintentar dirección
+                  </Button>
+                )}
+                {errors.location && (
+                  <p role="alert" className={errorCls}>
+                    {errors.location}
+                  </p>
+                )}
+                {errors.commune && (
+                  <p role="alert" className={errorCls}>
+                    {errors.commune}
+                  </p>
+                )}
+              </Section>
+            )}
+            {currentStep === 3 && user && (
+              <>
+                <Section step={3} title="Detalles y precio">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Input
+                        label="Superficie (m²)"
+                        type="number"
+                        min="0"
+                        placeholder="120"
+                        value={form.area}
+                        onChange={(e) => set('area', e.target.value)}
+                        required
+                      />
+                      {errors.area && <p className={errorCls}>{errors.area}</p>}
+                    </div>
+                    <Input
+                      label="Estacionamientos"
+                      type="number"
+                      min="0"
+                      placeholder="2"
+                      value={form.parkingSpots}
+                      onChange={(e) => set('parkingSpots', e.target.value)}
+                    />
+                    <Input
+                      label="Dormitorios"
+                      type="number"
+                      min="0"
+                      placeholder="3"
+                      value={form.bedrooms}
+                      onChange={(e) => set('bedrooms', e.target.value)}
+                    />
+                    <Input
+                      label="Baños"
+                      type="number"
+                      min="0"
+                      placeholder="2"
+                      value={form.bathrooms}
+                      onChange={(e) => set('bathrooms', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      label={
+                        operation === PropertyOperation.RENT
+                          ? 'Arriendo mensual (CLP)'
+                          : 'Precio (CLP)'
+                      }
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={form.price}
+                      onChange={(e) => set('price', e.target.value)}
+                      required
+                    />
+                    {errors.price && <p className={errorCls}>{errors.price}</p>}
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-on-surface cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.negotiable}
+                      onChange={(e) => set('negotiable', e.target.checked)}
+                      className="w-4 h-4 accent-[rgb(var(--primary))]"
+                    />
+                    Precio negociable
+                  </label>
+                </Section>
+              </>
+            )}
+            {currentStep === 4 && user && (
+              <>
+                <Section
+                  step={4}
+                  title="Fotos y revisión"
+                  desc={`Sube hasta ${MAX_IMAGES} fotos. Las optimizamos automáticamente para que carguen rápido. La primera es la principal.`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      addFiles(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {images.map((img, i) => (
+                        <div
+                          key={img.previewUrl}
+                          className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={img.previewUrl}
+                            alt={`Foto ${i + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {i === 0 ? (
+                            <span className="absolute bottom-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                              <Star size={9} /> Principal
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => makeMain(i)}
+                              className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              Hacer principal
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            aria-label={`Quitar foto ${i + 1}`}
+                            className="absolute top-1 right-1 bg-black/55 text-white rounded-full p-1 hover:bg-error transition-colors"
+                          >
+                            <X size={11} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {images.length < MAX_IMAGES && (
+                    <button
+                      type="button"
+                      disabled={processingImages || submitting}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <ImagePlus size={22} />
+                      <span className="text-sm font-medium">
+                        {processingImages
+                          ? 'Optimizando fotos…'
+                          : images.length
+                            ? 'Agregar más fotos'
+                            : 'Seleccionar fotos'}
+                      </span>
+                      <span className="text-xs">
+                        {images.length}/{MAX_IMAGES}
+                      </span>
+                    </button>
+                  )}
+                  {errors.images && <p className={errorCls}>{errors.images}</p>}
+                  <div className="space-y-2">
+                    <label className={labelCls} htmlFor="desc">
+                      Descripción de tu publicación
+                    </label>
+                    <p className="text-xs text-on-surface-variant">
+                      Describe la propiedad y lo que quieras destacar.
+                    </p>
+                    <textarea
+                      id="desc"
+                      value={form.description}
+                      onChange={(e) => set('description', e.target.value)}
+                      placeholder="Escribe la descripción de tu propiedad…"
+                      maxLength={2000}
+                      rows={6}
+                      className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <p className="text-xs text-on-surface-variant text-right">
+                      {form.description.length}/2000
+                    </p>
+                    {errors.description && <p className={errorCls}>{errors.description}</p>}
+                  </div>
+                  <div className="rounded-xl border border-outline-variant/40 p-4 space-y-2 text-sm text-on-surface">
+                    <h3 className="font-semibold">Revisa tu publicación</h3>
+                    <p>{form.title}</p>
+                    <p className="text-on-surface-variant">
+                      {OPERATION_LABELS[operation]} · {PROPERTY_TYPE_LABELS[type]} · {form.area} m²
+                    </p>
+                    <p>{[form.street, form.commune, form.city].filter(Boolean).join(', ')}</p>
+                    <p className="font-semibold">
+                      {formatPriceShort(Number(form.price), Currency.CLP)}
+                    </p>
+                    {form.description && (
+                      <p className="text-on-surface-variant whitespace-pre-wrap">
+                        {form.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-on-surface-variant">
+                      Tu propiedad aparecerá en el mapa cuando confirmes la publicación.
+                    </p>
+                  </div>
+                </Section>
+              </>
+            )}
+            {submitError && (
+              <p role="alert" className="rounded-xl bg-error/10 p-3 text-sm text-error">
+                {submitError}
+              </p>
+            )}
+            <div className="fixed bottom-16 inset-x-0 z-40 flex items-center justify-between gap-3 border-t border-outline-variant/40 bg-background/95 p-4 lg:static lg:rounded-xl lg:border lg:mt-6">
+              {currentStep > 1 ? (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleMapPick(coords.lat, coords.lng)}
-                >
-                  Reintentar dirección
-                </Button>
-              )}
-              {errors.location && (
-                <p role="alert" className={errorCls}>
-                  {errors.location}
-                </p>
-              )}
-              {errors.commune && (
-                <p role="alert" className={errorCls}>
-                  {errors.commune}
-                </p>
-              )}
-            </Section>
-          )}
-          {currentStep === 3 && user && (
-            <>
-              <Section step={3} title="Detalles y precio">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Input
-                      label="Superficie (m²)"
-                      type="number"
-                      min="0"
-                      placeholder="120"
-                      value={form.area}
-                      onChange={(e) => set('area', e.target.value)}
-                      required
-                    />
-                    {errors.area && <p className={errorCls}>{errors.area}</p>}
-                  </div>
-                  <Input
-                    label="Estacionamientos"
-                    type="number"
-                    min="0"
-                    placeholder="2"
-                    value={form.parkingSpots}
-                    onChange={(e) => set('parkingSpots', e.target.value)}
-                  />
-                  <Input
-                    label="Dormitorios"
-                    type="number"
-                    min="0"
-                    placeholder="3"
-                    value={form.bedrooms}
-                    onChange={(e) => set('bedrooms', e.target.value)}
-                  />
-                  <Input
-                    label="Baños"
-                    type="number"
-                    min="0"
-                    placeholder="2"
-                    value={form.bathrooms}
-                    onChange={(e) => set('bathrooms', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Input
-                    label={
-                      operation === PropertyOperation.RENT
-                        ? 'Arriendo mensual (CLP)'
-                        : 'Precio (CLP)'
-                    }
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={form.price}
-                    onChange={(e) => set('price', e.target.value)}
-                    required
-                  />
-                  {errors.price && <p className={errorCls}>{errors.price}</p>}
-                </div>
-                <label className="flex items-center gap-2 text-sm text-on-surface cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.negotiable}
-                    onChange={(e) => set('negotiable', e.target.checked)}
-                    className="w-4 h-4 accent-[rgb(var(--primary))]"
-                  />
-                  Precio negociable
-                </label>
-              </Section>
-            </>
-          )}
-          {currentStep === 4 && user && (
-            <>
-              <Section
-                step={4}
-                title="Fotos y revisión"
-                desc={`Sube hasta ${MAX_IMAGES} fotos. Las optimizamos automáticamente para que carguen rápido. La primera es la principal.`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/avif"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    addFiles(e.target.files)
-                    e.target.value = ''
+                  disabled={submitting || advancing || processingImages}
+                  onClick={() => {
+                    setStep((currentStep - 1) as PublishStep)
+                    setSubmitError(null)
                   }}
-                />
-
-                {images.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {images.map((img, i) => (
-                      <div
-                        key={img.previewUrl}
-                        className="relative group aspect-square rounded-xl overflow-hidden border border-outline-variant/40"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={img.previewUrl}
-                          alt={`Foto ${i + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        {i === 0 ? (
-                          <span className="absolute bottom-1 left-1 bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                            <Star size={9} /> Principal
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => makeMain(i)}
-                            className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Hacer principal
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeImage(i)}
-                          aria-label={`Quitar foto ${i + 1}`}
-                          className="absolute top-1 right-1 bg-black/55 text-white rounded-full p-1 hover:bg-error transition-colors"
-                        >
-                          <X size={11} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {images.length < MAX_IMAGES && (
-                  <button
-                    type="button"
-                    disabled={processingImages || submitting}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/60 rounded-xl py-8 text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
-                  >
-                    <ImagePlus size={22} />
-                    <span className="text-sm font-medium">
-                      {processingImages
-                        ? 'Optimizando fotos…'
-                        : images.length
-                          ? 'Agregar más fotos'
-                          : 'Seleccionar fotos'}
-                    </span>
-                    <span className="text-xs">
-                      {images.length}/{MAX_IMAGES}
-                    </span>
-                  </button>
-                )}
-                {errors.images && <p className={errorCls}>{errors.images}</p>}
-                <div className="space-y-2">
-                  <label className={labelCls} htmlFor="desc">
-                    Descripción de tu publicación
-                  </label>
-                  <p className="text-xs text-on-surface-variant">
-                    Describe la propiedad y lo que quieras destacar.
-                  </p>
-                  <textarea
-                    id="desc"
-                    value={form.description}
-                    onChange={(e) => set('description', e.target.value)}
-                    placeholder="Escribe la descripción de tu propiedad…"
-                    maxLength={2000}
-                    rows={6}
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <p className="text-xs text-on-surface-variant text-right">
-                    {form.description.length}/2000
-                  </p>
-                  {errors.description && <p className={errorCls}>{errors.description}</p>}
-                </div>
-                <div className="rounded-xl border border-outline-variant/40 p-4 space-y-2 text-sm text-on-surface">
-                  <h3 className="font-semibold">Revisa tu publicación</h3>
-                  <p>{form.title}</p>
-                  <p className="text-on-surface-variant">
-                    {OPERATION_LABELS[operation]} · {PROPERTY_TYPE_LABELS[type]} · {form.area} m²
-                  </p>
-                  <p>{[form.street, form.commune, form.city].filter(Boolean).join(', ')}</p>
-                  <p className="font-semibold">
-                    {formatPriceShort(Number(form.price), Currency.CLP)}
-                  </p>
-                  {form.description && (
-                    <p className="text-on-surface-variant whitespace-pre-wrap">
-                      {form.description}
-                    </p>
-                  )}
-                  <p className="text-xs text-on-surface-variant">
-                    Tu propiedad aparecerá en el mapa cuando confirmes la publicación.
-                  </p>
-                </div>
-              </Section>
-            </>
-          )}
-          {submitError && (
-            <p role="alert" className="rounded-xl bg-error/10 p-3 text-sm text-error">
-              {submitError}
-            </p>
-          )}
-          <div className="fixed bottom-16 inset-x-0 z-40 flex items-center justify-between gap-3 border-t border-outline-variant/40 bg-background/95 p-4 lg:static lg:rounded-xl lg:border lg:mt-6">
-            {currentStep > 1 ? (
+                >
+                  Anterior
+                </Button>
+              ) : (
+                <span className="text-sm text-on-surface-variant">Un paso a la vez</span>
+              )}
               <Button
-                type="button"
-                variant="outline"
-                disabled={submitting || advancing || processingImages}
-                onClick={() => {
-                  setStep((currentStep - 1) as PublishStep)
-                  setSubmitError(null)
-                }}
+                type="submit"
+                loading={submitting || advancing}
+                disabled={
+                  !draftLoaded ||
+                  authLoading ||
+                  locationBusy ||
+                  processingImages ||
+                  !!publishedId ||
+                  (currentStep === 4 && !canPublish && !isEditing)
+                }
               >
-                Anterior
+                {currentStep < 4
+                  ? 'Continuar'
+                  : isEditing
+                    ? 'Guardar cambios'
+                    : 'Publicar propiedad'}
               </Button>
-            ) : (
-              <span className="text-sm text-on-surface-variant">Un paso a la vez</span>
-            )}
-            <Button
-              type="submit"
-              loading={submitting || advancing}
-              disabled={
-                !draftLoaded ||
-                authLoading ||
-                locationBusy ||
-                processingImages ||
-                !!publishedId ||
-                (currentStep === 4 && !canPublish && !isEditing)
-              }
-            >
-              {currentStep < 4 ? 'Continuar' : isEditing ? 'Guardar cambios' : 'Publicar propiedad'}
-            </Button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
+        <PublishBlueprints />
       </div>
 
       <PublishAuthPrompt open={authPrompt} onOpenChange={setAuthPrompt} />
