@@ -1,4 +1,6 @@
 import type { NextConfig } from 'next'
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants'
 
 const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
@@ -17,4 +19,7 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+export default function config(phase: string) {
+  if (phase === PHASE_DEVELOPMENT_SERVER) void initOpenNextCloudflareForDev()
+  return nextConfig
+}
