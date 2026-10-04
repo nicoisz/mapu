@@ -81,7 +81,7 @@ export default function ForYouPage() {
         icon={<Sparkles size={22} />}
         description="Más del 30% de coincidencia con tus intereses, ordenadas de mayor a menor. El porcentaje refleja preferencias, no una probabilidad de compra."
       />
-      <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-7xl space-y-5 px-3 py-6 sm:px-5">
         <Link href="/intereses" className="inline-block text-sm font-medium text-accent underline">
           Ajustar mis intereses
         </Link>

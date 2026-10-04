@@ -230,7 +230,7 @@ export default function MejorarPage() {
         description="Elige el plan que mejor se adapte a tu actividad."
       />
 
-      <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-6">
+      <div className="mx-auto w-full max-w-4xl space-y-8 px-3 py-6 sm:px-5">
         {step === 'plan' && (
           <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

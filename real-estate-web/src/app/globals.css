@@ -1319,3 +1319,21 @@
     display: none;
   }
 }
+
+/* Internal navigation only. */
+@media (min-width: 768px) {
+  body:has([data-sidebar-collapsed='false']) [data-top-navbar] {
+    left: 14rem;
+  }
+  body:has([data-sidebar-collapsed='true']) [data-top-navbar] {
+    left: 72px;
+  }
+}
+.internal-modules [data-page-header] {
+  padding-inline: 12px;
+}
+@media (min-width: 640px) {
+  .internal-modules [data-page-header] {
+    padding-inline: 20px;
+  }
+}

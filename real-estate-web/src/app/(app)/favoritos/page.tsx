@@ -64,7 +64,7 @@ export default function FavoritosPage() {
         description={`${count} propiedad${count !== 1 ? 'es' : ''} guardada${count !== 1 ? 's' : ''}`}
       />
 
-      <div className="mx-auto w-full max-w-5xl px-6 py-6">
+      <div className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-5">
         {stats.totalCount > 0 && stats.averagePrice > 0 && (
           <div className="mb-6 grid grid-cols-2 gap-4 max-w-md">
             <div className="rounded-2xl border border-outline-variant/50 bg-surface-container-low p-4">
