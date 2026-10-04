@@ -18,16 +18,17 @@ begin
       target_id:=gen_random_uuid();
       insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,
         raw_app_meta_data,raw_user_meta_data,created_at,updated_at,
-        confirmation_token,recovery_token,email_change_token_new,email_change)
+        confirmation_token,recovery_token,email_change_token_new,email_change,email_change_token_current,reauthentication_token)
       values('00000000-0000-0000-0000-000000000000',target_id,'authenticated','authenticated',target_email,password_hash,now(),
-        '{"provider":"email","providers":["email"]}',jsonb_build_object('name',profile_name,'user_type','individual'),now(),now(),'','','','');
+        '{"provider":"email","providers":["email"]}',jsonb_build_object('name',profile_name,'user_type','individual'),now(),now(),'','','','','','');
     else
       update auth.users set encrypted_password=password_hash,email_confirmed_at=coalesce(email_confirmed_at,now()),updated_at=now(),
         raw_user_meta_data=coalesce(raw_user_meta_data,'{}') || '{"user_type":"individual"}',
         raw_app_meta_data=jsonb_set(coalesce(raw_app_meta_data,'{}'),'{providers}',
           (select jsonb_agg(distinct v) from jsonb_array_elements(coalesce(raw_app_meta_data->'providers','[]') || '["email"]') v)),
         confirmation_token=coalesce(confirmation_token,''),recovery_token=coalesce(recovery_token,''),
-        email_change_token_new=coalesce(email_change_token_new,''),email_change=coalesce(email_change,'')
+        email_change_token_new=coalesce(email_change_token_new,''),email_change=coalesce(email_change,''),
+        email_change_token_current=coalesce(email_change_token_current,''),reauthentication_token=coalesce(reauthentication_token,'')
       where id=target_id;
     end if;
     if exists(select 1 from auth.identities where provider='email' and provider_id=target_id::text and user_id<>target_id) then

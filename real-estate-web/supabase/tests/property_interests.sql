@@ -40,6 +40,7 @@ begin
  assert not exists(select 1 from public.score_property_interest(p,f || '{"minBedrooms":3,"required":["minBedrooms"]}')),'missing mandatory excluded';
  p.type:='land';
  select score into score_value from public.score_property_interest(p,f || '{"types":["house","land"],"minBedrooms":3}'); assert score_value=100,'housing questions in mixed interests do not penalize land';
+ assert not exists(select 1 from public.score_property_interest(p,f || '{"types":["house","land"],"minBedrooms":3,"required":["minBedrooms"]}')),'mixed types cannot bypass indispensable bedrooms';
  p.type:='apartment';p.area:=33.33;
  select score into score_value from public.score_property_interest(p,f || '{"minArea":100,"features":["has_garden"]}');assert score_value=30,'visible boundary 30';
  p.area:=37;
@@ -75,6 +76,19 @@ end $$;
 update public.property_interests set is_active=true;
 do $$ begin assert (select bool_and(effective_at > now()-interval '1 minute') from public.property_interests),'reactivation resets effective date';end $$;
 
+-- Test the public threshold too, not only the internal scoring function.
+update public.properties set type='apartment',area=33.33 where id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+update public.property_interests set filters=filters || '{"minArea":100,"features":["has_garden"]}';
+select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+do $$ begin assert jsonb_array_length(public.get_interest_matches()->'items')=0,'RPC excludes visible 30 percent';end $$;
+update public.properties set area=37 where id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+do $$ begin assert jsonb_array_length(public.get_interest_matches()->'items')=1,'RPC includes visible 31 percent';end $$;
+select set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+do $$ declare d record; begin
+ select * into d from public.get_owned_property_demand(array['cccccccc-cccc-4ccc-8ccc-cccccccccccc'::uuid]);
+ assert d.users=1 and d.exact_users=0 and d.partial_users=1,'same partial threshold for distinct demand';
+end $$;
+
 set local role authenticated;
 do $$ begin
  assert (select count(*) from public.property_interests)=0,'RLS hides other users interests';
@@ -87,4 +101,18 @@ do $$ begin
  begin update public.property_interests set effective_at='2000-01-01';raise exception 'effective timestamp spoof allowed';exception when insufficient_privilege then null;end;
 end $$;
 reset role;
+-- More than one page, with duplicate interests and equal scores/publication times.
+insert into public.properties(id,owner_id,title,description,type,operation,status,latitude,longitude,area,price,currency,address_commune,bedrooms,has_garden,published_at,expires_at)
+select gen_random_uuid(),'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Page ' || n,'SQL fixture','house','sale','active',-39.8,-73.2,100,100,'CLP','Valdivia',3,true,now(),now()+interval '1 day'
+from generate_series(1,21) n;
+select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+do $$ declare first_page jsonb; second_page jsonb; begin
+ first_page:=public.get_interest_matches(20,0)->'items';
+ second_page:=public.get_interest_matches(20,20)->'items';
+ assert jsonb_array_length(first_page)=20 and jsonb_array_length(second_page)=2,'pagination includes 22 unique properties';
+ assert first_page=public.get_interest_matches(20,0)->'items','stable ordering for tied scores';
+ assert (second_page->1->>'score')::int=31,'lower scores sorted last';
+ assert (select count(distinct item->>'property_id')=22 from jsonb_array_elements(first_page || second_page) item),'no duplicate across pages or interests';
+ begin perform public.get_interest_matches(21,0);raise exception 'oversized page accepted';exception when raise_exception then if sqlerrm='oversized page accepted' then raise;end if;end;
+end $$;
 rollback;

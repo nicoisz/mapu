@@ -12,7 +12,7 @@ async function createTestDatabase() {
     create function extensions.uuid_generate_v4() returns uuid language sql as $$select gen_random_uuid()$$;
     create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth;
-    create table auth.users(instance_id uuid,id uuid primary key,aud text,role text,email text unique,encrypted_password text,email_confirmed_at timestamptz,raw_app_meta_data jsonb,raw_user_meta_data jsonb,created_at timestamptz,updated_at timestamptz,confirmation_token text,recovery_token text,email_change_token_new text,email_change text);
+    create table auth.users(instance_id uuid,id uuid primary key,aud text,role text,email text unique,encrypted_password text,email_confirmed_at timestamptz,raw_app_meta_data jsonb,raw_user_meta_data jsonb,created_at timestamptz,updated_at timestamptz,confirmation_token text,recovery_token text,email_change_token_new text,email_change text,email_change_token_current text,reauthentication_token text);
     create table auth.identities(id uuid primary key,user_id uuid references auth.users(id),provider_id text,provider text,identity_data jsonb,created_at timestamptz,updated_at timestamptz,unique(provider_id,provider));
     create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema auth to authenticated;
@@ -40,6 +40,10 @@ async function main() {
     await db.exec(script)
     const after = await db.query('select id,email,encrypted_password from auth.users order by email')
     assert.deepEqual(before.rows, after.rows)
+    const setup = fs.readFileSync('supabase/testing/setup-interests.sql', 'utf8')
+    await db.exec(setup)
+    await db.exec(setup)
+    assert.deepEqual(before.rows, (await db.query('select id,email,encrypted_password from auth.users order by email')).rows)
     for (const row of after.rows) assert(bcrypt.compareSync('123qweasd', row.encrypted_password))
     assert.equal((await db.query("select name from public.profiles where email='mapu.probe.claude@gmail.com'")).rows[0].name, 'Existing test name')
     assert.equal((await db.query('select count(*)::int n from auth.identities')).rows[0].n, 2)
