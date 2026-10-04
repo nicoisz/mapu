@@ -1,5 +1,6 @@
 import { getSupabase } from '@/lib/supabase'
 import { propertyService } from '@/services/propertyService'
+import { captureError } from '@/lib/errorLogging'
 import type {
   InterestFilters,
   InterestMatch,
@@ -42,8 +43,25 @@ export const interestsService = {
     const query = id ? table.update({ filters }).eq('id', id) : table.insert({ filters })
     const { data, error } = await query.select('id, filters, is_active').single()
     if (error)
-      throw new Error('No pudimos guardar el interés. Revisa tus respuestas e intenta nuevamente.')
+      throw new Error(
+        'No pudimos guardar tus intereses. Revisa tus respuestas e intenta nuevamente.'
+      )
     return toInterest(data as InterestRow)
+  },
+  async saveDraft(id: string, filters: InterestFilters, userId: string): Promise<PropertyInterest> {
+    const { data, error } = await getSupabase().rpc('save_property_interest', {
+      interest_id: id,
+      interest_filters: filters,
+      expected_user_id: userId,
+    })
+    if (error) {
+      captureError({
+        message: 'Error al guardar intereses',
+        context: { operation: 'save_property_interest', code: error.code, cause: error.message },
+      })
+      throw new Error('No pudimos guardar tus intereses. Intenta nuevamente.')
+    }
+    return toInterest(data as unknown as InterestRow)
   },
   async setActive(id: string, active: boolean): Promise<void> {
     const { error, data } = await getSupabase()

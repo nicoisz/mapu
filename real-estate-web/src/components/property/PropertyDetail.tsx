@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -34,7 +34,7 @@ import { Reviews } from '@/components/reviews/Reviews'
 import { contactService } from '@/services/contactService'
 import { ContactOwnerForm } from '@/components/property/ContactOwnerForm'
 import { shareService } from '@/services/shareService'
-import { cn, formatArea, formatDate, getDisplayPrice } from '@/lib/utils'
+import { cn, formatDate, getDisplayPrice } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
 import { PropertyOperation } from '@/types/enums'
 
@@ -60,6 +60,7 @@ const AMENITY_MAP: { key: keyof Property['features']; label: string }[] = [
 export function PropertyDetail({ property }: PropertyDetailProps) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0)
   const [mapOpen, setMapOpen] = useState(false)
+  const swipeStart = useRef<{ x: number; y: number } | null>(null)
   const { isFavorite, toggle } = useFavoritesContext()
   const fav = isFavorite(property.id)
   const { amount, suffix } = getDisplayPrice(property)
@@ -88,10 +89,10 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-24">
+    <div className="max-w-4xl mx-auto pb-[calc(10rem+env(safe-area-inset-bottom))] md:pb-24">
       <div className="flex items-center justify-between p-4">
         <Link
-          href="/"
+          href="/buscar"
           className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors"
         >
           <ArrowLeft size={20} />
@@ -125,7 +126,31 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       </div>
 
       {/* Image carousel */}
-      <div className="relative h-80 md:h-[480px] bg-surface-container-high overflow-hidden md:rounded-2xl md:mx-4">
+      <div
+        className="relative h-80 md:h-[480px] bg-surface-container-high overflow-hidden md:rounded-2xl md:mx-4 touch-pan-y"
+        aria-label="Fotos de la propiedad"
+        onTouchStart={(event) => {
+          const t = event.touches[0]
+          swipeStart.current =
+            t && event.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null
+        }}
+        onTouchCancel={() => {
+          swipeStart.current = null
+        }}
+        onTouchEnd={(event) => {
+          const start = swipeStart.current
+          swipeStart.current = null
+          if (!start || images.length < 2) return
+          const t = event.changedTouches[0]
+          if (!t || event.touches.length) return
+          const dx = t.clientX - start.x,
+            dy = t.clientY - start.y
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            if (dx < 0) nextImage()
+            else prevImage()
+          }
+        }}
+      >
         {images.length > 0 ? (
           <>
             <Image
@@ -323,9 +348,11 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
 
             <div className="flex items-center gap-3 mb-4">
               {property.contact.avatar ? (
-                <img
+                <Image
                   src={property.contact.avatar}
                   alt={property.contact.name}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (
@@ -441,7 +468,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       {/* Map modal — compact, map fills the whole card */}
       {mapOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4"
           onClick={() => setMapOpen(false)}
         >
           <div
@@ -474,7 +501,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
       )}
 
       {/* Mobile sticky CTA */}
-      <div className="fixed bottom-16 md:hidden left-0 right-0 p-3 bg-surface-container-low/95 border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
+      <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] z-[60] md:hidden left-0 right-0 p-3 bg-surface-container-low border-t border-outline-variant/60 shadow-xl flex items-center gap-3">
         <div className="min-w-0">
           <p className="font-headline font-bold text-on-surface text-lg leading-tight truncate">
             {amount}

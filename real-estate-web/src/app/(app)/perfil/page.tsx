@@ -13,6 +13,7 @@ import {
   Mail,
   Phone,
   Shield,
+  Star,
   UserRound,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -70,6 +71,22 @@ export default function PerfilPage() {
           </Badge>
         }
         description={`${user.email} · ${USER_TYPE_LABELS[user.userType]}`}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              document.getElementById('mis-resenas')?.scrollIntoView({
+                block: 'start',
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                  ? 'auto'
+                  : 'smooth',
+              })
+            }
+          >
+            <Star size={15} /> Ver mis reseñas
+          </Button>
+        }
       />
 
       <div className="mx-auto w-full max-w-2xl space-y-4 px-6 py-6">
@@ -209,7 +226,11 @@ export default function PerfilPage() {
         </section>
 
         {/* Reviews */}
-        <section className="bg-surface-container-low rounded-2xl border border-outline-variant/40 p-4">
+        <section
+          id="mis-resenas"
+          className="scroll-mt-4 bg-surface-container-low rounded-2xl border border-outline-variant/40 p-4"
+        >
+          <h2 className="mb-3 font-headline text-lg font-semibold">Reseñas que recibiste</h2>
           <Reviews subjectId={user.id} organizationId={user.organizationId} />
         </section>
 

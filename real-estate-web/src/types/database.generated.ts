@@ -31,6 +31,9 @@ export type Database = {
           id: string
           message: string | null
           name: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
           route: string | null
           stack: string | null
           user_id: string | null
@@ -42,6 +45,9 @@ export type Database = {
           id?: string
           message?: string | null
           name?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
           route?: string | null
           stack?: string | null
           user_id?: string | null
@@ -53,11 +59,21 @@ export type Database = {
           id?: string
           message?: string | null
           name?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
           route?: string | null
           stack?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: 'error_logs_resolved_by_fkey'
+            columns: ['resolved_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'error_logs_user_id_fkey'
             columns: ['user_id']
@@ -103,12 +119,56 @@ export type Database = {
           },
         ]
       }
+      message_reads: {
+        Row: {
+          counterparty_id: string
+          property_id: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          counterparty_id: string
+          property_id: string
+          seen_at: string
+          user_id: string
+        }
+        Update: {
+          counterparty_id?: string
+          property_id?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'message_reads_counterparty_id_fkey'
+            columns: ['counterparty_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'message_reads_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'message_reads_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string
           created_at: string
           id: string
           property_id: string
+          recipient_id: string
           sender_id: string
         }
         Insert: {
@@ -116,6 +176,7 @@ export type Database = {
           created_at?: string
           id?: string
           property_id: string
+          recipient_id: string
           sender_id: string
         }
         Update: {
@@ -123,6 +184,7 @@ export type Database = {
           created_at?: string
           id?: string
           property_id?: string
+          recipient_id?: string
           sender_id?: string
         }
         Relationships: [
@@ -131,6 +193,13 @@ export type Database = {
             columns: ['property_id']
             isOneToOne: false
             referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'messages_recipient_id_fkey'
+            columns: ['recipient_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
             referencedColumns: ['id']
           },
           {
@@ -906,6 +975,20 @@ export type Database = {
         Returns: undefined
       }
       can_user_publish: { Args: { p_user_id: string }; Returns: boolean }
+      capture_error_log: {
+        Args: {
+          expected_actor?: string
+          log_context: Json
+          log_message: string
+          log_route: string
+          log_stack: string
+        }
+        Returns: undefined
+      }
+      conversation_messages: {
+        Args: { before_message?: string; counterparty: string; property: string }
+        Returns: Json
+      }
       create_org_invite: {
         Args: { inv_email: string; inv_org_id: string; inv_role: string }
         Returns: string
@@ -1010,6 +1093,7 @@ export type Database = {
           day: string
         }[]
       }
+      inbox_unread_count: { Args: Record<PropertyKey, never>; Returns: number }
       increment_property_views: { Args: { property_id: string }; Returns: undefined }
       interest_matches_for: {
         Args: { viewer: string }
@@ -1028,6 +1112,11 @@ export type Database = {
       is_org_member: { Args: { org_id: string }; Returns: boolean }
       is_subscription_active: { Args: { p_user_id: string }; Returns: boolean }
       is_superadmin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      list_conversations: { Args: { page_offset?: number }; Returns: Json }
+      mark_conversation_seen: {
+        Args: { counterparty: string; property: string; seen_before: string }
+        Returns: undefined
+      }
       mark_interest_matches_seen: { Args: { seen_before: string }; Returns: undefined }
       mark_notifications_seen: { Args: Record<PropertyKey, never>; Returns: undefined }
       owner_activity: {
@@ -1043,6 +1132,10 @@ export type Database = {
         }[]
       }
       owner_unread_count: { Args: Record<PropertyKey, never>; Returns: number }
+      save_property_interest: {
+        Args: { expected_user_id: string; interest_filters: Json; interest_id: string }
+        Returns: Json
+      }
       score_property_interest: {
         Args: { f: Json; p: Database['public']['Tables']['properties']['Row'] }
         Returns: {
@@ -1050,6 +1143,17 @@ export type Database = {
           score: number
         }[]
       }
+      send_conversation_message: {
+        Args: {
+          counterparty: string
+          expected_sender: string
+          message_body: string
+          property: string
+          request_id: string
+        }
+        Returns: string
+      }
+      set_error_log_resolved: { Args: { is_resolved: boolean; log_id: string }; Returns: undefined }
       set_member_role: {
         Args: { new_role: string; org_id: string; target_user_id: string }
         Returns: undefined

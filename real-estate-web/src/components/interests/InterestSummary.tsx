@@ -1,7 +1,8 @@
-import { INTEREST_CRITERIA, interestLabel } from '@/lib/interests'
+import { INTEREST_CRITERIA, interestLabel, simplifyInterestFilters } from '@/lib/interests'
 import type { InterestFilters } from '@/types/interests'
 
-export function InterestSummary({ filters: f }: { filters: InterestFilters }) {
+export function InterestSummary({ filters }: { filters: InterestFilters }) {
+  const f = simplifyInterestFilters(filters)
   const entries: [string, string][] = [
     ['types', interestLabel(f)],
     ...(f.communes.length
@@ -29,10 +30,7 @@ export function InterestSummary({ filters: f }: { filters: InterestFilters }) {
     <dl className="space-y-3 text-sm">
       {entries.map(([key, text]) => (
         <div key={key}>
-          <dt className="font-medium text-on-surface">
-            {INTEREST_CRITERIA[key]}
-            {f.required.includes(key) ? ' · Indispensable' : ' · Preferencia'}
-          </dt>
+          <dt className="font-medium text-on-surface">{INTEREST_CRITERIA[key]}</dt>
           <dd className="mt-1 text-on-surface-variant">{text}</dd>
         </div>
       ))}

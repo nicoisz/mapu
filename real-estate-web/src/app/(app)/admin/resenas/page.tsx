@@ -53,11 +53,11 @@ export default function AdminReviewsPage() {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-on-surface-variant">
-                    {r.author_name ?? r.author_id}
+                    {r.author_name ?? 'Usuario'}
                   </span>
                   <span className="text-on-surface-variant/40">→</span>
                   <span className="text-xs font-medium text-on-surface-variant">
-                    {r.subject_id}
+                    {r.subject_name ?? 'Publicador'}
                   </span>
                   <span className="flex gap-0.5 ml-2">
                     {[1, 2, 3, 4, 5].map((n) => (

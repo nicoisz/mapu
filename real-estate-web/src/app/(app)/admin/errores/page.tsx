@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bug, ChevronDown, RefreshCw } from 'lucide-react'
+import { Bug, Check, ChevronDown, RefreshCw } from 'lucide-react'
 import { adminService, ErrorLogRow } from '@/services/adminService'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/utils'
+import { hideInternalIds } from '@/lib/diagnostics'
 
 function formatWhen(iso: string): string {
   return new Date(iso).toLocaleString('es-CL')
@@ -19,11 +20,14 @@ export default function AdminErrorLogPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [status, setStatus] = useState<'all' | 'pending' | 'resolved'>('all')
+  const [busy, setBusy] = useState<string | null>(null)
 
   const load = (term = search) => {
     setLoading(true)
+    setError(null)
     adminService
-      .listErrorLogs(term)
+      .listErrorLogs(term, 200, status === 'all' ? undefined : status === 'resolved')
       .then(setRows)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
@@ -31,11 +35,33 @@ export default function AdminErrorLogPage() {
 
   useEffect(() => {
     load()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
+  async function resolve(row: ErrorLogRow) {
+    setBusy(row.id)
+    setError(null)
+    try {
+      await adminService.resolveErrorLog(row.id, !row.resolved)
+      load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo actualizar el estado')
+    } finally {
+      setBusy(null)
+    }
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
+        <select
+          aria-label="Estado del error"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as typeof status)}
+          className="rounded-lg border border-outline-variant bg-surface px-2 py-2 text-sm"
+        >
+          <option value="all">Todos</option>
+          <option value="pending">Pendientes</option>
+          <option value="resolved">Solucionados</option>
+        </select>
         <div className="flex-1">
           <SearchInput
             value={search}
@@ -73,13 +99,13 @@ export default function AdminErrorLogPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Bug size={14} className="text-error shrink-0" />
                     <p className="text-sm font-medium text-on-surface truncate">
-                      {r.message ?? 'Error sin mensaje'}
+                      {hideInternalIds(r.message ?? 'Error sin mensaje')}
                     </p>
                   </div>
                   <p className="text-xs text-on-surface-variant mt-1">
                     {formatWhen(r.created_at)}
-                    {r.route && <span> · {r.route}</span>}
-                    {r.name && <span> · {r.name}</span>}
+                    {r.route && <span> · {hideInternalIds(r.route)}</span>}
+                    <span> · {r.name || 'Visitante anónimo'}</span>
                     {r.email && <span> · {r.email}</span>}
                   </p>
                 </div>
@@ -91,6 +117,22 @@ export default function AdminErrorLogPage() {
                   )}
                 />
               </button>
+              <div className="flex items-center justify-between gap-2 px-4 pb-3">
+                <span className={`text-xs ${r.resolved ? 'text-tertiary' : 'text-error'}`}>
+                  {r.resolved
+                    ? `Solucionado${r.resolved_at ? ' · ' + formatWhen(r.resolved_at) : ''}`
+                    : 'Pendiente'}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy === r.id}
+                  onClick={() => void resolve(r)}
+                >
+                  {r.resolved ? <RefreshCw size={14} /> : <Check size={14} />}{' '}
+                  {r.resolved ? 'Marcar pendiente' : 'Marcar solucionado'}
+                </Button>
+              </div>
 
               {expanded === r.id && (
                 <div className="px-4 pb-4 space-y-3 border-t border-outline-variant/40 pt-3">
@@ -98,7 +140,7 @@ export default function AdminErrorLogPage() {
                     <div>
                       <p className="text-xs font-semibold text-on-surface-variant mb-1">Stack</p>
                       <pre className="text-xs text-on-surface whitespace-pre-wrap break-all bg-surface-container-highest/50 rounded-lg p-3 overflow-x-auto">
-                        {r.stack}
+                        {hideInternalIds(r.stack)}
                       </pre>
                     </div>
                   )}
@@ -107,10 +149,19 @@ export default function AdminErrorLogPage() {
                       Contexto (JSON)
                     </p>
                     <pre className="text-xs text-on-surface whitespace-pre-wrap break-all bg-surface-container-highest/50 rounded-lg p-3 overflow-x-auto">
-                      {JSON.stringify(
-                        { ...(r.context ?? {}), user_id: r.user_id, id: r.id },
-                        null,
-                        2
+                      {hideInternalIds(
+                        JSON.stringify(
+                          {
+                            ...(r.context ?? {}),
+                            usuario: r.name ?? 'Anónimo',
+                            email: r.email,
+                            fecha: r.created_at,
+                            message: r.message,
+                            resolved: r.resolved,
+                          },
+                          null,
+                          2
+                        )
                       )}
                     </pre>
                   </div>

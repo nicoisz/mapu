@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // 'published'). Omitir author_id no da un error de columna nula: da 403, que
 // en la UI aparece como "No tienes permisos para realizar esta acción". Este
 // test existe para que no se vuelva a caer del payload.
-const insert = vi.fn((_payload: Record<string, unknown>) => Promise.resolve({ error: null }))
+const insert = vi.fn<(payload: Record<string, unknown>) => Promise<{ error: null }>>()
+insert.mockResolvedValue({ error: null })
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({ from: () => ({ insert }) }) }))
 
 const { reviewService } = await import('@/services/reviewService')

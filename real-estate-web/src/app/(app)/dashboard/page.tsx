@@ -103,7 +103,7 @@ export default function DashboardPage() {
     } finally {
       setLoadingProps(false)
     }
-  }, [effectiveUserId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [effectiveUserId])
 
   useEffect(() => {
     void loadProperties()
@@ -224,6 +224,11 @@ export default function DashboardPage() {
         }
         actions={
           <>
+            {!impersonating && (
+              <Button variant="outline" onClick={() => router.push('/mensajes')}>
+                <MessageSquare size={16} /> Mensajes
+              </Button>
+            )}
             <Button
               onClick={() => router.push('/publicar')}
               disabled={!isPremium && remaining === 0}

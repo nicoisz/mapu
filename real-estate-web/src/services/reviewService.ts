@@ -12,6 +12,7 @@ export interface Review {
   status?: string
   created_at: string
   author_name?: string
+  subject_name?: string
   property_title?: string
 }
 
@@ -27,6 +28,7 @@ interface ReviewJoinRow {
   status: string
   created_at: string
   profiles?: { name: string | null } | null
+  subject?: { name: string | null } | null
   properties?: { title: string | null } | null
 }
 
@@ -34,7 +36,9 @@ export const reviewService = {
   async listForSubject(subjectId: string): Promise<Review[]> {
     const { data, error } = await getSupabase()
       .from('reviews')
-      .select('*, profiles!reviews_author_id_fkey(name), properties(title)')
+      .select(
+        '*, profiles!reviews_author_id_fkey(name), subject:profiles!reviews_subject_id_fkey(name), properties(title)'
+      )
       .eq('subject_id', subjectId)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
@@ -49,6 +53,7 @@ export const reviewService = {
       comment: r.comment,
       created_at: r.created_at,
       author_name: r.profiles?.name ?? undefined,
+      subject_name: r.subject?.name ?? undefined,
       property_title: r.properties?.title ?? undefined,
     }))
   },
@@ -94,7 +99,9 @@ export const reviewService = {
   async listAll(): Promise<Review[]> {
     const { data, error } = await getSupabase()
       .from('reviews')
-      .select('*, profiles!reviews_author_id_fkey(name), properties(title)')
+      .select(
+        '*, profiles!reviews_author_id_fkey(name), subject:profiles!reviews_subject_id_fkey(name), properties(title)'
+      )
       .order('created_at', { ascending: false })
       .limit(100)
     if (error) rethrowUserError(error)
@@ -109,6 +116,7 @@ export const reviewService = {
       status: r.status,
       created_at: r.created_at,
       author_name: r.profiles?.name ?? undefined,
+      subject_name: r.subject?.name ?? undefined,
       property_title: r.properties?.title ?? undefined,
     }))
   },

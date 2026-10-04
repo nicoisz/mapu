@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/Button'
 import { InterestSummary } from './InterestSummary'
 import {
   cleanInterestFilters,
+  simplifyInterestFilters,
   defaultInterestFilters,
   hasHousingTypes,
   INTEREST_FEATURES,
@@ -45,8 +46,7 @@ const questions: Record<string, string> = {
   communes: '¿En qué comunas buscarías?',
   maxPrice: '¿Cuál es tu presupuesto máximo?',
   minArea: '¿Qué superficie mínima necesitas?',
-  minBedrooms: '¿Cuántos dormitorios necesitas como mínimo?',
-  minBathrooms: '¿Cuántos baños necesitas como mínimo?',
+  rooms: '¿Cuántos dormitorios y baños necesitas?',
   features: '¿Qué características te interesan?',
   review: 'Así quedó tu interés',
 }
@@ -57,15 +57,19 @@ export function InterestQuiz({
   initial,
   onSave,
   onCancel,
+  initialStep = 0,
+  onDraftChange,
 }: {
   initial?: InterestFilters
   onSave: (f: InterestFilters) => Promise<void>
   onCancel?: () => void
+  initialStep?: number
+  onDraftChange?: (filters: InterestFilters, step: number) => void
 }) {
   const [filters, setFilters] = useState<InterestFilters>(() =>
-    initial ? structuredClone(initial) : defaultInterestFilters()
+    simplifyInterestFilters(initial ? structuredClone(initial) : defaultInterestFilters())
   )
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(() => Math.min(initialStep, hasHousingTypes(filters) ? 7 : 6))
   const [region, setRegion] = useState<keyof typeof regions>('Región de Los Ríos')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -76,11 +80,14 @@ export function InterestQuiz({
     'communes',
     'maxPrice',
     'minArea',
-    ...(hasHousingTypes(filters) ? ['minBedrooms', 'minBathrooms'] : []),
+    ...(hasHousingTypes(filters) ? ['rooms'] : []),
     'features',
     'review',
   ]
-  const key = steps[step]
+  const key = steps[Math.min(step, steps.length - 1)]
+  useEffect(() => {
+    onDraftChange?.(filters, Math.min(step, steps.length - 1))
+  }, [filters, step, steps.length, onDraftChange])
   useEffect(() => {
     if (step > 0) heading.current?.focus()
   }, [step])
@@ -95,17 +102,6 @@ export function InterestQuiz({
       [field]: values.includes(value) ? values.filter((v) => v !== value) : [...values, value],
     })
   }
-  const mandatory = (criterion: string, enabled: boolean) =>
-    enabled && (
-      <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-surface-container-low px-3 py-2 text-sm text-on-surface-variant">
-        <input
-          type="checkbox"
-          checked={filters.required.includes(criterion)}
-          onChange={() => toggle('required', criterion)}
-        />{' '}
-        Indispensable
-      </label>
-    )
   async function submit() {
     if (key !== 'review') {
       setStep((s) => s + 1)
@@ -116,7 +112,7 @@ export function InterestQuiz({
     try {
       await onSave(cleanInterestFilters(filters))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No pudimos guardar el interés.')
+      setError(e instanceof Error ? e.message : 'No pudimos guardar tus intereses.')
     } finally {
       setBusy(false)
     }
@@ -124,6 +120,7 @@ export function InterestQuiz({
   const skip = () => {
     if (key === 'communes') update({ communes: [], alternativeCommunes: [] })
     else if (key === 'features') update({ features: [] })
+    else if (key === 'rooms') update({ minBedrooms: undefined, minBathrooms: undefined })
     else update({ [key]: undefined })
     setStep((s) => s + 1)
   }
@@ -221,10 +218,10 @@ export function InterestQuiz({
                 ? 'Elige cómo quieres encontrar tu próximo lugar.'
                 : key === 'types'
                   ? 'Puedes elegir más de un tipo de propiedad.'
-                  : 'Puedes ser flexible. Marca indispensable solo lo que no puede faltar.'}
+                  : 'Selecciona lo que te gustaría encontrar. Puedes omitir esta pregunta si no tienes una preferencia.'}
           </p>
         </div>
-        <div key={key} className={`${styles.enter} space-y-4`}>
+        <fieldset disabled={busy} key={key} className={`${styles.enter} space-y-4`}>
           {key === 'operation' && (
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -282,7 +279,6 @@ export function InterestQuiz({
                   )
                 })}
               </div>
-              {mandatory('types', filters.types.length > 0)}
             </>
           )}
           {key === 'communes' && (
@@ -290,7 +286,7 @@ export function InterestQuiz({
               <label className="block text-sm">
                 Región
                 <select
-                  className={`${inputClass} mt-2`}
+                  className={inputClass + ' mt-2'}
                   aria-label="Región"
                   value={region}
                   onChange={(e) => setRegion(e.target.value as keyof typeof regions)}
@@ -300,48 +296,31 @@ export function InterestQuiz({
                   ))}
                 </select>
               </label>
-              <p className="text-xs text-on-surface-variant">
-                Principales: coincidencia completa. Alternativas: ubicación flexible. Puedes elegir
-                comunas de varias regiones.
+              <p className="text-sm text-on-surface-variant">
+                Elige todas las comunas que te interesan. Puedes combinar varias regiones.
               </p>
-              <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-outline-variant/50 p-3">
+              <div className="grid max-h-72 gap-2 overflow-y-auto sm:grid-cols-2">
                 {regions[region].map((commune) => (
-                  <div
+                  <label
                     key={commune}
-                    className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/30 py-2 last:border-0"
+                    className={
+                      styles.option + ' ' + inputClass + ' flex items-center gap-3 text-sm'
+                    }
                   >
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={filters.communes.includes(commune)}
-                        onChange={() => toggle('communes', commune)}
-                      />
-                      {commune}
-                    </label>
-                    <label className="flex items-center gap-2 text-xs text-on-surface-variant">
-                      <input
-                        type="checkbox"
-                        aria-label={`${commune} como alternativa`}
-                        disabled={
-                          !filters.communes.length ||
-                          filters.communes.includes(commune) ||
-                          filters.required.includes('communes')
-                        }
-                        checked={filters.alternativeCommunes.includes(commune)}
-                        onChange={() => toggle('alternativeCommunes', commune)}
-                      />
-                      Alternativa
-                    </label>
-                  </div>
+                    <input
+                      type="checkbox"
+                      checked={filters.communes.includes(commune)}
+                      onChange={() => toggle('communes', commune)}
+                    />
+                    {commune}
+                  </label>
                 ))}
               </div>
               <p className="text-sm text-on-surface-variant">
-                Principales: {filters.communes.join(', ') || 'Sin preferencia'}
-                {filters.alternativeCommunes.length
-                  ? ` · Alternativas: ${filters.alternativeCommunes.join(', ')}`
-                  : ''}
+                {filters.communes.length
+                  ? filters.communes.join(', ')
+                  : 'Sin comunas seleccionadas'}
               </p>
-              {mandatory('communes', filters.communes.length > 0)}
             </>
           )}
           {key === 'maxPrice' && (
@@ -378,8 +357,7 @@ export function InterestQuiz({
                   <select
                     className={`${inputClass} mt-2`}
                     aria-label="Flexibilidad"
-                    value={filters.required.includes('maxPrice') ? 0 : filters.budgetFlexibility}
-                    disabled={filters.required.includes('maxPrice')}
+                    value={filters.budgetFlexibility}
                     onChange={(e) =>
                       update({
                         budgetFlexibility: Number(
@@ -407,31 +385,34 @@ export function InterestQuiz({
                   {filters.currency}. No convertimos entre monedas.
                 </p>
               )}
-              {mandatory('maxPrice', !!filters.maxPrice)}
             </>
           )}
-          {['minArea', 'minBedrooms', 'minBathrooms'].includes(key) && (
-            <>
-              <label className="block text-sm">
-                {key === 'minArea'
-                  ? 'Superficie en m²'
-                  : key === 'minBedrooms'
-                    ? 'Dormitorios mínimos'
-                    : 'Baños mínimos'}
-                <input
-                  className={`${inputClass} mt-2`}
-                  type="number"
-                  min="1"
-                  max={key === 'minArea' ? 1000000 : 100}
-                  step={key === 'minArea' ? 'any' : 1}
-                  value={filters[key as 'minArea'] ?? ''}
-                  onChange={(e) =>
-                    update({ [key]: e.target.value ? Number(e.target.value) : undefined })
-                  }
-                />
-              </label>
-              {mandatory(key, !!filters[key as 'minArea'])}
-            </>
+          {(key === 'minArea' || key === 'rooms') && (
+            <div className={key === 'rooms' ? 'grid grid-cols-2 gap-4' : ''}>
+              {(key === 'rooms'
+                ? (['minBedrooms', 'minBathrooms'] as const)
+                : (['minArea'] as const)
+              ).map((field) => (
+                <label key={field} className="block text-sm">
+                  {field === 'minArea'
+                    ? 'Superficie en m²'
+                    : field === 'minBedrooms'
+                      ? 'Dormitorios mínimos'
+                      : 'Baños mínimos'}
+                  <input
+                    className={inputClass + ' mt-2'}
+                    type="number"
+                    min="1"
+                    max={field === 'minArea' ? 1000000 : 100}
+                    step={field === 'minArea' ? 'any' : 1}
+                    value={filters[field] ?? ''}
+                    onChange={(e) =>
+                      update({ [field]: e.target.value ? Number(e.target.value) : undefined })
+                    }
+                  />
+                </label>
+              ))}
+            </div>
           )}
           {key === 'features' && (
             <div className="space-y-3">
@@ -448,13 +429,12 @@ export function InterestQuiz({
                     />
                     {label}
                   </label>
-                  {mandatory(feature, filters.features.includes(feature))}
                 </div>
               ))}
             </div>
           )}
           {key === 'review' && <InterestSummary filters={filters} />}
-        </div>
+        </fieldset>
         {error && (
           <p role="alert" className="text-sm text-error">
             {error}

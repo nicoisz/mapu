@@ -4,10 +4,11 @@ import { getSupabaseAdmin } from '@/lib/server/supabaseAdmin'
 import { propertyToRow } from '@/lib/propertyMapper'
 import { PropertyStatus } from '@/types/enums'
 import { Property } from '@/types/property'
-import { FREE_PLAN_LISTINGS_LIMIT, LISTING_EXPIRATION_DAYS } from '@/constants'
+import { LISTING_EXPIRATION_DAYS } from '@/constants'
 import { activeExpiryFilter } from '@/services/propertyService'
 import { hasReachedListingLimit, isPremiumAccount } from '@/lib/listingQuota'
 import { isInsideChile } from '@/lib/geo'
+import { captureServerError } from '@/lib/server/errorLogging'
 
 /**
  * POST /api/publish
@@ -67,18 +68,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Sesión inválida' }, { status: 401 })
   }
   const userId = user.user.id
+  const failure = async (message: string, status: number, code?: string) => {
+    await captureServerError(message, '/api/publish', userId, { status, code })
+    return NextResponse.json({ error: message }, { status })
+  }
 
   let body: unknown
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
+    return failure('JSON inválido', 400)
   }
 
   const parsed = publishSchema.safeParse(body)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
-    return NextResponse.json({ error: first?.message ?? 'Datos inválidos' }, { status: 400 })
+    return failure(first?.message ?? 'Datos inválidos', 400)
   }
 
   // Frontera JSON: `body` llega como unknown; el cliente envía un Partial<Property>
@@ -96,7 +101,7 @@ export async function POST(req: NextRequest) {
       .eq('status', 'active')
       .maybeSingle()
     if (memberError || !member) {
-      return NextResponse.json({ error: 'No eres miembro de esta organización' }, { status: 403 })
+      return failure('No eres miembro de esta organización', 403, memberError?.code)
     }
   }
 
@@ -107,7 +112,7 @@ export async function POST(req: NextRequest) {
     .eq('id', userId)
     .maybeSingle()
   if (profileError) {
-    return NextResponse.json({ error: 'No se pudo verificar tu cuenta' }, { status: 500 })
+    return failure('No se pudo verificar tu cuenta', 500, profileError.code)
   }
   const premium = isPremiumAccount(profile?.subscription_type, profile?.trial_expires_at)
   if (!premium) {
@@ -118,10 +123,7 @@ export async function POST(req: NextRequest) {
       .eq('status', PropertyStatus.ACTIVE)
       .or(activeExpiryFilter())
     if (countError) {
-      return NextResponse.json(
-        { error: 'No se pudo verificar el límite de publicaciones' },
-        { status: 500 }
-      )
+      return failure('No se pudo verificar el límite de publicaciones', 500, countError.code)
     }
     if (hasReachedListingLimit(count ?? 0, false)) {
       return NextResponse.json(
@@ -150,7 +152,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
       if (existing) return NextResponse.json({ id: existing.id }, { status: 200 })
     }
-    return NextResponse.json({ error: 'No se pudo guardar la propiedad' }, { status: 500 })
+    return failure('No se pudo guardar la propiedad', 500, error.code)
   }
 
   return NextResponse.json({ id: inserted.id }, { status: 201 })

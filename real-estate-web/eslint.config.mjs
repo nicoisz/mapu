@@ -6,7 +6,7 @@ const compat = new FlatCompat({
   baseDirectory: path.dirname(fileURLToPath(import.meta.url)),
 })
 
-export default [
+const config = [
   {
     ignores: [
       '.next/**',
@@ -19,3 +19,4 @@ export default [
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 ]
+export default config

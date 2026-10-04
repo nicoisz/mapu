@@ -347,7 +347,7 @@ export default function PublicarPage() {
       imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     },
     []
-  ) // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   if (notFound) {
     return (

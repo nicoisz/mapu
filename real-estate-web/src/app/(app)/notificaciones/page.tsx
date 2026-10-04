@@ -75,7 +75,7 @@ export default function NotificacionesPage() {
           return (
             <Link
               key={`${item.kind}-${item.propertyId}-${item.createdAt}-${i}`}
-              href={`/propiedad/${item.propertyId}`}
+              href={isMessage ? '/mensajes' : `/propiedad/${item.propertyId}`}
               className={cn(
                 'flex gap-3 rounded-2xl border p-4 transition-all hover:shadow-soft',
                 item.isNew

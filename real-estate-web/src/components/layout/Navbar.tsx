@@ -64,7 +64,7 @@ export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, logout } = useAuthContext()
-  const { count: matchCount } = useInterestMatches()
+  const { count: matchCount, hasInterests } = useInterestMatches()
   const { count: favCount } = useFavoritesContext()
   const [scrolled, setScrolled] = useState(false)
 
@@ -130,7 +130,7 @@ export function Navbar() {
         </Link>
         <div className={floating ? 'w-2' : 'flex-1'} />
         <div className="hidden md:flex items-center gap-1">
-          {isAuthenticated && (
+          {isAuthenticated && hasInterests && (
             <Link
               href="/para-ti"
               className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-on-surface-variant hover:bg-surface-container hover:text-primary"
@@ -184,6 +184,13 @@ export function Navbar() {
             })}
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/buscar"
+            aria-label="Explorar mapa"
+            className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container md:hidden"
+          >
+            <Map size={20} />
+          </Link>
           <ThemeToggle />
           {isAuthenticated && user ? (
             <DropdownMenu>
@@ -250,7 +257,7 @@ export function Navbar() {
       </div>
 
       {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex md:hidden z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex md:hidden z-50 pb-[env(safe-area-inset-bottom)]">
         {navLinks.slice(0, 4).map(({ href, label, icon: Icon, authRequired }) => {
           if (authRequired && !isAuthenticated) return null
           const isActive = pathname === href
