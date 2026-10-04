@@ -18,6 +18,11 @@ import { cn } from '@/lib/utils'
 import { parseSearchOperation } from '@/lib/landingSearch'
 
 type ViewMode = 'map' | 'list'
+const ZONE_LABELS: Record<ZoneBucket, string> = {
+  economic: 'Económica',
+  mid: 'Media',
+  premium: 'Premium',
+}
 
 /** Anything exposing maplibre's bounds.contains — keeps the page free of the
  *  maplibre-gl import while still filtering the list by the visible area. */
@@ -86,7 +91,7 @@ function SearchContent() {
     const el = cardRef.current
     if (viewMode !== 'map' || !selected || !el || prefersReducedMotion) return
     gsap.fromTo(el, { x: 24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: 'power3.out' })
-  }, [selected?.id, viewMode, prefersReducedMotion])
+  }, [selected, viewMode, prefersReducedMotion])
 
   const {
     query,
@@ -176,11 +181,6 @@ function SearchContent() {
 
   // Price-zone of the selected property, matching the map's legend (diamond).
   const zoneMode: 'sale' | 'rent' = filters.operation === PropertyOperation.RENT ? 'rent' : 'sale'
-  const ZONE_LABELS: Record<ZoneBucket, string> = {
-    economic: 'Económica',
-    mid: 'Media',
-    premium: 'Premium',
-  }
   const selectedZone = useMemo(() => {
     if (!selected || results.length === 0) return null
     const { cells } = computePriceZones(results, zoneMode)

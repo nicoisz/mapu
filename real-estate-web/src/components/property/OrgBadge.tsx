@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { organizationService, OrgInfo } from '@/services/organizationService'
 import { cn } from '@/lib/utils'
 
@@ -34,7 +35,13 @@ export function OrgBadge({
       )}
     >
       {org.logo_url ? (
-        <img src={org.logo_url} alt="" className="h-3.5 w-3.5 rounded-full object-cover" />
+        <Image
+          src={org.logo_url}
+          alt=""
+          width={14}
+          height={14}
+          className="h-3.5 w-3.5 rounded-full object-cover"
+        />
       ) : (
         <span className="h-3 w-3 rounded-full bg-white/40" />
       )}

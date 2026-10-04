@@ -287,10 +287,11 @@ export default function MapView({
     // A click on the empty basemap (not on a marker) deselects.
     map.on('click', () => mapClickRef.current?.())
     mapRef.current = map
+    const markers = markersRef.current
 
     return () => {
-      markersRef.current.forEach((m) => m.remove())
-      markersRef.current.clear()
+      markers.forEach((m) => m.remove())
+      markers.clear()
       readyRef.current = false
       map.remove()
       mapRef.current = null
@@ -562,7 +563,6 @@ export default function MapView({
       map.off('resize', onResize)
       clearTimeout(settle)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitToken])
 
   // ── Recenter when the center prop changes ────────────────────────

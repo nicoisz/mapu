@@ -103,7 +103,7 @@ export default function DashboardPage() {
     } finally {
       setLoadingProps(false)
     }
-  }, [effectiveUserId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [effectiveUserId])
 
   useEffect(() => {
     void loadProperties()

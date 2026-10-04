@@ -4,7 +4,6 @@ import {
   zonesToGeoJSON,
   propertyHexesToGeoJSON,
   cellFor,
-  ZoneMode,
 } from '@/lib/priceZones'
 import { searchService } from '@/services/searchService'
 import { Property } from '@/types/property'

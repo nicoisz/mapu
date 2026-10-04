@@ -41,7 +41,8 @@ describe('Publishing draft validation', () => {
     expect(validPublishDraft({ ...draft(), savedAt: now + 1 }, now)).toBeNull()
   })
   it('restores legacy drafts at the first stage without automatic submission', () => {
-    const { step, ...legacy } = draft()
+    const legacy: Partial<PublishDraft> = draft()
+    delete legacy.step
     const restored = validPublishDraft({ ...legacy, resumeSubmit: true }, now)
     expect(restored?.step).toBe(1)
     expect(restored).not.toHaveProperty('resumeSubmit')
@@ -51,7 +52,8 @@ describe('Publishing draft validation', () => {
     expect(validPublishDraft({ ...draft(), files: ['blob:expired'] }, now)).toBeNull()
   })
   it('requires a fresh confirmation for drafts saved before pin confirmation existed', () => {
-    const { locationConfirmed, ...legacy } = draft()
+    const legacy: Partial<PublishDraft> = draft()
+    delete legacy.locationConfirmed
     expect(validPublishDraft(legacy, now)?.locationConfirmed).toBe(false)
   })
 })

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-page-custom-font -- App Router root layout loads these global fonts on every route; pages/_document does not apply. */
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
       </head>
       <body className="flex flex-col h-[100dvh] bg-background text-on-surface">
