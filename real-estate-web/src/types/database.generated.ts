@@ -23,6 +23,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      property_interests: {
+        Row: { id: string; user_id: string; filters: Json; is_active: boolean; created_at: string; updated_at: string; effective_at: string }
+        Insert: { id?: string; user_id?: string; filters: Json; is_active?: boolean; created_at?: string; updated_at?: string; effective_at?: string }
+        Update: { id?: string; user_id?: string; filters?: Json; is_active?: boolean; created_at?: string; updated_at?: string; effective_at?: string }
+        Relationships: [{ foreignKeyName: 'property_interests_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] }]
+      }
       error_logs: {
         Row: {
           context: NonNullable<Json>
@@ -421,6 +427,7 @@ export type Database = {
           notifications_email: boolean | null
           notifications_push: boolean | null
           notifications_seen_at: string | null
+          interest_matches_seen_at: string | null
           phone: string | null
           platform_role: string
           preferred_currency: Database['public']['Enums']['currency'] | null
@@ -454,6 +461,7 @@ export type Database = {
           notifications_email?: boolean | null
           notifications_push?: boolean | null
           notifications_seen_at?: string | null
+          interest_matches_seen_at?: string | null
           phone?: string | null
           platform_role?: string
           preferred_currency?: Database['public']['Enums']['currency'] | null
@@ -487,6 +495,7 @@ export type Database = {
           notifications_email?: boolean | null
           notifications_push?: boolean | null
           notifications_seen_at?: string | null
+          interest_matches_seen_at?: string | null
           phone?: string | null
           platform_role?: string
           preferred_currency?: Database['public']['Enums']['currency'] | null
@@ -835,6 +844,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_interest_matches: { Args: { page_size?: number; page_offset?: number }; Returns: Json }
+      get_interest_match_count: { Args: Record<PropertyKey, never>; Returns: number }
+      mark_interest_matches_seen: { Args: { seen_before: string }; Returns: undefined }
+      get_owned_property_demand: { Args: { property_ids: string[] }; Returns: { property_id: string; users: number; exact_users: number; partial_users: number }[] }
       accept_pending_invites: { Args: Record<PropertyKey, never>; Returns: undefined }
       admin_list_users: {
         Args: { search_term?: string }
@@ -918,6 +931,7 @@ export type Database = {
           notifications_email: boolean | null
           notifications_push: boolean | null
           notifications_seen_at: string | null
+          interest_matches_seen_at: string | null
           phone: string | null
           platform_role: string
           preferred_currency: Database['public']['Enums']['currency'] | null

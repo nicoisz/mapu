@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react'
 import { AuthProvider, useAuthContext } from '@/contexts/AuthContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
+import { InterestMatchesProvider } from '@/contexts/InterestMatchesContext'
 import { initErrorLogging, setErrorLogUser } from '@/lib/errorLogging'
 
 function ErrorLogBindings() {
@@ -21,7 +22,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <ErrorLogBindings />
-      <FavoritesProvider>{children}</FavoritesProvider>
+      <InterestMatchesProvider>
+        <FavoritesProvider>{children}</FavoritesProvider>
+      </InterestMatchesProvider>
     </AuthProvider>
   )
 }

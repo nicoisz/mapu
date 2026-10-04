@@ -73,6 +73,16 @@ export default function PerfilPage() {
       />
 
       <div className="mx-auto w-full max-w-2xl space-y-4 px-6 py-6">
+        <section className="space-y-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-5">
+          <h2 className="font-headline text-lg font-semibold">Lo que buscas</h2>
+          <p className="text-sm text-on-surface-variant">
+            Define tus intereses con preguntas breves y encuentra propiedades compatibles.
+          </p>
+          <div className="flex flex-wrap gap-4 text-sm font-medium text-accent">
+            <Link href="/intereses">Mis intereses</Link>
+            <Link href="/para-ti">Propiedades para ti</Link>
+          </div>
+        </section>
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <StatCard label="Publicaciones" value={user.stats.totalListings} />

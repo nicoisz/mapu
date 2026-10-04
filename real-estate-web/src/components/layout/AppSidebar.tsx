@@ -20,6 +20,8 @@ import {
   TrendingUp,
   UserRound,
   Users,
+  Sparkles,
+  SlidersHorizontal,
   X,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -30,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getAppRole, AppRole } from '@/lib/roles'
+import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 
 interface NavItem {
   href: string
@@ -44,9 +47,16 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuthContext()
   const { count: favCount } = useFavoritesContext()
   const unreadCount = useUnreadNotifications()
+  const { count: matchCount } = useInterestMatches()
 
   const badgeFor = (href: string) =>
-    href === '/favoritos' ? favCount : href === '/notificaciones' ? unreadCount : 0
+    href === '/favoritos'
+      ? favCount
+      : href === '/notificaciones'
+        ? unreadCount
+        : href === '/para-ti'
+          ? (matchCount ?? 0)
+          : 0
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
@@ -76,6 +86,8 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const exploreItems: NavItem[] = [
     { href: '/buscar', label: 'Explorar', icon: Map },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
+    { href: '/para-ti', label: 'Propiedades para ti', icon: Sparkles },
+    { href: '/intereses', label: 'Mis intereses', icon: SlidersHorizontal },
     { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard },
     { href: '/notificaciones', label: 'Notificaciones', icon: Bell },
   ]
