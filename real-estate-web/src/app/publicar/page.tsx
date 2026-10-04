@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Lock, Star, X } from 'lucide-react'
 import {
   publishSchema,
   PUBLISH_STEPS,
