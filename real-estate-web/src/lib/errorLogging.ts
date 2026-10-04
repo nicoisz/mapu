@@ -15,6 +15,8 @@ import { redactDiagnostic } from './diagnostics'
 let initialized = false
 let timer: ReturnType<typeof setTimeout> | null = null
 let queue: Array<Record<string, unknown>> = []
+let flushing = false
+let retryAfter = 0
 let currentUser: { id?: string; email?: string; name?: string } | null = null
 
 /** El AuthProvider mantiene aquí el usuario actual para etiquetar los errores. */
@@ -22,29 +24,35 @@ export function setErrorLogUser(user: { id?: string; email?: string; name?: stri
   currentUser = user
 }
 
-function flush(): void {
-  if (queue.length === 0) return
+async function flush(): Promise<void> {
+  if (timer) clearTimeout(timer)
+  timer = null
+  if (flushing || queue.length === 0 || Date.now() < retryAfter) return
   const batch = queue
   queue = []
-  timer = null
+  flushing = true
   try {
     for (const row of batch) {
-      getSupabase()
-        .rpc('capture_error_log', {
-          log_message: row.message,
-          log_stack: row.stack,
-          log_route: row.route,
-          log_context: row.context,
-          expected_actor: row.user_id,
-        })
-        .then(
-          () => {},
-          () => {} // Never log failures of the logger itself.
-        )
+      const { error } = await getSupabase().rpc('capture_error_log', {
+        log_message: row.message,
+        log_stack: row.stack,
+        log_route: row.route,
+        log_context: row.context,
+        expected_actor: row.user_id,
+      })
+      if (error) {
+        // One failed probe is enough; allow recovery after a migration or outage.
+        retryAfter = Date.now() + 60_000
+        queue = []
+        break
+      }
     }
   } catch {
-    // Sin credenciales Supabase u otro fallo: no propagar, pero dejar rastro.
-    console.error('errorLogging: no se pudo iniciar el envío (sin credenciales?)')
+    retryAfter = Date.now() + 60_000
+    queue = []
+  } finally {
+    flushing = false
+    if (queue.length > 0) scheduleFlush()
   }
 }
 
@@ -61,7 +69,7 @@ export interface CapturePayload {
 }
 
 export function captureError(payload: CapturePayload): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || Date.now() < retryAfter) return
   const row: Record<string, unknown> = {
     user_id: currentUser?.id ?? null,
     email: currentUser?.email ?? null,

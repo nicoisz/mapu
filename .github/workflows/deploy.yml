@@ -17,8 +17,62 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
-  deploy:
+  migrations-ready:
     needs: ci
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      # Read-only gate: this job never accesses Supabase or applies migrations.
+      - name: Require successful production migrations
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { data: migrations } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              path: 'real-estate-web/supabase/migrations',
+              per_page: 1,
+            })
+            if (!migrations[0]) {
+              core.setFailed('Cannot determine the required migration commit; deployment blocked.')
+              return
+            }
+            for (let attempt = 0; attempt < 12; attempt++) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'deploy-migrations.yml',
+                branch: 'main',
+                per_page: 1,
+              })
+              const run = data.workflow_runs[0]
+              if (!run) {
+                core.setFailed('No production migration run found. Run Deploy Migrations before deploying.')
+                return
+              }
+              if (run.status === 'completed') {
+                if (run.conclusion !== 'success') {
+                  core.setFailed('Production migrations failed. Fix Supabase credentials and rerun Deploy Migrations: ' + run.html_url)
+                  return
+                }
+                const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  basehead: migrations[0].sha + '...' + run.head_sha,
+                })
+                if (comparison.status === 'ahead' || comparison.status === 'identical') return
+                core.setFailed('The successful migration run does not include this release migrations; deployment blocked.')
+                return
+              }
+              await new Promise(resolve => setTimeout(resolve, 10000))
+            }
+            core.setFailed('Production migrations are still pending; frontend deployment blocked.')
+
+  deploy:
+    needs: migrations-ready
     runs-on: ubuntu-latest
     environment: env
     defaults:
