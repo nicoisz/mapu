@@ -1,0 +1,116 @@
+.enter {
+  animation: interest-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.action {
+  transition:
+    transform 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+.action:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.action:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+.results > svg {
+  transition: transform 220ms ease;
+}
+.results:hover > svg {
+  transform: translateX(4px);
+}
+.card {
+  transition:
+    transform 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: rgb(var(--primary) / 0.3);
+  box-shadow: 0 10px 28px rgb(var(--primary) / 0.06);
+}
+.disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 280ms ease,
+    opacity 220ms ease;
+}
+.disclosure[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.chevron {
+  transition: transform 280ms ease;
+}
+.quiz input[type='checkbox'],
+.quiz input[type='radio'] {
+  accent-color: rgb(var(--accent));
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.option {
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    transform 200ms ease;
+}
+.option:hover {
+  border-color: rgb(var(--primary) / 0.5);
+  transform: translateY(-2px);
+}
+.option:has(input:checked) {
+  border-color: rgb(var(--accent));
+  background: rgb(var(--secondary) / 0.1);
+}
+.option:has(input:focus-visible) {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 3px;
+}
+.option svg {
+  transition: transform 200ms ease;
+}
+.option:has(input:checked) svg {
+  transform: scale(1.06);
+}
+.progress {
+  transition: width 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes interest-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+  .action,
+  .card,
+  .option,
+  .option svg,
+  .chevron,
+  .progress,
+  .results > svg,
+  .disclosure {
+    transition: none;
+  }
+  .action:hover:not(:disabled),
+  .action:active:not(:disabled),
+  .card:hover,
+  .option:hover,
+  .option:has(input:checked) svg,
+  .results:hover > svg {
+    transform: none;
+  }
+}
