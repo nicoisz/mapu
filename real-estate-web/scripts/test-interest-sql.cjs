@@ -48,7 +48,7 @@ async function main() {
     for (const row of after.rows) assert(bcrypt.compareSync('123qweasd', row.encrypted_password))
     assert.equal((await db.query("select name from public.profiles where email='mapu.probe.claude@gmail.com'")).rows[0].name, 'Existing test name')
     assert.equal((await db.query('select count(*)::int n from auth.identities')).rows[0].n, 2)
-    await db.exec('begin;\n' + fs.readFileSync('supabase/testing/property-interest-assertions.sql', 'utf8') + '\nrollback;')
+    await db.exec('begin;\n' + fs.readFileSync('supabase/tests/property-interest-assertions.inc', 'utf8') + '\nrollback;')
     console.log('PASS: PostgreSQL scoring, RPC/RLS isolation, demand, novelties; test accounts idempotent, preserve name/UUID; bcrypt passwords verified.')
   } finally { await db.close() }
 }
