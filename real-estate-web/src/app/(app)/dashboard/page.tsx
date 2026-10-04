@@ -35,6 +35,8 @@ import { formatDate, getDisplayPrice, getRemainingDays } from '@/lib/utils'
 import { Property } from '@/types/property'
 import { SubscriptionType, PlatformRole } from '@/types/enums'
 import { FREE_PLAN_LISTINGS_LIMIT, PROPERTY_TYPE_LABELS, STATUS_LABELS } from '@/constants'
+import { interestsService } from '@/services/interestsService'
+import type { PropertyDemand } from '@/types/interests'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -47,10 +49,30 @@ export default function DashboardPage() {
   const [confirmDelete, setConfirmDelete] = useState<Property | null>(null)
   const [asUser, setAsUser] = useState<{ id: string; name: string; email: string } | null>(null)
   const [viewsSeries, setViewsSeries] = useState<{ day: string; count: number }[]>([])
+  const [demand, setDemand] = useState<PropertyDemand[] | null>(null)
+  const [demandError, setDemandError] = useState(false)
+  const [demandRetry, setDemandRetry] = useState(0)
 
   // Superadmin impersonation: only when a superadmin passes ?as=<id>.
   const impersonating = !!asId && user?.platformRole === PlatformRole.SUPERADMIN
   const effectiveUserId = impersonating ? asId : user?.id
+  useEffect(() => {
+    if (!user?.id || impersonating) return
+    let active = true
+    setDemand(null)
+    setDemandError(false)
+    interestsService.getOwnedDemand(properties.map((p) => p.id)).then(
+      (rows) => {
+        if (active) setDemand(rows)
+      },
+      () => {
+        if (active) setDemandError(true)
+      }
+    )
+    return () => {
+      active = false
+    }
+  }, [properties, user?.id, impersonating, demandRetry])
 
   useEffect(() => {
     if (!impersonating || !asId) return
@@ -299,6 +321,43 @@ export default function DashboardPage() {
                   : null
                 return (
                   <Card key={property.id} className="p-4">
+                    {!impersonating && (
+                      <div className="mb-3 rounded-xl bg-accent/5 px-3 py-2 text-xs text-on-surface-variant">
+                        {demandError ? (
+                          <span>
+                            No pudimos consultar los intereses.{' '}
+                            <button
+                              className="text-accent underline"
+                              onClick={() => setDemandRetry((n) => n + 1)}
+                            >
+                              Reintentar
+                            </button>
+                          </span>
+                        ) : demand === null ? (
+                          'Consultando intereses compatibles…'
+                        ) : (
+                          (() => {
+                            const stats = demand.find((d) => d.propertyId === property.id)
+                            return stats ? (
+                              <>
+                                <p className="font-medium text-accent">
+                                  {stats.users}{' '}
+                                  {stats.users === 1 ? 'persona tiene' : 'personas tienen'}{' '}
+                                  intereses compatibles
+                                </p>
+                                <p className="mt-1">
+                                  {stats.exactUsers} con coincidencia completa ·{' '}
+                                  {stats.partialUsers} parcial. Son preferencias, no visitas ni
+                                  contactos.
+                                </p>
+                              </>
+                            ) : (
+                              'Conteo no disponible.'
+                            )
+                          })()
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <Link

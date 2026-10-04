@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart3,
@@ -17,6 +18,7 @@ import {
   User,
 } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
+import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { useTheme } from '@/hooks/useTheme'
 import { APP_CONFIG } from '@/constants'
@@ -62,6 +64,7 @@ export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, logout } = useAuthContext()
+  const { count: matchCount } = useInterestMatches()
   const { count: favCount } = useFavoritesContext()
   const [scrolled, setScrolled] = useState(false)
 
@@ -127,6 +130,19 @@ export function Navbar() {
         </Link>
         <div className={floating ? 'w-2' : 'flex-1'} />
         <div className="hidden md:flex items-center gap-1">
+          {isAuthenticated && (
+            <Link
+              href="/para-ti"
+              className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-on-surface-variant hover:bg-surface-container hover:text-primary"
+            >
+              Para ti
+              {matchCount !== null && matchCount > 0 && (
+                <span className="rounded-full bg-accent px-1.5 text-xs text-white">
+                  {matchCount}
+                </span>
+              )}
+            </Link>
+          )}
           {commonLinks
             .filter(({ href }) => !(href === '/buscar' && pathname === '/buscar'))
             .map(({ href, label, icon: Icon }) => {
@@ -177,9 +193,12 @@ export function Navbar() {
                   aria-label="Menú de usuario"
                 >
                   {user.avatar ? (
-                    <img
+                    <Image
                       src={user.avatar}
                       alt={user.name}
+                      width={32}
+                      height={32}
+                      sizes="32px"
                       className="w-8 h-8 rounded-full object-cover border-2 border-outline-variant"
                     />
                   ) : (

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, ImagePlus, Lock, Star, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Lock, Star, X } from 'lucide-react'
 import {
   publishSchema,
   PUBLISH_STEPS,
@@ -29,6 +29,7 @@ import { loadPublishDraft, savePublishDraft, clearPublishDraft } from '@/lib/pub
 import { Input } from '@/components/ui/Input'
 import { PublishAuthPrompt } from '@/components/auth/PublishAuthPrompt'
 import { PublishBlueprints } from '@/components/publish/PublishBlueprints'
+import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 import { LocationPicker } from '@/components/map/LocationPicker'
 import { GlowLoader } from '@/components/ui/GlowLoader'
 import { REGIONS } from '@/data/chileanLocations'
@@ -95,6 +96,7 @@ const selectCls =
 const errorCls = 'text-error text-xs mt-1'
 
 export default function PublicarPage() {
+  const { refresh: refreshMatches } = useInterestMatches()
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
@@ -552,6 +554,7 @@ export default function PublicarPage() {
         setPublishedId(created.id)
       }
       void refreshUser()
+      void refreshMatches()
       if (editId) router.push('/dashboard')
     } catch (err) {
       // Roll back orphaned uploads when the insert/update fails.
