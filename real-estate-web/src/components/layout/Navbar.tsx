@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart3,
@@ -192,9 +193,12 @@ export function Navbar() {
                   aria-label="Menú de usuario"
                 >
                   {user.avatar ? (
-                    <img
+                    <Image
                       src={user.avatar}
                       alt={user.name}
+                      width={32}
+                      height={32}
+                      sizes="32px"
                       className="w-8 h-8 rounded-full object-cover border-2 border-outline-variant"
                     />
                   ) : (
