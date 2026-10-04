@@ -224,6 +224,11 @@ export default function DashboardPage() {
         }
         actions={
           <>
+            {!impersonating && (
+              <Button variant="outline" onClick={() => router.push('/mensajes')}>
+                <MessageSquare size={16} /> Mensajes
+              </Button>
+            )}
             <Button
               onClick={() => router.push('/publicar')}
               disabled={!isPremium && remaining === 0}

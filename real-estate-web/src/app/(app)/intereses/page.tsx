@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -25,6 +25,12 @@ import { InterestSummary } from '@/components/interests/InterestSummary'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import styles from '@/components/interests/interests.module.css'
+import {
+  clearInterestDraft,
+  readInterestDraft,
+  writeInterestDraft,
+  type InterestDraft,
+} from '@/lib/interestDraft'
 
 export default function InterestsPage() {
   const router = useRouter()
@@ -38,23 +44,159 @@ export default function InterestsPage() {
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [draft, setDraft] = useState<InterestDraft | null>(null)
+  const [draftNotice, setDraftNotice] = useState('')
+  const loadVersion = useRef(0)
+  const draftId = useRef<string | null>(null)
   const load = useCallback(async () => {
     if (!user?.id) return
+    const version = ++loadVersion.current
     setLoading(true)
     setError('')
     try {
-      setItems(await interestsService.list())
+      const result = await interestsService.list()
+      if (version === loadVersion.current) setItems(result)
     } catch (e) {
-      setError((e as Error).message)
+      if (version === loadVersion.current) setError((e as Error).message)
     } finally {
-      setLoading(false)
+      if (version === loadVersion.current) setLoading(false)
     }
   }, [user?.id])
   useEffect(() => {
-    void load()
-  }, [load])
+    let active = true
+    async function restore() {
+      setEditing(null)
+      draftId.current = null
+      setDraft(null)
+      setItems([])
+      setSaved(false)
+      setDraftNotice('')
+      setLoading(true)
+      if (!user?.id) return
+      const pending = readInterestDraft(user.id)
+      if (pending?.pending) {
+        try {
+          await interestsService.saveDraft(pending.id, pending.filters, user.id)
+          clearInterestDraft(user.id, pending.id)
+          if (active) {
+            setSaved(true)
+            setDraftNotice('Tus intereses pendientes se guardaron correctamente.')
+            await refresh()
+          }
+        } catch {
+          if (active)
+            setDraftNotice(
+              'Tus intereses siguen pendientes. Conservamos tus respuestas en este dispositivo; puedes reintentar.'
+            )
+        }
+      }
+      if (!active) return
+      const recovered = readInterestDraft(user.id)
+      draftId.current = recovered?.id ?? null
+      setDraft(recovered)
+      if (recovered) {
+        setEditing(
+          recovered.editing
+            ? { id: recovered.id, filters: recovered.filters, isActive: true }
+            : 'new'
+        )
+        if (!recovered.pending)
+          setDraftNotice('Recuperamos tus respuestas para que puedas continuar.')
+      }
+      await load()
+    }
+    void restore()
+    return () => {
+      active = false
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- Sequence counter, not a DOM ref; invalidate outstanding responses.
+      loadVersion.current++
+    }
+  }, [load, user?.id, refresh])
+  const recordDraft = useCallback(
+    (filters: InterestFilters, step: number) => {
+      if (!user?.id) return
+      const previous = readInterestDraft(user.id)
+      const id =
+        editing && editing !== 'new'
+          ? editing.id
+          : (previous?.id ?? draftId.current ?? crypto.randomUUID())
+      draftId.current = id
+      writeInterestDraft(user.id, {
+        id,
+        editing: !!editing && editing !== 'new',
+        filters,
+        step,
+        pending:
+          !!previous?.pending && JSON.stringify(previous.filters) === JSON.stringify(filters),
+      })
+    },
+    [user?.id, editing]
+  )
+  function openEditor(item: PropertyInterest | 'new') {
+    const existing = user?.id ? readInterestDraft(user.id) : null
+    if (existing?.pending) {
+      setDraft(existing)
+      setEditing(
+        existing.editing ? { id: existing.id, filters: existing.filters, isActive: true } : 'new'
+      )
+      setDraftNotice(
+        'Tus respuestas pendientes siguen aquí. Guárdalas antes de iniciar otra búsqueda.'
+      )
+      return
+    }
+    if (user?.id) {
+      const current = readInterestDraft(user.id)
+      if (current) clearInterestDraft(user.id, current.id)
+    }
+    setDraft(null)
+    draftId.current = null
+    setDraftNotice('')
+    setSaved(false)
+    setEditing(item)
+  }
+  function cancelEditor() {
+    const current = user?.id ? readInterestDraft(user.id) : null
+    if (user?.id) {
+      if (current && !current.pending) clearInterestDraft(user.id, current.id)
+      setDraftNotice(
+        current?.pending
+          ? 'Conservamos tus intereses pendientes. Puedes continuar con Crear interés o volver más tarde.'
+          : ''
+      )
+    }
+    setDraft(current?.pending ? current : null)
+    setEditing(null)
+  }
   async function save(filters: InterestFilters) {
-    await interestsService.save(editing && editing !== 'new' ? editing.id : null, filters)
+    if (!user?.id) return
+    const existing = readInterestDraft(user.id)
+    const pending: InterestDraft = {
+      id:
+        editing && editing !== 'new'
+          ? editing.id
+          : (existing?.id ?? draftId.current ?? crypto.randomUUID()),
+      editing: !!editing && editing !== 'new',
+      filters,
+      step: existing?.step ?? 0,
+      pending: true,
+    }
+    const retained = writeInterestDraft(user.id, pending)
+    draftId.current = pending.id
+    try {
+      await interestsService.saveDraft(pending.id, filters, user.id)
+    } catch {
+      setDraft(pending)
+      setDraftNotice(
+        retained
+          ? 'Conservamos tus respuestas en este dispositivo. Al volver aquí reintentaremos guardarlas.'
+          : 'El navegador no permite conservar tus respuestas. Mantén esta página abierta y reintenta.'
+      )
+      throw new Error('No pudimos guardar tus intereses.')
+    }
+    clearInterestDraft(user.id, pending.id)
+    draftId.current = null
+    setDraft(null)
+    setDraftNotice('')
     setEditing(null)
     setSaved(true)
     await load()
@@ -117,8 +259,7 @@ export default function InterestsPage() {
             <Button
               className={`${styles.action} rounded-xl px-5 py-3`}
               onClick={() => {
-                setSaved(false)
-                setEditing('new')
+                openEditor('new')
               }}
             >
               <Plus size={18} /> Crear interés
@@ -132,12 +273,22 @@ export default function InterestsPage() {
             <p className="text-sm text-on-surface-variant">Preparando tus intereses…</p>
           </div>
         )}
+        {draftNotice && (
+          <p
+            role="status"
+            className="mb-5 rounded-xl bg-secondary/10 px-4 py-3 text-sm text-on-surface"
+          >
+            {draftNotice}
+          </p>
+        )}
         {showQuiz && (
           <InterestQuiz
             key={editing && editing !== 'new' ? editing.id : 'new'}
-            initial={editing && editing !== 'new' ? editing.filters : undefined}
+            initial={draft?.filters ?? (editing && editing !== 'new' ? editing.filters : undefined)}
+            initialStep={draft?.step}
+            onDraftChange={recordDraft}
             onSave={save}
-            onCancel={items.length ? () => setEditing(null) : undefined}
+            onCancel={items.length ? cancelEditor : undefined}
           />
         )}
         {!loading && !editing && items.length > 0 && (
@@ -239,8 +390,7 @@ export default function InterestsPage() {
                       className={styles.action}
                       disabled={busy}
                       onClick={() => {
-                        setSaved(false)
-                        setEditing(item)
+                        openEditor(item)
                       }}
                     >
                       <Pencil size={14} /> Editar

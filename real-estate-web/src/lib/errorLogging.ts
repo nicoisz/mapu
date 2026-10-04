@@ -1,12 +1,13 @@
 import { getSupabase } from '@/lib/supabase'
+import { redactDiagnostic } from './diagnostics'
 
 /**
  * Captura de errores client-side para el log del admin.
  *
  * Registra window.onerror + unhandledrejection (vía initErrorLogging) y
  * expone captureError() para usarlo desde error.tsx / catch blocks.
- * Los errores se acumulan en un buffer y se insertan en lote a la tabla
- * `error_logs` (RLS: insert cualquiera, lectura solo superadmin).
+ * Los errores se acumulan en un buffer y se envían por RPC con identidad
+ * verificada en el servidor. La lectura queda reservada al administrador.
  *
  * Nunca debe romper la app: si no hay credenciales, DB o red, se descarta.
  */
@@ -27,13 +28,20 @@ function flush(): void {
   queue = []
   timer = null
   try {
-    getSupabase()
-      .from('error_logs')
-      .insert(batch)
-      .then(
-        () => {},
-        (err) => console.error('errorLogging: no se pudo enviar el batch', err)
-      )
+    for (const row of batch) {
+      getSupabase()
+        .rpc('capture_error_log', {
+          log_message: row.message,
+          log_stack: row.stack,
+          log_route: row.route,
+          log_context: row.context,
+          expected_actor: row.user_id,
+        })
+        .then(
+          () => {},
+          () => {} // Never log failures of the logger itself.
+        )
+    }
   } catch {
     // Sin credenciales Supabase u otro fallo: no propagar, pero dejar rastro.
     console.error('errorLogging: no se pudo iniciar el envío (sin credenciales?)')
@@ -62,12 +70,12 @@ export function captureError(payload: CapturePayload): void {
     message: payload.message ?? null,
     stack: payload.stack ? String(payload.stack).slice(0, 20000) : null,
     context: {
-      url: window.location.href,
+      url: window.location.origin + window.location.pathname,
       userAgent: navigator.userAgent,
-      ...payload.context,
+      ...(redactDiagnostic(payload.context ?? {}) as Record<string, unknown>),
     },
   }
-  queue.push(row)
+  if (queue.length < 100) queue.push(row)
   scheduleFlush()
 }
 

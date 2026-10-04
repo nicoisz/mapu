@@ -62,7 +62,7 @@ export default function MapaPage() {
   )
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
       {/* Search bar */}
       <div className="px-3 py-2 bg-surface-container-low border-b border-outline-variant/40 flex items-center gap-2 shrink-0">
         <SearchBar

@@ -141,12 +141,13 @@ export const adminService = {
   },
 
   /** Log de errores client-side (solo superadmin puede leer por RLS). */
-  async listErrorLogs(search?: string, limit = 200): Promise<ErrorLogRow[]> {
+  async listErrorLogs(search?: string, limit = 200, resolved?: boolean): Promise<ErrorLogRow[]> {
     let q = getSupabase()
       .from('error_logs')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
+    if (resolved !== undefined) q = q.eq('resolved', resolved)
     if (search?.trim()) {
       const term = search.trim()
       q = q.or(`message.ilike.%${term}%,email.ilike.%${term}%,route.ilike.%${term}%`)
@@ -154,6 +155,13 @@ export const adminService = {
     const { data, error } = await q
     if (error) rethrowUserError(error)
     return (data ?? []) as ErrorLogRow[]
+  },
+  async resolveErrorLog(id: string, resolved: boolean): Promise<void> {
+    const { error } = await getSupabase().rpc('set_error_log_resolved', {
+      log_id: id,
+      is_resolved: resolved,
+    })
+    if (error) rethrowUserError(error)
   },
 
   /** Ingresos desde payments + propiedades vendidas/arrendadas. */
@@ -215,6 +223,9 @@ export interface OrganizationRow {
 
 /** Fila de error_logs (captura client-side). */
 export interface ErrorLogRow {
+  resolved: boolean
+  resolved_at: string | null
+  resolved_by: string | null
   id: string
   user_id: string | null
   email: string | null

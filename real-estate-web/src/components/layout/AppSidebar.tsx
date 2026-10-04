@@ -14,6 +14,7 @@ import {
   LogOut,
   Map,
   Menu,
+  MessageCircle,
   PanelLeft,
   ShieldCheck,
   Star,
@@ -33,6 +34,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getAppRole, AppRole } from '@/lib/roles'
 import { useInterestMatches } from '@/contexts/InterestMatchesContext'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
 interface NavItem {
   href: string
@@ -47,16 +49,19 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuthContext()
   const { count: favCount } = useFavoritesContext()
   const unreadCount = useUnreadNotifications()
-  const { count: matchCount } = useInterestMatches()
+  const unreadMessages = useUnreadMessages()
+  const { count: matchCount, hasInterests } = useInterestMatches()
 
   const badgeFor = (href: string) =>
     href === '/favoritos'
       ? favCount
       : href === '/notificaciones'
         ? unreadCount
-        : href === '/para-ti'
-          ? (matchCount ?? 0)
-          : 0
+        : href === '/mensajes'
+          ? unreadMessages
+          : href === '/para-ti'
+            ? (matchCount ?? 0)
+            : 0
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
@@ -89,6 +94,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     { href: '/para-ti', label: 'Propiedades para ti', icon: Sparkles },
     { href: '/intereses', label: 'Mis intereses', icon: SlidersHorizontal },
     { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard },
+    { href: '/mensajes', label: 'Mensajes', icon: MessageCircle },
     { href: '/notificaciones', label: 'Notificaciones', icon: Bell },
   ]
 
@@ -164,31 +170,34 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className={cn('flex-1 overflow-y-auto space-y-1', collapsed ? 'p-2' : 'p-3')}>
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`)
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setOpen(false)}
-              className={cn(
-                navLinkClasses,
-                active
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              )}
-              title={collapsed ? label : undefined}
-            >
-              <Icon size={18} className="shrink-0" />
-              {!collapsed && label}
-              {!collapsed && badgeFor(href) > 0 && (
-                <span className="ml-auto text-xs rounded-full px-1.5 py-px bg-accent text-white">
-                  {badgeFor(href)}
-                </span>
-              )}
-            </Link>
-          )
-        })}
+        {items
+          .filter((item) => item.href !== '/para-ti' || hasInterests)
+          .map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`)
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  navLinkClasses,
+                  href === '/buscar' && 'hidden md:flex',
+                  active
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                )}
+                title={collapsed ? label : undefined}
+              >
+                <Icon size={18} className="shrink-0" />
+                {!collapsed && label}
+                {!collapsed && badgeFor(href) > 0 && (
+                  <span className="ml-auto text-xs rounded-full px-1.5 py-px bg-accent text-white">
+                    {badgeFor(href)}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
         {showTeamSeparator && (
           <>
             <div className="pt-3 mt-3 border-t border-outline-variant/40" />

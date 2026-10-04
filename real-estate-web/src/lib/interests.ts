@@ -62,6 +62,15 @@ export function cleanInterestFilters(input: InterestFilters): InterestFilters {
   f.required = f.required.filter((k) => answered.has(k))
   return f
 }
+/** All selected communes are peers; current UX has no mandatory criteria. */
+export function simplifyInterestFilters(input: InterestFilters): InterestFilters {
+  return cleanInterestFilters({
+    ...input,
+    communes: [...new Set([...input.communes, ...input.alternativeCommunes])],
+    alternativeCommunes: [],
+    required: [],
+  })
+}
 export function interestLabel(f: InterestFilters): string {
   return [
     f.operation === 'sale' ? 'Comprar' : 'Arrendar',

@@ -189,7 +189,7 @@ function SearchContent() {
   }, [selected, results, zoneMode])
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
       {/* Search header */}
       <div className="px-3 py-2.5 bg-surface-container-low border-b border-outline-variant/40 flex items-center gap-2 shrink-0">
         <SearchBar
@@ -230,7 +230,7 @@ function SearchContent() {
 
       {/* Count bar */}
       <div className="px-4 py-1.5 bg-surface-container border-b border-outline-variant/40 flex items-center gap-3 text-xs text-on-surface-variant shrink-0">
-        <span className="flex items-center gap-1.5">
+        <span className="hidden md:flex items-center gap-1.5">
           <Building2 size={12} />
           <span className="font-semibold text-on-surface">{visible.length}</span>
           propiedad{visible.length !== 1 ? 'es' : ''} en esta zona
@@ -262,7 +262,7 @@ function SearchContent() {
               Limpiar filtros
             </button>
           )}
-          <label className="flex items-center gap-1.5">
+          <label className="hidden md:flex items-center gap-1.5">
             <span className="hidden sm:inline">Ordenar:</span>
             <select
               value={sort}
@@ -279,7 +279,7 @@ function SearchContent() {
       </div>
 
       {/* Map + list */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="min-h-0 flex-1 flex overflow-hidden">
         <div className={cn('flex-1 relative', viewMode === 'list' ? 'hidden md:block' : '')}>
           <DynamicMapView
             properties={results}
@@ -397,7 +397,7 @@ function SearchContent() {
       </div>
 
       {/* Mobile view toggle */}
-      <div className="md:hidden fixed bottom-16 right-4 z-20">
+      <div className="md:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40">
         <button
           onClick={() => changeViewMode(viewMode === 'map' ? 'list' : 'map')}
           className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-full shadow-elevated text-sm font-semibold"

@@ -1,4 +1,5 @@
 import { getSupabase } from '@/lib/supabase'
+import { messagesService } from './messagesService'
 
 /**
  * Notificaciones del dueño de una propiedad.
@@ -57,10 +58,12 @@ export const notificationsService = {
   },
 
   /** Mensaje al dueño. Solo usuarios registrados; el anónimo usa WhatsApp. */
-  async sendMessage(propertyId: string, senderId: string, body: string): Promise<void> {
-    const { error } = await getSupabase()
-      .from('messages')
-      .insert({ property_id: propertyId, sender_id: senderId, body: body.trim() })
-    if (error) throw new Error('No se pudo enviar el mensaje')
+  async sendMessage(
+    propertyId: string,
+    senderId: string,
+    body: string,
+    requestId: string
+  ): Promise<void> {
+    await messagesService.send(propertyId, null, body, requestId, senderId)
   },
 }
