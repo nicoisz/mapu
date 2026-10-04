@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { notificationsService, ActivityItem } from '@/services/notificationsService'
 import { cn, formatDate } from '@/lib/utils'
+import { MatchNotice } from '@/components/interests/MatchNotice'
 
 export default function NotificacionesPage() {
   const [items, setItems] = useState<ActivityItem[]>([])
@@ -44,6 +45,7 @@ export default function NotificacionesPage() {
   if (items.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-background p-8">
+        <MatchNotice />
         <EmptyState
           icon={<Bell size={22} />}
           title="Sin novedades"
@@ -66,6 +68,7 @@ export default function NotificacionesPage() {
         icon={<Bell size={22} />}
       />
       <div className="mx-auto max-w-3xl space-y-2 px-4 md:px-6">
+        <MatchNotice />
         {items.map((item, i) => {
           const isMessage = item.kind === 'message'
           const Icon = isMessage ? MessageCircle : Heart

@@ -10,6 +10,8 @@ import { cn, formatArea, getDisplayPrice } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
 import { PropertyOperation } from '@/types/enums'
 import { OrgBadge } from '@/components/property/OrgBadge'
+import type { MatchReason } from '@/types/interests'
+import { INTEREST_CRITERIA } from '@/lib/interests'
 
 interface PropertyCardProps {
   property: Property
@@ -32,6 +34,7 @@ interface PropertyCardProps {
   /** Price-zone color + label (shown as a diamond in detail mode). */
   zoneColor?: string | null
   zoneLabel?: string | null
+  match?: { score: number; interestLabel: string; reasons: MatchReason[]; isNew: boolean }
 }
 
 export function PropertyCard({
@@ -44,6 +47,7 @@ export function PropertyCard({
   onClose,
   zoneColor,
   zoneLabel,
+  match,
 }: PropertyCardProps) {
   const { isFavorite, toggle } = useFavoritesContext()
   const fav = isFavorite(property.id)
@@ -147,6 +151,35 @@ export function PropertyCard({
       <div
         className={cn('min-w-0', compact ? 'p-3 flex-1 flex flex-col' : dense ? 'p-3.5' : 'p-5')}
       >
+        {match && (
+          <div className="mb-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+                {match.score}% de coincidencia
+              </span>
+              {match.isNew && <span className="text-xs text-on-surface-variant">Nueva</span>}
+            </div>
+            <details
+              className="text-xs text-on-surface-variant"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <summary className="cursor-pointer">¿Por qué coincide?</summary>
+              <p className="mt-2 font-medium">{match.interestLabel}</p>
+              <ul className="mt-2 space-y-1">
+                {match.reasons.map((reason) => (
+                  <li key={reason.key}>
+                    {INTEREST_CRITERIA[reason.key] ?? reason.key}:{' '}
+                    {reason.status === 'meets'
+                      ? 'Cumple'
+                      : reason.status === 'unknown'
+                        ? 'Sin información'
+                        : 'Difiere de tu preferencia'}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
+        )}
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <span
