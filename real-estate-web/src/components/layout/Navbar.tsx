@@ -4,23 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import {
-  BarChart3,
-  Heart,
-  LayoutDashboard,
-  LogIn,
-  LogOut,
-  Map,
-  Moon,
-  Search,
-  Shield,
-  Sun,
-  User,
-} from 'lucide-react'
+import { Heart, LayoutDashboard, LogIn, LogOut, Map, Shield, User, Plus } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
-import { useTheme } from '@/hooks/useTheme'
 import { APP_CONFIG } from '@/constants'
 import { cn } from '@/lib/utils'
 import {
@@ -32,31 +19,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-function ThemeToggle() {
-  const { theme, toggle, mounted } = useTheme()
-  return (
-    <button
-      onClick={toggle}
-      className="p-2 rounded-full text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
-      title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-      aria-label="Cambiar tema"
-    >
-      {mounted && theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
-  )
-}
-
 const navLinks = [
-  { href: '/', label: 'Inicio', icon: Map },
-  { href: '/buscar', label: 'Buscar', icon: Search },
+  { href: '/buscar', label: 'Buscar', icon: Map },
   { href: '/favoritos', label: 'Favoritos', icon: Heart },
-  { href: '/dashboard', label: 'Mis propiedades', icon: LayoutDashboard, authRequired: true },
-  { href: '/metricas', label: 'Métricas', icon: BarChart3, authRequired: true },
+  { href: '/publicar', label: 'Publicar', icon: Plus },
+  { href: '/dashboard', label: 'Panel', icon: LayoutDashboard },
 ]
 
 // En el header desktop solo las opciones comunes a todos los roles.
 const commonLinks = [
-  { href: '/buscar', label: 'Buscar', icon: Search },
+  { href: '/buscar', label: 'Buscar', icon: Map },
   { href: '/favoritos', label: 'Favoritos', icon: Heart },
 ]
 
@@ -104,6 +76,7 @@ export function Navbar() {
 
   return (
     <nav
+      data-top-navbar
       className={cn(
         'fixed left-0 right-0 z-50 flex justify-center transition-all duration-500',
         floating ? 'top-4 px-4' : 'top-0 px-0'
@@ -119,6 +92,7 @@ export function Navbar() {
               : 'solid-chrome h-16 max-w-full gap-4 rounded-none border-b border-outline-variant/30 px-4'
         )}
       >
+        <span id="sidebar-trigger" className="empty:hidden md:hidden" />
         <Link
           href="/"
           className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90"
@@ -143,55 +117,50 @@ export function Navbar() {
               )}
             </Link>
           )}
-          {commonLinks
-            .filter(({ href }) => !(href === '/buscar' && pathname === '/buscar'))
-            .map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
-                    href === '/buscar' && 'nav-shine',
-                    heroBar
-                      ? isActive
-                        ? 'font-bold text-on-secondary'
-                        : 'text-on-secondary/75 hover:bg-black/5 hover:text-on-secondary'
-                      : isActive
-                        ? 'font-bold text-primary'
-                        : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
-                  )}
-                >
-                  <Icon
-                    size={16}
-                    className={href === '/buscar' ? 'search-light-icon' : undefined}
-                  />
-                  {label === 'Favoritos' && favCount > 0 ? (
-                    <span className="flex items-center gap-1">
-                      {label}
-                      <span className="text-xs rounded-full bg-accent px-1.5 py-px text-white">
-                        {favCount}
-                      </span>
+          {commonLinks.map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors',
+                  href === '/buscar' && 'nav-shine',
+                  heroBar
+                    ? isActive
+                      ? 'font-bold text-on-secondary'
+                      : 'text-on-secondary/75 hover:bg-black/5 hover:text-on-secondary'
+                    : isActive
+                      ? 'font-bold text-primary'
+                      : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
+                )}
+              >
+                <Icon size={16} className={href === '/buscar' ? 'search-light-icon' : undefined} />
+                {label === 'Favoritos' && favCount > 0 ? (
+                  <span className="flex items-center gap-1">
+                    {label}
+                    <span className="text-xs rounded-full bg-accent px-1.5 py-px text-white">
+                      {favCount}
                     </span>
-                  ) : (
-                    <span className={href === '/buscar' ? 'search-light-label' : undefined}>
-                      {label}
-                    </span>
-                  )}
-                </Link>
-              )
-            })}
+                  </span>
+                ) : (
+                  <span className={href === '/buscar' ? 'search-light-label' : undefined}>
+                    {label}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/buscar"
-            aria-label="Explorar mapa"
-            className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container md:hidden"
+            aria-label="Buscar"
+            className="flex items-center gap-1 rounded-full p-2 text-on-surface-variant hover:bg-surface-container md:hidden"
           >
             <Map size={20} />
+            <span className="text-xs">Buscar</span>
           </Link>
-          <ThemeToggle />
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -226,8 +195,8 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                   <LayoutDashboard size={16} /> Mis propiedades
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/metricas')}>
-                  <BarChart3 size={16} /> Métricas
+                <DropdownMenuItem onClick={() => router.push('/perfil')}>
+                  <User size={16} /> Mi perfil
                 </DropdownMenuItem>
                 {user.platformRole === 'superadmin' && (
                   <DropdownMenuItem onClick={() => router.push('/admin')}>
@@ -258,13 +227,12 @@ export function Navbar() {
 
       {/* Mobile bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex md:hidden z-50 pb-[env(safe-area-inset-bottom)]">
-        {navLinks.slice(0, 4).map(({ href, label, icon: Icon, authRequired }) => {
-          if (authRequired && !isAuthenticated) return null
+        {navLinks.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href
           return (
             <Link
               key={href}
-              href={href}
+              href={href === '/dashboard' && !isAuthenticated ? '/login' : href}
               className={cn(
                 'flex-1 flex flex-col items-center py-2 text-xs gap-0.5 transition-colors',
                 isActive ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
@@ -288,24 +256,12 @@ export function Navbar() {
                   )}
                 </div>
                 <span className={href === '/buscar' ? 'search-light-label' : undefined}>
-                  {label === 'Mis propiedades' ? 'Panel' : label}
+                  {label}
                 </span>
               </span>
             </Link>
           )
         })}
-        <Link
-          href={isAuthenticated ? '/perfil' : '/login'}
-          className={cn(
-            'flex-1 flex flex-col items-center py-2 text-xs gap-0.5 transition-colors',
-            pathname === '/perfil' || pathname === '/login'
-              ? 'text-primary'
-              : 'text-on-surface-variant hover:text-on-surface'
-          )}
-        >
-          <User size={20} />
-          <span>{isAuthenticated ? 'Perfil' : 'Ingresar'}</span>
-        </Link>
       </div>
     </nav>
   )

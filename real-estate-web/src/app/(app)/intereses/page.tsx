@@ -240,7 +240,7 @@ export default function InterestsPage() {
     )
   return (
     <div className="h-full overflow-y-auto bg-background pb-24">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-10">
+      <div className="mx-auto max-w-7xl px-3 py-8 sm:px-5 sm:py-10">
         <header className={`${styles.enter} mb-8 flex flex-wrap items-end justify-between gap-5`}>
           <div className="max-w-xl">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-accent">

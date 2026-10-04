@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  BarChart3,
   Building,
   Building2,
   Bell,
@@ -12,8 +12,9 @@ import {
   Heart,
   LayoutDashboard,
   LogOut,
-  Map,
   Menu,
+  Moon,
+  Sun,
   MessageCircle,
   PanelLeft,
   ShieldCheck,
@@ -34,6 +35,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { getAppRole, AppRole } from '@/lib/roles'
 import { useInterestMatches } from '@/contexts/InterestMatchesContext'
+import { useTheme } from '@/hooks/useTheme'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
 interface NavItem {
@@ -63,7 +65,29 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             ? (matchCount ?? 0)
             : 0
   const [open, setOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
+  const [desktopCollapsed, setCollapsed] = useState(false)
+  const collapsed = desktopCollapsed && !open
+  const [triggerTarget, setTriggerTarget] = useState<HTMLElement | null>(null)
+  const drawer = useRef<HTMLDialogElement>(null)
+  const { theme, select } = useTheme()
+
+  useEffect(() => {
+    setTriggerTarget(document.getElementById('sidebar-trigger'))
+  }, [])
+  useEffect(() => {
+    const dialog = drawer.current
+    if (!dialog) return
+    if (open && !dialog.open) dialog.showModal()
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 768px)')
+    const closeOnDesktop = () => {
+      if (query.matches) setOpen(false)
+    }
+    query.addEventListener('change', closeOnDesktop)
+    return () => query.removeEventListener('change', closeOnDesktop)
+  }, [])
 
   // Persistir colapso entre sesiones.
   useEffect(() => {
@@ -89,7 +113,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const role: AppRole = getAppRole(user)
 
   const exploreItems: NavItem[] = [
-    { href: '/buscar', label: 'Explorar', icon: Map },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
     { href: '/para-ti', label: 'Propiedades para ti', icon: Sparkles },
     { href: '/intereses', label: 'Mis intereses', icon: SlidersHorizontal },
@@ -98,7 +121,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     { href: '/notificaciones', label: 'Notificaciones', icon: Bell },
   ]
 
-  const metricsItem: NavItem = { href: '/metricas', label: 'Métricas', icon: BarChart3 }
   const teamItem: NavItem = { href: '/equipo', label: 'Mi empresa', icon: Building2 }
   const profileItem: NavItem = { href: '/perfil', label: 'Mi perfil', icon: UserRound }
 
@@ -116,14 +138,14 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   let items: NavItem[]
   let showTeamSeparator = false
   if (role === 'superadmin') {
-    items = [...adminItems, metricsItem, profileItem]
+    items = [...adminItems, profileItem]
     showTeamSeparator = true
   } else if (role === 'org_owner' || role === 'org_admin') {
-    items = [teamItem, metricsItem, ...exploreItems, profileItem]
+    items = [teamItem, ...exploreItems, profileItem]
   } else if (role === 'org_agent') {
-    items = [teamItem, ...exploreItems, metricsItem, profileItem]
+    items = [teamItem, ...exploreItems, profileItem]
   } else {
-    items = [...exploreItems, metricsItem, profileItem]
+    items = [...exploreItems, profileItem]
   }
 
   function handleLogout() {
@@ -181,11 +203,11 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                 onClick={() => setOpen(false)}
                 className={cn(
                   navLinkClasses,
-                  href === '/buscar' && 'hidden md:flex',
                   active
                     ? 'bg-primary/10 text-primary'
                     : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                 )}
+                aria-label={label}
                 title={collapsed ? label : undefined}
               >
                 <Icon size={18} className="shrink-0" />
@@ -220,6 +242,36 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className={cn('border-t border-outline-variant/40', collapsed ? 'p-2' : 'p-3')}>
+        <div
+          className={cn('mb-3 flex gap-1', collapsed && 'flex-col')}
+          role="group"
+          aria-label="Tema"
+        >
+          {(
+            [
+              { value: 'light', label: 'Claro', icon: Sun },
+              { value: 'dark', label: 'Oscuro', icon: Moon },
+            ] as const
+          ).map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              aria-label={`Modo ${label.toLowerCase()}`}
+              aria-pressed={theme === value}
+              onClick={() => {
+                if (isAuthenticated) select(value)
+              }}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-2 rounded-lg p-2 text-xs transition-colors',
+                theme === value
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container'
+              )}
+            >
+              <Icon size={16} />
+              {!collapsed && label}
+            </button>
+          ))}
+        </div>
         {!collapsed && <ExchangeIndicators className="justify-center mb-3" />}
         {isAuthenticated && user ? (
           <div className={cn('space-y-2', collapsed && 'space-y-3')}>
@@ -278,37 +330,54 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-full">
+    <div
+      className="internal-modules flex h-full"
+      data-sidebar-collapsed={desktopCollapsed ? 'true' : 'false'}
+    >
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          'hidden h-full shrink-0 transition-[width] duration-200 ease-in-out md:block',
-          collapsed ? 'w-[72px]' : 'w-56'
+          'fixed inset-y-0 left-0 z-[55] hidden transition-[width] duration-200 ease-in-out md:block',
+          desktopCollapsed ? 'w-[72px]' : 'w-56'
         )}
       >
         {sidebar}
       </aside>
 
-      {/* Mobile drawer */}
-      {open && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 h-full">{sidebar}</div>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="flex h-full min-w-0 flex-1 flex-col">
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-outline-variant/40 px-3 md:hidden">
+      {triggerTarget &&
+        createPortal(
           <button
             onClick={() => setOpen(true)}
-            className="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container"
             aria-label="Abrir menú"
+            aria-expanded={open}
+            aria-controls="app-menu"
+            className="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container"
           >
             <Menu size={20} />
-          </button>
-          <span className="font-headline font-bold text-primary">MapU</span>
+          </button>,
+          triggerTarget
+        )}
+      <dialog
+        ref={drawer}
+        id="app-menu"
+        aria-label="Menú principal"
+        onCancel={() => setOpen(false)}
+        onClose={() => setOpen(false)}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setOpen(false)
+        }}
+        className="m-0 h-[100dvh] max-h-none w-full max-w-none border-0 bg-transparent p-0 backdrop:bg-black/50"
+      >
+        <div className="h-full w-72 max-w-[85vw] pb-[env(safe-area-inset-bottom)] bg-surface-container-lowest">
+          {sidebar}
         </div>
+      </dialog>
+      <div
+        className={cn(
+          'flex h-full min-w-0 flex-1 flex-col transition-[margin] duration-200',
+          desktopCollapsed ? 'md:ml-[72px]' : 'md:ml-56'
+        )}
+      >
         <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       </div>
     </div>

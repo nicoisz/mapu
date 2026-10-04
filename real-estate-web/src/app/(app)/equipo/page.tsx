@@ -133,7 +133,7 @@ export default function EquipoPage() {
         description={`${org?.type === 'company' ? 'Empresa' : 'Corredora'} · ${members.length} miembros · tu rol: ${ROLE_LABELS[orgRole ?? ''] ?? orgRole ?? ''}`}
       />
 
-      <div className="mx-auto w-full max-w-5xl space-y-8 px-6 py-6">
+      <div className="mx-auto w-full max-w-7xl space-y-8 px-3 py-6 sm:px-5">
         {canManage && (
           <section className="space-y-4">
             <SectionHeading title="Equipo" count={members.length} />
@@ -216,7 +216,7 @@ export default function EquipoPage() {
             count={properties.length}
             actions={
               <Link
-                href="/metricas"
+                href="/perfil#metricas"
                 className="flex items-center gap-1 text-xs font-medium text-accent hover:text-primary transition-colors"
               >
                 <BarChart3 size={14} /> Ver métricas

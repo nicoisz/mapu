@@ -72,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="h-full overflow-y-auto bg-background">
       <PageHeader icon={meta.icon} title={meta.title} description={meta.description} />
-      <div className="mx-auto w-full max-w-5xl px-6 py-6">{children}</div>
+      <div className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-5">{children}</div>
     </div>
   )
 }

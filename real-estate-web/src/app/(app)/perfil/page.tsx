@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ProfileMetrics } from '@/components/profile/ProfileMetrics'
 import { Reviews } from '@/components/reviews/Reviews'
 import { PlatformRole, SubscriptionType, UserType } from '@/types/enums'
 
@@ -89,7 +90,7 @@ export default function PerfilPage() {
         }
       />
 
-      <div className="mx-auto w-full max-w-2xl space-y-4 px-6 py-6">
+      <div className="mx-auto w-full max-w-7xl space-y-4 px-3 sm:px-5 py-6">
         <section className="space-y-3 rounded-2xl border border-outline-variant/40 bg-surface-container-low p-5">
           <h2 className="font-headline text-lg font-semibold">Lo que buscas</h2>
           <p className="text-sm text-on-surface-variant">
@@ -224,6 +225,8 @@ export default function PerfilPage() {
             ))}
           </div>
         </section>
+
+        <ProfileMetrics />
 
         {/* Reviews */}
         <section

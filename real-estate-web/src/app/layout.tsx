@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: APP_CONFIG.description,
 }
 
-// Respeta la elección guardada; si no hay, manda el sistema operativo.
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();`
+// Preferencia del dispositivo; claro por defecto.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

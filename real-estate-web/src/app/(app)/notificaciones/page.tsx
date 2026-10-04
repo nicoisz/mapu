@@ -33,7 +33,7 @@ export default function NotificacionesPage() {
     return (
       <div className="h-full overflow-y-auto bg-background">
         <PageHeader title="Notificaciones" icon={<Bell size={22} />} />
-        <div className="mx-auto max-w-3xl space-y-3 px-4 pb-16 md:px-6">
+        <div className="mx-auto max-w-7xl space-y-3 px-3 pb-16 md:px-5">
           {[0, 1, 2].map((i) => (
             <div key={i} className="skeleton h-20 rounded-2xl" />
           ))}
@@ -67,7 +67,7 @@ export default function NotificacionesPage() {
         description="Actividad sobre las propiedades que publicaste"
         icon={<Bell size={22} />}
       />
-      <div className="mx-auto max-w-3xl space-y-2 px-4 md:px-6">
+      <div className="mx-auto max-w-7xl space-y-2 px-3 md:px-5">
         <MatchNotice />
         {items.map((item, i) => {
           const isMessage = item.kind === 'message'

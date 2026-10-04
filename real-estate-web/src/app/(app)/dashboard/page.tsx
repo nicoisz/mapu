@@ -248,7 +248,7 @@ export default function DashboardPage() {
         }
       />
 
-      <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-6">
+      <div className="mx-auto w-full max-w-7xl space-y-6 px-3 py-6 sm:px-5">
         {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
