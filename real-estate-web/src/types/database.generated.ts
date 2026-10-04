@@ -23,12 +23,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      property_interests: {
-        Row: { id: string; user_id: string; filters: Json; is_active: boolean; created_at: string; updated_at: string; effective_at: string }
-        Insert: { id?: string; user_id?: string; filters: Json; is_active?: boolean; created_at?: string; updated_at?: string; effective_at?: string }
-        Update: { id?: string; user_id?: string; filters?: Json; is_active?: boolean; created_at?: string; updated_at?: string; effective_at?: string }
-        Relationships: [{ foreignKeyName: 'property_interests_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] }]
-      }
       error_logs: {
         Row: {
           context: NonNullable<Json>
@@ -419,6 +413,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          interest_matches_seen_at: string | null
           is_email_verified: boolean | null
           is_identity_verified: boolean | null
           is_phone_verified: boolean | null
@@ -427,7 +422,6 @@ export type Database = {
           notifications_email: boolean | null
           notifications_push: boolean | null
           notifications_seen_at: string | null
-          interest_matches_seen_at: string | null
           phone: string | null
           platform_role: string
           preferred_currency: Database['public']['Enums']['currency'] | null
@@ -453,6 +447,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id: string
+          interest_matches_seen_at?: string | null
           is_email_verified?: boolean | null
           is_identity_verified?: boolean | null
           is_phone_verified?: boolean | null
@@ -461,7 +456,6 @@ export type Database = {
           notifications_email?: boolean | null
           notifications_push?: boolean | null
           notifications_seen_at?: string | null
-          interest_matches_seen_at?: string | null
           phone?: string | null
           platform_role?: string
           preferred_currency?: Database['public']['Enums']['currency'] | null
@@ -487,6 +481,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          interest_matches_seen_at?: string | null
           is_email_verified?: boolean | null
           is_identity_verified?: boolean | null
           is_phone_verified?: boolean | null
@@ -495,7 +490,6 @@ export type Database = {
           notifications_email?: boolean | null
           notifications_push?: boolean | null
           notifications_seen_at?: string | null
-          interest_matches_seen_at?: string | null
           phone?: string | null
           platform_role?: string
           preferred_currency?: Database['public']['Enums']['currency'] | null
@@ -732,6 +726,44 @@ export type Database = {
           },
         ]
       }
+      property_interests: {
+        Row: {
+          created_at: string
+          effective_at: string
+          filters: NonNullable<Json>
+          id: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          effective_at?: string
+          filters: NonNullable<Json>
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          effective_at?: string
+          filters?: NonNullable<Json>
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'property_interests_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       property_views: {
         Row: {
           created_at: string | null
@@ -844,10 +876,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_interest_matches: { Args: { page_size?: number; page_offset?: number }; Returns: Json }
-      get_interest_match_count: { Args: Record<PropertyKey, never>; Returns: number }
-      mark_interest_matches_seen: { Args: { seen_before: string }; Returns: undefined }
-      get_owned_property_demand: { Args: { property_ids: string[] }; Returns: { property_id: string; users: number; exact_users: number; partial_users: number }[] }
       accept_pending_invites: { Args: Record<PropertyKey, never>; Returns: undefined }
       admin_list_users: {
         Args: { search_term?: string }
@@ -898,6 +926,8 @@ export type Database = {
           day: string
         }[]
       }
+      get_interest_match_count: { Args: Record<PropertyKey, never>; Returns: number }
+      get_interest_matches: { Args: { page_offset?: number; page_size?: number }; Returns: Json }
       get_org_members: {
         Args: { org_id: string }
         Returns: {
@@ -923,6 +953,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          interest_matches_seen_at: string | null
           is_email_verified: boolean | null
           is_identity_verified: boolean | null
           is_phone_verified: boolean | null
@@ -931,7 +962,6 @@ export type Database = {
           notifications_email: boolean | null
           notifications_push: boolean | null
           notifications_seen_at: string | null
-          interest_matches_seen_at: string | null
           phone: string | null
           platform_role: string
           preferred_currency: Database['public']['Enums']['currency'] | null
@@ -957,6 +987,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_owned_property_demand: {
+        Args: { property_ids: string[] }
+        Returns: {
+          exact_users: number
+          partial_users: number
+          property_id: string
+          users: number
+        }[]
+      }
       get_owner_views: {
         Args: { days?: number; owner_id: string }
         Returns: {
@@ -972,11 +1011,24 @@ export type Database = {
         }[]
       }
       increment_property_views: { Args: { property_id: string }; Returns: undefined }
+      interest_matches_for: {
+        Args: { viewer: string }
+        Returns: {
+          filters: Json
+          interest_id: string
+          is_new: boolean
+          property_id: string
+          published_at: string
+          reasons: Json
+          score: number
+        }[]
+      }
       is_org_admin: { Args: { org_id: string }; Returns: boolean }
       is_org_admin_any: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_org_member: { Args: { org_id: string }; Returns: boolean }
       is_subscription_active: { Args: { p_user_id: string }; Returns: boolean }
       is_superadmin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      mark_interest_matches_seen: { Args: { seen_before: string }; Returns: undefined }
       mark_notifications_seen: { Args: Record<PropertyKey, never>; Returns: undefined }
       owner_activity: {
         Args: Record<PropertyKey, never>
@@ -991,12 +1043,20 @@ export type Database = {
         }[]
       }
       owner_unread_count: { Args: Record<PropertyKey, never>; Returns: number }
+      score_property_interest: {
+        Args: { f: Json; p: Database['public']['Tables']['properties']['Row'] }
+        Returns: {
+          reasons: Json
+          score: number
+        }[]
+      }
       set_member_role: {
         Args: { new_role: string; org_id: string; target_user_id: string }
         Returns: undefined
       }
       show_limit: { Args: Record<PropertyKey, never>; Returns: number }
       show_trgm: { Args: { '': string }; Returns: string[] }
+      valid_interest_filters: { Args: { f: Json }; Returns: boolean }
     }
     Enums: {
       contact_method: 'phone' | 'email' | 'whatsapp' | 'sms'
