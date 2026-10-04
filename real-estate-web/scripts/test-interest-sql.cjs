@@ -1,4 +1,5 @@
 // Test-only PostgreSQL runtime, installed outside the application. See docs/INTERESTS.md.
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS runner loads test dependencies from an external runtime directory. */
 const fs = require('node:fs')
 const path = require('node:path')
 const assert = require('node:assert/strict')
@@ -47,7 +48,7 @@ async function main() {
     for (const row of after.rows) assert(bcrypt.compareSync('123qweasd', row.encrypted_password))
     assert.equal((await db.query("select name from public.profiles where email='mapu.probe.claude@gmail.com'")).rows[0].name, 'Existing test name')
     assert.equal((await db.query('select count(*)::int n from auth.identities')).rows[0].n, 2)
-    await db.exec(fs.readFileSync('supabase/tests/property_interests.sql', 'utf8'))
+    await db.exec('begin;\n' + fs.readFileSync('supabase/testing/property-interest-assertions.sql', 'utf8') + '\nrollback;')
     console.log('PASS: PostgreSQL scoring, RPC/RLS isolation, demand, novelties; test accounts idempotent, preserve name/UUID; bcrypt passwords verified.')
   } finally { await db.close() }
 }

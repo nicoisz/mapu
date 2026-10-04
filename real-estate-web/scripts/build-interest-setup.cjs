@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- This standalone Node script intentionally uses CommonJS. */
 const fs = require('node:fs')
 const stripTransaction = text => text.replace(/^begin;\s*$/gmi, '').replace(/^commit;\s*$/gmi, '').trim()
 const migration = fs.readFileSync('supabase/migrations/20261003120000_property_interests.sql','utf8')
