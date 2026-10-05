@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
+import { SessionRequired } from '@/components/auth/SessionRequired'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 import { interestsService } from '@/services/interestsService'
@@ -67,12 +68,10 @@ export default function ForYouPage() {
   if (isLoading) return <p className="p-8">Cargando…</p>
   if (!user)
     return (
-      <div className="p-8">
-        <p>Inicia sesión para ver propiedades para ti.</p>
-        <Link href="/login" className="mt-4 inline-block underline">
-          Iniciar sesión
-        </Link>
-      </div>
+      <SessionRequired
+        title="Tus próximas coincidencias te esperan"
+        description="Inicia sesión para descubrir propiedades que coinciden con tus intereses."
+      />
     )
   return (
     <div className="h-full overflow-y-auto bg-background pb-24">
