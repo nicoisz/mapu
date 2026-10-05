@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowRight,
@@ -15,6 +14,7 @@ import {
   SlidersHorizontal,
   Trash2,
 } from 'lucide-react'
+import { SessionRequired } from '@/components/auth/SessionRequired'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 import { interestsService } from '@/services/interestsService'
@@ -225,18 +225,10 @@ export default function InterestsPage() {
     )
   if (!user)
     return (
-      <div className="mx-auto max-w-lg space-y-5 p-8">
-        <h1 className="font-headline text-2xl font-bold">Encuentra lo que va contigo</h1>
-        <p className="text-on-surface-variant">
-          Inicia sesión para guardar tus preferencias y encontrar propiedades para ti.
-        </p>
-        <Link
-          href="/login"
-          className={`${styles.action} inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-on-primary`}
-        >
-          Iniciar sesión <ArrowRight size={18} />
-        </Link>
-      </div>
+      <SessionRequired
+        title="Encuentra lo que va contigo"
+        description="Inicia sesión para guardar tus preferencias y encontrar propiedades para ti."
+      />
     )
   return (
     <div className="h-full overflow-y-auto bg-background pb-24">
