@@ -32,7 +32,7 @@ const draftSchema = z.object({
 
 export type PublishDraft = z.infer<typeof draftSchema>
 const TTL = 7 * 24 * 60 * 60 * 1000
-const DATABASE = 'mapu-publish-drafts'
+const DATABASE = 'luky-publish-drafts'
 const STORE = 'drafts'
 const KEY = 'new-property'
 

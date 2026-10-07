@@ -45,7 +45,7 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string }>
 }
 
-const COLLAPSE_KEY = 'mapu:sidebar-collapsed'
+const COLLAPSE_KEY = 'luky:sidebar-collapsed'
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

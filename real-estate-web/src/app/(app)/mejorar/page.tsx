@@ -84,7 +84,7 @@ interface SavedCard {
   default?: boolean
 }
 
-const CARDS_KEY = 'mapu:saved-cards'
+const CARDS_KEY = 'luky:saved-cards'
 
 const fmt = (n: number) => `$${n.toLocaleString('es-CL')}`
 

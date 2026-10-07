@@ -616,7 +616,7 @@ const WHY = [
   },
 ]
 
-export function WhyMapu() {
+export function WhyLuky() {
   return (
     <section className="why-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <LandingAccents variant="route" className="accent-why" />
@@ -782,14 +782,22 @@ export function Testimonials() {
 
 /* ─── Preguntas frecuentes ─────────────────────────────────────── */
 
-const FAQS = [
+export const FAQS = [
   {
     q: '¿Publicar una propiedad tiene costo?',
-    a: 'Los particulares pueden publicar una propiedad gratis. Las corredoras y quienes publican más de una propiedad necesitan un plan de pago. No cobramos comisión por la venta o el arriendo.',
+    a: 'Los particulares pueden publicar su primera propiedad gratis en LUKY. Las corredoras y quienes publican más de una propiedad necesitan un plan de pago. No cobramos comisión por la venta o el arriendo.',
+  },
+  {
+    q: '¿Dónde puedo publicar mi propiedad gratis en Chile?',
+    a: 'En LUKY PROPIEDADES. Los particulares publican su primera propiedad gratis y sin comisión por la venta o el arriendo. Puedes publicar sin iniciar sesión y luego gestionar visitas, favoritos y contactos desde tu panel.',
   },
   {
     q: '¿De dónde salen los precios por zona?',
     a: 'Se calculan con los valores de las propiedades publicadas en cada comuna y se pintan sobre el mapa en zonas económica, media y premium.',
+  },
+  {
+    q: '¿Qué son las zonas económica, media y premium?',
+    a: 'Son las tres categorías con las que LUKY pinta el mapa de precios de una comuna, según los valores de las propiedades publicadas en ella. Sirven para comparar barrios de un vistazo antes de decidir.',
   },
   {
     q: '¿Cómo contacto a quien publica?',

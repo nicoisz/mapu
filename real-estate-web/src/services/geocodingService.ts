@@ -16,7 +16,7 @@ import { REGIONS, communesForRegion, regionForCommune } from '@/data/chileanLoca
 const BASE_URL =
   process.env.NEXT_PUBLIC_GEOCODING_URL?.replace(/\/$/, '') || 'https://nominatim.openstreetmap.org'
 
-const USER_AGENT = 'mapu-real-estate-web (contact: mapu.app.admin@gmail.com)'
+const USER_AGENT = 'luky-propiedades-web'
 
 /** Throttle simple: encola y espacia las llamadas GEOCODING_MIN_INTERVAL_MS. */
 let lastCallAt = 0
