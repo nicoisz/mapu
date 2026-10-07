@@ -464,7 +464,8 @@ input:is(:autofill, :-webkit-autofill):is(:hover, :focus) {
 @media (prefers-reduced-motion: reduce) {
   .orb,
   .marquee-track,
-  .word-in {
+  .word-in,
+  .chip-float {
     animation: none;
   }
 }

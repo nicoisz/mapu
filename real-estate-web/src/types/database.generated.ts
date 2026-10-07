@@ -992,7 +992,6 @@ export type Database = {
         Args: { field: string; target_user_id: string; value: boolean }
         Returns: undefined
       }
-      base36: { Args: { p_min_len?: number; p_num: number }; Returns: string }
       can_user_publish: { Args: { p_user_id: string }; Returns: boolean }
       capture_error_log: {
         Args: {
@@ -1004,6 +1003,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      code_alphabet: { Args: Record<PropertyKey, never>; Returns: string }
       contains_forbidden_word: { Args: { p_text: string }; Returns: boolean }
       conversation_messages: {
         Args: { before_message?: string; counterparty: string; property: string }
@@ -1013,6 +1013,7 @@ export type Database = {
         Args: { inv_email: string; inv_org_id: string; inv_role: string }
         Returns: string
       }
+      encode_property_code: { Args: { p_n: number }; Returns: string }
       expire_stale_listings: { Args: Record<PropertyKey, never>; Returns: number }
       find_user_for_org: {
         Args: { search_email: string }

@@ -1,7 +1,7 @@
 -- Smoke test (pgTAP): valida que una base vacía, tras `supabase db reset` + seed,
 -- reconstruye el esquema y los datos esperados. Se ejecuta con `supabase test db`.
 begin;
-select plan(28);
+select plan(32);
 
 -- Tablas esenciales
 select has_table('public', 'profiles', 'profiles existe');
@@ -26,6 +26,7 @@ select has_function('public', 'is_superadmin', array[]::text[], 'is_superadmin e
 -- Código de propiedad y palabras prohibidas
 select has_table('public', 'forbidden_words', 'forbidden_words existe');
 select has_function('public', 'generate_property_code', array[]::text[], 'generate_property_code existe');
+select has_function('public', 'encode_property_code', array['bigint'], 'encode_property_code existe');
 select has_function('public', 'contains_forbidden_word', array['text'], 'contains_forbidden_word existe');
 
 -- Datos del seed
@@ -42,9 +43,17 @@ select is(
   'los códigos de propiedad son únicos'
 );
 
--- base36: 3 dígitos hasta 36^3, luego escala a 4 automáticamente.
-select is(public.base36(35), '00Z', 'base36(35) = 00Z');
-select is(public.base36(46656), '1000', 'base36(36^3) escala a 4 dígitos');
+-- encode_property_code: alfabeto de 31 (sin 0/O/1/I/L), permutación biyectiva,
+-- no secuencial y con escalada de longitud a 31^3 = 29791.
+select is(length(public.encode_property_code(29790)), 3, 'el bloque de 3 llega a 31^3-1');
+select is(length(public.encode_property_code(29791)), 4, 'sobre 31^3 el código escala a 4');
+select ok(public.encode_property_code(1) <> '222', 'el primer código no es secuencial');
+select ok(public.encode_property_code(1) !~ '[01OIL]', 'sin caracteres confundibles');
+select is(
+  (select count(distinct public.encode_property_code(i))::int from generate_series(1, 500) i),
+  500,
+  'la permutación no colisiona'
+);
 
 -- La misma tabla modera texto de usuario (límites de palabra).
 select ok(public.contains_forbidden_word('una wea de casa'), 'detecta palabra prohibida');

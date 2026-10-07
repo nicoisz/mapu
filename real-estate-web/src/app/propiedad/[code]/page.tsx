@@ -2,7 +2,6 @@ import { notFound, redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import { PropertyDetail } from '@/components/property/PropertyDetail'
 import { propertyService } from '@/services/propertyService'
-import { isUuid } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ code: string }>
@@ -29,9 +28,9 @@ export default async function PropertyPage({ params }: Props) {
   const property = await propertyService.getById(code)
   if (!property) notFound()
 
-  // La URL pública canónica usa el código. Cualquier enlace legacy por uuid
-  // (notificaciones, bookmarks) redirige al código para no exponerlo.
-  if (isUuid(code)) redirect(`/propiedad/${property.code}`)
+  // La URL pública canónica usa el código en mayúsculas. Enlaces legacy por
+  // uuid o códigos en minúsculas redirigen para no exponer el id ni duplicar.
+  if (code !== property.code) redirect(`/propiedad/${property.code}`)
 
   return (
     <div className="h-full overflow-y-auto bg-background">
