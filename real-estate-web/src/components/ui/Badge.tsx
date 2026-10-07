@@ -20,7 +20,7 @@ export function Badge({
         {
           'bg-primary text-on-primary': variant === 'default',
           'bg-secondary-container text-on-secondary-container': variant === 'sale',
-          'bg-accent text-on-tertiary': variant === 'rent',
+          'bg-accent text-on-accent': variant === 'rent',
           'bg-primary-container text-on-primary-container': variant === 'premium',
           'bg-tertiary-container text-on-tertiary-container': variant === 'success',
           'bg-secondary text-on-secondary': variant === 'warning',

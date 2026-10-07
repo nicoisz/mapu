@@ -86,7 +86,7 @@ export function SearchBar({
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? 'Buscar casa, departamento, sector...'}
-          className="flex-1 px-3 py-2.5 text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-on-surface-variant/60"
+          className="flex-1 px-3 py-2.5 text-sm bg-transparent focus:outline-none text-on-surface placeholder:text-on-surface-variant"
         />
         {value && (
           <button
@@ -109,7 +109,7 @@ export function SearchBar({
           >
             <SlidersHorizontal size={14} />
             {activeFilterCount > 0 && (
-              <span className="bg-accent text-on-tertiary text-xs rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="bg-accent text-on-accent text-xs rounded-full w-4 h-4 flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}

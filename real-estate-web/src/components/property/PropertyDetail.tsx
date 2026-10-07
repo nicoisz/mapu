@@ -356,7 +356,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg">
                   {property.contact.name.charAt(0)}
                 </div>
               )}

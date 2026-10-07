@@ -119,7 +119,7 @@ export function Reviews({
             onChange={(e) => setComment(e.target.value)}
             rows={3}
             placeholder="Cuéntanos tu experiencia (mín. 10 caracteres)…"
-            className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
           />
           {error && <p className="text-error text-xs">{error}</p>}
           <Button

@@ -69,6 +69,7 @@ const config: Config = {
           light: withAlpha('--accent-light'),
           dark: withAlpha('--accent-dark'),
         },
+        'on-accent': withAlpha('--on-accent'),
       },
       fontFamily: {
         sans: [

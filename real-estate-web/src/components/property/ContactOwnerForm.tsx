@@ -90,7 +90,7 @@ export function ContactOwnerForm({ propertyId, ownerId }: { propertyId: string; 
         disabled={sending}
         rows={3}
         placeholder="Hola, me interesa esta propiedad. ¿Sigue disponible?"
-        className="w-full resize-none rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full resize-none rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
       />
       {error && <p className="mt-1 text-xs text-error">{error}</p>}
       <Button

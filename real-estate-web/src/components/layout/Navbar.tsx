@@ -42,7 +42,7 @@ export function Navbar() {
 
   // La barra se achica recién cuando el hero termina de pasar bajo el nav,
   // no a los pocos px de scroll: mientras se ve el hero, la barra
-  // mantiene la superficie salvia y todo el ancho.
+  // deja ver su mismo gradiente y mantiene todo el ancho.
   const heroThreshold = useRef(40)
   useEffect(() => {
     setScrolled(false)
@@ -63,7 +63,7 @@ export function Navbar() {
   }, [pathname])
 
   const isHome = pathname === '/'
-  // En el hero la barra es salvia a todo el ancho;
+  // En el hero la barra es transparente para compartir su mismo gradiente;
   // al salir del hero se achica a un pill blanco centrado. En el resto del
   // sitio la barra queda sólida de borde a borde.
   const floating = isHome && scrolled
@@ -88,7 +88,7 @@ export function Navbar() {
           floating
             ? 'solid-chrome h-14 max-w-2xl gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
             : heroBar
-              ? 'h-16 max-w-full gap-2 rounded-none bg-secondary px-4 text-on-secondary sm:gap-4'
+              ? 'h-16 max-w-full gap-2 rounded-none bg-transparent px-4 text-on-secondary sm:gap-4'
               : 'solid-chrome h-16 max-w-full gap-2 rounded-none border-b border-outline-variant/30 px-4 sm:gap-4'
         )}
       >
@@ -109,7 +109,7 @@ export function Navbar() {
             >
               Para ti
               {matchCount !== null && matchCount > 0 && (
-                <span className="rounded-full bg-accent px-1.5 text-xs text-white">
+                <span className="rounded-full bg-accent px-1.5 text-xs text-on-accent">
                   {matchCount}
                 </span>
               )}
@@ -137,7 +137,7 @@ export function Navbar() {
                 {label === 'Favoritos' && favCount > 0 ? (
                   <span className="flex items-center gap-1">
                     {label}
-                    <span className="text-xs rounded-full bg-accent px-1.5 py-px text-white">
+                    <span className="text-xs rounded-full bg-accent px-1.5 py-px text-on-accent">
                       {favCount}
                     </span>
                   </span>
@@ -248,7 +248,7 @@ export function Navbar() {
                     className={href === '/buscar' ? 'search-light-icon' : undefined}
                   />
                   {href === '/favoritos' && favCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-accent text-on-accent text-xs rounded-full w-4 h-4 flex items-center justify-center">
                       {favCount}
                     </span>
                   )}
