@@ -8,9 +8,11 @@
 --   5. Los helpers no se exponen por PostgREST (si no, se enumera vía RPC).
 
 -- 1) encode_property_code: permutación modular biyectiva por bloque de
---    longitud + alfabeto mezclado. Para el bloque [36^(L-1), 36^L):
---      m = (a * (n - block) + c) mod D,  D = 36^L - block = 36^(L-1)*35.
---    D tiene factores {2,3,5,7}; con a=1000003 (coprimo con ellos) la
+--    longitud + alfabeto mezclado. Alfabeto de 31 símbolos sin los
+--    confundibles en un pendón: se quitan 0, O, 1, I, L.
+--    Para el bloque [31^(L-1), 31^L):
+--      m = (a * (n - block) + c) mod D,  D = 31^L - block = 31^(L-1)*30.
+--    D tiene factores {2,3,5,31}; con a=1000003 (coprimo con todos) la
 --    función es biyectiva → sin colisiones y sin orden predecible.
 create or replace function public.code_alphabet()
 returns text
@@ -19,10 +21,10 @@ immutable
 set search_path to 'public', 'pg_temp'
 as $$
   select string_agg(
-           substr('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', ((i * 17 + 5) % 36) + 1, 1),
+           substr('23456789ABCDEFGHJKMNPQRSTUVWXYZ', ((i * 17 + 5) % 31) + 1, 1),
            '' order by i
          )
-    from generate_series(0, 35) as i;
+    from generate_series(0, 30) as i;
 $$;
 
 create or replace function public.encode_property_code(p_n bigint)
@@ -32,16 +34,14 @@ immutable
 set search_path to 'public', 'pg_temp'
 as $$
 declare
-  v_digits constant text := '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  v_base constant integer := 31;
   v_alpha text := public.code_alphabet();
   v_len integer := 3;
   v_block bigint := 0;
-  v_pow bigint := 46656; -- 36^3
+  v_pow bigint := 29791; -- 31^3
   v_domain bigint;
   v_m bigint;
-  v_raw text;
-  v_pos integer;
-  v_idx integer;
+  v_rem integer;
   v_result text := '';
   v_a constant bigint := 1000003;
   v_c constant bigint := 12347;
@@ -49,19 +49,24 @@ begin
   while p_n >= v_pow loop
     v_block := v_pow;
     v_len := v_len + 1;
-    v_pow := v_pow * 36;
+    v_pow := v_pow * v_base;
   end loop;
   v_domain := v_pow - v_block;
   v_m := v_block + ((v_a * (p_n - v_block) + v_c) % v_domain);
 
-  v_raw := public.base36(v_m, v_len);
-  for v_pos in 1..length(v_raw) loop
-    v_idx := strpos(v_digits, substr(v_raw, v_pos, 1)) - 1;
-    v_result := v_result || substr(v_alpha, v_idx + 1, 1);
+  loop
+    v_rem := (v_m % v_base)::integer;
+    v_result := substr(v_alpha, v_rem + 1, 1) || v_result;
+    v_m := v_m / v_base;
+    exit when v_m = 0;
   end loop;
-  return v_result;
+  return lpad(v_result, v_len, substr(v_alpha, 1, 1));
 end;
 $$;
+
+-- base36 (versión secuencial de la migración anterior) ya no se usa: encode
+-- lo reemplaza. Se elimina para no dejar helper muerto ni footprint RPC.
+drop function if exists public.base36(bigint, integer);
 
 -- 2) Genera el siguiente código libre: avanza la sequence, salta palabras
 --    prohibidas y salta códigos ya usados (robusto ante espacios mezclados).
@@ -142,7 +147,6 @@ create trigger trg_forbidden_words_code_collision
 -- 6) Los helpers de generación no se exponen por PostgREST (si no, cualquiera
 --    llama encode_property_code(n) y enumera). Los triggers corren como
 --    SECURITY DEFINER (owner), así que siguen funcionando sin EXECUTE extra.
-revoke execute on function public.base36(bigint, integer) from public, anon, authenticated;
 revoke execute on function public.code_alphabet() from public, anon, authenticated;
 revoke execute on function public.encode_property_code(bigint) from public, anon, authenticated;
 revoke execute on function public.generate_property_code() from public, anon, authenticated;

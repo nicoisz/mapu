@@ -992,7 +992,6 @@ export type Database = {
         Args: { field: string; target_user_id: string; value: boolean }
         Returns: undefined
       }
-      base36: { Args: { p_min_len?: number; p_num: number }; Returns: string }
       can_user_publish: { Args: { p_user_id: string }; Returns: boolean }
       capture_error_log: {
         Args: {
