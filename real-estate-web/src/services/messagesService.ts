@@ -71,7 +71,7 @@ export const messagesService = {
       expected_sender: userId,
     })
     if (error) fail('send_conversation_message', error)
-    window.dispatchEvent(new Event('mapu:messages-changed'))
+    window.dispatchEvent(new Event('luky:messages-changed'))
   },
   async markSeen(property: string, counterparty: string, seenBefore: string): Promise<void> {
     const { error } = await getSupabase().rpc('mark_conversation_seen', {
@@ -80,7 +80,7 @@ export const messagesService = {
       seen_before: seenBefore,
     })
     if (error) fail('mark_conversation_seen', error)
-    window.dispatchEvent(new Event('mapu:messages-changed'))
+    window.dispatchEvent(new Event('luky:messages-changed'))
   },
   async unreadCount(): Promise<number> {
     const { data, error } = await getSupabase().rpc('inbox_unread_count')

@@ -55,10 +55,10 @@ export function Navbar() {
     }
     measure()
     window.addEventListener('resize', measure)
-    window.addEventListener('mapu:scroll', handler as EventListener)
+    window.addEventListener('luky:scroll', handler as EventListener)
     return () => {
       window.removeEventListener('resize', measure)
-      window.removeEventListener('mapu:scroll', handler as EventListener)
+      window.removeEventListener('luky:scroll', handler as EventListener)
     }
   }, [pathname])
 

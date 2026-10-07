@@ -19,10 +19,10 @@ export function useUnreadMessages() {
       )
     }
     refresh()
-    window.addEventListener('mapu:messages-changed', refresh)
+    window.addEventListener('luky:messages-changed', refresh)
     return () => {
       active = false
-      window.removeEventListener('mapu:messages-changed', refresh)
+      window.removeEventListener('luky:messages-changed', refresh)
     }
   }, [userId])
   return count

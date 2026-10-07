@@ -10,7 +10,7 @@ export interface InterestDraft {
   pending: boolean
 }
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
-const key = (userId: string) => `mapu:interest-draft:${userId}`
+const key = (userId: string) => `luky:interest-draft:${userId}`
 
 export function readInterestDraft(userId: string, storage?: DraftStorage): InterestDraft | null {
   try {

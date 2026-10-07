@@ -4,7 +4,7 @@ import { APP_CONFIG } from '@/constants'
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_CONFIG.name,
-    short_name: 'LUKY',
+    short_name: APP_CONFIG.shortName,
     description: APP_CONFIG.description,
     lang: 'es',
     start_url: '/',

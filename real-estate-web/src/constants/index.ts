@@ -1,7 +1,10 @@
 export const APP_CONFIG = {
   name: 'LUKY PROPIEDADES',
+  shortName: 'LUKY',
   version: '1.0.0',
-  description: 'Encuentra tu propiedad ideal en Chile',
+  tagline: 'El mapa de propiedades de Chile',
+  description:
+    'Busca, compara y publica propiedades en venta y arriendo en Chile. Mapa con precios por zona (económica, media y premium), primera propiedad gratis para particulares y sin comisión.',
 }
 
 export const FREE_PLAN_LISTINGS_LIMIT = 1

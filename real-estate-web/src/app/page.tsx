@@ -17,14 +17,16 @@ import { isPropertyCode, landingSearchUrl } from '@/lib/landingSearch'
 import {
   ActivityFeed,
   CtaCards,
+  FAQS,
   FaqAccordion,
   ProductReel,
   SectionIntro,
   StatsBand,
   Testimonials,
-  WhyMapu,
+  WhyLuky,
   Words,
 } from '@/components/landing/LandingSections'
+import { APP_CONFIG } from '@/constants'
 
 /** Lo que la gente quiere dejar de hacer. Rota bajo el titular. */
 const PAIN_POINTS = [
@@ -50,6 +52,47 @@ const COMUNAS = [
   'Antofagasta',
   'Temuco',
 ]
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+
+/** Datos estructurados para buscadores y motores de respuesta (GEO). */
+const STRUCTURED_DATA = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: APP_CONFIG.name,
+      alternateName: APP_CONFIG.shortName,
+      url: SITE_URL,
+      logo: `${SITE_URL}/android-chrome-512x512.png`,
+      description: APP_CONFIG.description,
+      areaServed: { '@type': 'Country', name: 'Chile' },
+      knowsLanguage: 'es-CL',
+    },
+    {
+      '@type': 'WebSite',
+      name: APP_CONFIG.name,
+      url: SITE_URL,
+      inLanguage: 'es-CL',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/buscar?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: FAQS.map((faq) => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: { '@type': 'Answer', text: faq.a },
+      })),
+    },
+  ],
+}
 
 /** Search tabs select an explicit operation filter or start a publication. */
 const HERO_TABS = [
@@ -391,7 +434,7 @@ export default function LandingPage() {
     const el = scrollRef.current
     if (!el) return
     const onScroll = () => {
-      window.dispatchEvent(new CustomEvent('mapu:scroll', { detail: { y: el.scrollTop } }))
+      window.dispatchEvent(new CustomEvent('luky:scroll', { detail: { y: el.scrollTop } }))
     }
     // Un solo listener para el halo de todas las tarjetas `.spotlight`, en
     // vez de uno por tarjeta: la posición se escribe en la que está bajo el
@@ -416,6 +459,10 @@ export default function LandingPage() {
       ref={scrollRef}
       className="h-full overflow-y-auto selection:bg-primary selection:text-on-primary"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      />
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
         data-hero
@@ -423,13 +470,17 @@ export default function LandingPage() {
       >
         <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-12 lg:grid-cols-2 lg:px-6">
           <div>
+            <p className="hero-reveal mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-on-secondary/70">
+              {APP_CONFIG.name} · {APP_CONFIG.tagline}
+            </p>
             <h1 className="font-display text-[2.75rem] leading-[1.04] sm:text-6xl lg:text-[3.9rem] xl:text-[4.4rem]">
-              <Words text="Tu lugar en Chile" className="block" />
-              <Words text="está en el mapa" className="block" />
+              <Words text="Propiedades en venta y arriendo" className="block" />
+              <Words text="en todo Chile" className="block" />
             </h1>
 
             <p className="hero-reveal mt-6 max-w-lg text-base leading-relaxed sm:text-lg">
-              Busca, compara y publica propiedades en todo Chile. Sin <RotatingPain />
+              LUKY PROPIEDADES es la plataforma para buscar, comparar y publicar propiedades con
+              precios por zona y sin comisión. Sin <RotatingPain />
             </p>
 
             {/* Pestañas subrayadas, como el conmutador de Casavo. */}
@@ -559,8 +610,8 @@ export default function LandingPage() {
       {/* ─── REEL DE PRODUCTO ─────────────────────────────── */}
       <ProductReel />
 
-      {/* ─── POR QUÉ MAPU ─────────────────────────────────── */}
-      <WhyMapu />
+      {/* ─── POR QUÉ LUKY ─────────────────────────────────── */}
+      <WhyLuky />
 
       {/* ─── DESTACADAS ───────────────────────────────────── */}
       <section className="property-grid-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-16 lg:px-20">
