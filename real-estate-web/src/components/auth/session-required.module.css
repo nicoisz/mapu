@@ -90,10 +90,10 @@
   color: rgb(var(--accent));
 }
 .title {
-  font-family: var(--font-headline, Archivo), sans-serif;
+  font-family: Forum, Georgia, serif;
   font-size: clamp(28px, 3vw, 38px);
-  font-weight: 700;
-  font-stretch: 85%;
+  font-weight: 400;
+  font-stretch: normal;
   line-height: 1.1;
   letter-spacing: -0.025em;
 }

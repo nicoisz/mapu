@@ -18,11 +18,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {/* Titulares: Archivo (Omnibus-Type) condensada, hasta light.
-            Cuerpo: Inter. */}
+        {/* Titulares: Forum. Párrafos: Instrument Serif. Controles: Inter. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Inter:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Forum&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"
         />
         <link
           rel="stylesheet"

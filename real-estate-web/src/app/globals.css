@@ -162,6 +162,9 @@
     color: rgb(var(--on-surface));
     overflow-x: hidden;
   }
+  p {
+    font-family: 'Instrument Serif', Georgia, serif;
+  }
   * {
     box-sizing: border-box;
   }
@@ -606,21 +609,21 @@
   }
 }
 
-/* Archivo condensado: es el ancho, no el peso, lo que le da carácter.
-   Casavo lleva sus titulares en Bagoss Condensed Light; Archivo a 85% +
-   peso 300 es lo más cerca que queda sin fuentes propietarias. */
-.font-headline {
-  font-stretch: 90%;
+/* Forum tiene un único peso: conservar su dibujo sin negrita sintética. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-headline,
+.font-display {
+  font-family: Forum, Georgia, serif;
+  font-stretch: normal;
+  font-weight: 400;
+  font-synthesis: none;
 }
 .font-display {
-  font-family:
-    Archivo,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  font-stretch: 85%;
-  font-weight: 300;
   letter-spacing: -0.01em;
 }
 
@@ -1017,8 +1020,8 @@
 .auth-login-form h1,
 .auth-visual-heading,
 .publish-auth-copy h2 {
-  font-weight: 700;
-  font-stretch: 80%;
+  font-weight: 400;
+  font-stretch: normal;
 }
 .auth-login-form form > button {
   min-height: 52px;
