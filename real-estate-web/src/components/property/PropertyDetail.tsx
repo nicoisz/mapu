@@ -319,7 +319,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                 {amenities.map((a) => (
                   <span
                     key={a.key}
-                    className="flex items-center gap-1 bg-secondary/10 text-secondary text-sm px-3 py-1 rounded-full font-medium"
+                    className="flex items-center gap-1 bg-secondary/10 text-accent text-sm px-3 py-1 rounded-full font-medium"
                   >
                     ✓ {a.label}
                   </span>
@@ -364,7 +364,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
                 <div className="flex items-center gap-1">
                   <p className="font-medium text-on-surface text-sm">{property.contact.name}</p>
                   {property.contact.isVerified && (
-                    <Shield size={13} className="text-secondary" aria-label="Verificado" />
+                    <Shield size={13} className="text-accent" aria-label="Verificado" />
                   )}
                 </div>
                 {property.contact.responseTime && (

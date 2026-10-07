@@ -2,148 +2,136 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ──────────────────────────────────────────────────────────────
-   Casa & Mapa — paleta Casavo: lona crema, tinta carbón y naranjo
-   de marca. La tinta es el primario (texto y botones, como Casavo),
-   el naranjo queda como acento de marca y el teal sobrevive como
-   semántica de dato (arriendo).
-
-   Regla de superficie: el RELLENO define la tarjeta, el borde solo la
-   remata. Fondo crema, tarjetas blanco puro.
-
-   Tokens en canales RGB separados por espacio para que Tailwind
-   (`rgb(var(--x) / <alpha-value>)`) mantenga las utilidades de opacidad
-   (bg-primary/10, border-outline-variant/30).
-   Todo par texto/fondo verificado >= 4.5:1 (>= 3:1 para no-texto).
-   El acento de texto usa un naranjo quemado para pasar contraste;
-   el naranjo brillante vive en --secondary y en rellenos.
-   ────────────────────────────────────────────────────────────── */
+/* LUKY — verde bosque del logo (#335e4a), salvia (#d9e4df) y
+   fondos suaves (#f1f6f4). Los tokens RGB conservan las opacidades
+   de Tailwind y la misma identidad en los temas claro y oscuro. */
 
 :root {
-  /* LIGHT — lona blanca (como Casavo), tarjetas gris plano sin borde */
-  --background: 255 255 255;
-  --on-background: 29 29 27;
-  --surface: 255 255 255;
-  --surface-dim: 240 240 237;
-  --surface-bright: 255 255 255;
-  --surface-container-lowest: 255 255 255;
-  --surface-container-low: 250 250 248;
-  --surface-container: 240 240 237;
-  --surface-container-high: 233 233 230;
-  --surface-container-highest: 225 225 221;
-  --surface-variant: 240 240 237;
-  --surface-tint: 255 153 31;
-  --on-surface: 29 29 27;
-  --on-surface-variant: 92 92 90;
+  /* LIGHT — fondos salvia y tarjetas blancas. */
+  --background: 241 246 244;
+  --on-background: 30 51 40;
+  --surface: 254 254 254;
+  --surface-dim: 217 228 223;
+  --surface-bright: 254 254 254;
+  --surface-container-lowest: 254 254 254;
+  --surface-container-low: 245 249 247;
+  --surface-container: 233 241 236;
+  --surface-container-high: 217 228 223;
+  --surface-container-highest: 200 217 206;
+  --surface-variant: 233 241 236;
+  --surface-tint: 51 94 74;
+  --on-surface: 30 51 40;
+  --on-surface-variant: 76 98 86;
 
-  /* Primario = tinta carbón (#1D1D1B). Botones y texto. */
-  --primary: 29 29 27;
-  --on-primary: 246 246 241;
-  --primary-container: 232 231 226;
-  --on-primary-container: 29 29 27;
+  /* Primario = verde bosque del logo. Botones y texto. */
+  --primary: 51 94 74;
+  --on-primary: 254 254 254;
+  --primary-container: 217 228 223;
+  --on-primary-container: 30 51 40;
 
-  /* Secondary = naranjo de marca (#FF991F). Acentos y sellos. */
-  --secondary: 255 153 31;
-  --on-secondary: 29 29 27;
-  --secondary-container: 255 240 224;
-  --on-secondary-container: 90 46 0;
+  /* Secondary = salvia pastel. Superficies y sellos. */
+  --secondary: 217 228 223;
+  --on-secondary: 30 51 40;
+  --secondary-container: 233 241 236;
+  --on-secondary-container: 51 94 74;
 
   /* Tertiary = teal. Semántica de arriendo en mapa y chips. */
-  --tertiary: 13 122 111;
+  --tertiary: 15 118 110;
   --on-tertiary: 255 255 255;
   --tertiary-container: 214 243 238;
   --on-tertiary-container: 4 45 42;
 
-  /* Acento de texto: naranjo quemado (contraste AA sobre crema). */
-  --accent: 154 87 0;
-  --accent-light: 255 153 31;
-  --accent-dark: 120 66 0;
+  /* Acento de texto: verde bosque para contraste sobre salvia. */
+  --accent: 51 94 74;
+  --accent-light: 165 196 177;
+  --accent-dark: 36 68 53;
 
-  --outline: 117 117 115;
-  --outline-variant: 226 226 222;
-  --border: 226 226 222;
+  --outline: 107 127 115;
+  --outline-variant: 204 220 211;
+  --border: 204 220 211;
 
   --error: 179 38 30;
   --on-error: 255 255 255;
   --error-container: 255 218 214;
   --on-error-container: 65 0 2;
 
-  --inverse-surface: 29 29 27;
-  --inverse-on-surface: 246 246 241;
-  --inverse-primary: 255 153 31;
+  --inverse-surface: 30 51 40;
+  --inverse-on-surface: 241 246 244;
+  --inverse-primary: 165 196 177;
 
-  --shadow-color: 29 29 27;
+  --shadow-color: 30 51 40;
 
   /* Borde especular de los gradientes (.grad-a / .grad-b). */
   --glass-spec: 255 255 255;
   --glass-spec-op: 0.9;
 
-  /* Gradientes: SOLO métricas destacadas. Ver .grad-a / .grad-b. */
-  --grad-a: linear-gradient(135deg, #ffe0bd, #ff991f);
-  --grad-b: linear-gradient(135deg, #f0ede6, #d8d4cc);
-  --grad-ink: 29 29 27;
+  /* Gradientes de salvia para métricas y superficies de marca. */
+  --grad-a: linear-gradient(135deg, #f1f6f4, #bfd7c8);
+  --grad-b: linear-gradient(135deg, #e9f1ec, #d9e4df);
+  --grad-ink: 30 51 40;
+  --brand-gradient: linear-gradient(135deg, #d9e4df 0%, #f1f6f4 52%, #bfd7c8 100%);
   color-scheme: light;
 }
 
 .dark {
-  /* DARK — tinta carbón profunda, no negro plano: el negro puro no deja
-     nada que desenfocar detrás del vidrio y aplana las capas. */
-  --background: 20 20 18;
-  --on-background: 246 246 241;
-  --surface: 20 20 18;
-  --surface-dim: 14 14 12;
-  --surface-bright: 45 44 41;
-  --surface-container-lowest: 14 14 12;
-  --surface-container-low: 27 27 24;
-  --surface-container: 33 33 29;
-  --surface-container-high: 41 41 36;
-  --surface-container-highest: 50 49 44;
-  --surface-variant: 41 41 36;
-  --surface-tint: 255 153 31;
-  --on-surface: 246 246 241;
-  --on-surface-variant: 208 207 199;
+  /* DARK — verdes profundos y acentos salvia. */
+  --background: 20 36 28;
+  --on-background: 233 241 236;
+  --surface: 20 36 28;
+  --surface-dim: 14 27 20;
+  --surface-bright: 45 65 53;
+  --surface-container-lowest: 14 27 20;
+  --surface-container-low: 25 43 33;
+  --surface-container: 32 51 40;
+  --surface-container-high: 42 63 50;
+  --surface-container-highest: 54 76 63;
+  --surface-variant: 42 63 50;
+  --surface-tint: 165 196 177;
+  --on-surface: 233 241 236;
+  --on-surface-variant: 185 207 193;
 
-  --primary: 246 246 241;
-  --on-primary: 29 29 27;
-  --primary-container: 55 54 49;
-  --on-primary-container: 240 239 232;
+  --primary: 165 196 177;
+  --on-primary: 20 36 28;
+  --primary-container: 43 69 53;
+  --on-primary-container: 233 241 236;
 
-  --secondary: 255 176 77;
-  --on-secondary: 43 25 0;
-  --secondary-container: 90 58 15;
-  --on-secondary-container: 255 224 189;
+  --secondary: 62 91 73;
+  --on-secondary: 241 246 244;
+  --secondary-container: 37 64 48;
+  --on-secondary-container: 209 232 218;
 
   --tertiary: 94 198 180;
   --on-tertiary: 0 55 49;
   --tertiary-container: 20 92 84;
   --on-tertiary-container: 190 240 232;
 
-  --accent: 224 160 60;
-  --accent-light: 255 190 110;
-  --accent-dark: 180 120 30;
+  --accent: 185 217 198;
+  --accent-light: 209 232 218;
+  --accent-dark: 137 180 156;
 
-  --outline: 107 106 99;
-  --outline-variant: 60 59 54;
-  --border: 60 59 54;
+  --outline: 124 151 135;
+  --outline-variant: 62 86 72;
+  --border: 62 86 72;
 
   --error: 255 180 171;
   --on-error: 105 0 5;
   --error-container: 147 0 10;
   --on-error-container: 255 218 214;
 
-  --inverse-surface: 246 246 241;
-  --inverse-on-surface: 29 29 27;
-  --inverse-primary: 255 153 31;
+  --inverse-surface: 233 241 236;
+  --inverse-on-surface: 20 36 28;
+  --inverse-primary: 51 94 74;
 
-  --shadow-color: 0 0 0;
+  --shadow-color: 8 19 12;
 
   --glass-spec: 255 255 255;
   --glass-spec-op: 0.14;
 
-  --grad-a: linear-gradient(135deg, #6a4210, #c8791a);
-  --grad-b: linear-gradient(135deg, #2b2b27, #3c3b35);
-  --grad-ink: 246 246 241;
+  --grad-a: linear-gradient(135deg, #294936, #416950);
+  --grad-b: linear-gradient(135deg, #203328, #304c3a);
+  --grad-ink: 241 246 244;
 
+  --brand-gradient: linear-gradient(135deg, #294936 0%, #203b2d 52%, #416950 100%);
   color-scheme: dark;
 }
 
@@ -178,6 +166,9 @@
 }
 
 @layer utilities {
+  .brand-gradient {
+    background: var(--brand-gradient);
+  }
   /* Chrome flotante (navbar, buscador, chips sobre el reel): superficie
      opaca y una sombra mínima. Sin blur: el contraste lo da el relleno.
      El borde lo pone quien la usa, para poder hacer solo `border-b`. */
@@ -902,7 +893,7 @@ h6,
     filter: none;
   }
   25% {
-    filter: drop-shadow(0 0 4px #a9ceff) brightness(1.5);
+    filter: drop-shadow(0 0 4px #b9d9c6) brightness(1.5);
   }
 }
 .nav-shine,
@@ -934,7 +925,7 @@ h6,
   border-radius: inherit;
   pointer-events: none;
   z-index: 2;
-  background: linear-gradient(105deg, transparent 40%, #d2e6ff 50%, transparent 60%) 140% 50% / 300%
+  background: linear-gradient(105deg, transparent 40%, #d9e4df 50%, transparent 60%) 140% 50% / 300%
     100%;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -946,7 +937,7 @@ h6,
 .search-light-label {
   position: relative;
   z-index: 1;
-  background: linear-gradient(105deg, currentColor 40%, #c7e4ff 50%, currentColor 60%) 140% 50% /
+  background: linear-gradient(105deg, currentColor 40%, #c8dfd1 50%, currentColor 60%) 140% 50% /
     300% 100%;
   background-clip: text;
   -webkit-background-clip: text;
@@ -1039,7 +1030,7 @@ h6,
   overflow: hidden;
   min-width: 0;
   padding: clamp(32px, 4.5vw, 72px);
-  background: rgb(var(--secondary));
+  background: var(--brand-gradient);
   color: rgb(var(--on-secondary));
 }
 .auth-visual-heading {
@@ -1074,7 +1065,7 @@ h6,
   position: absolute;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 0.7);
-  box-shadow: 0 16px 32px rgb(50 25 0 / 0.12);
+  box-shadow: 0 16px 32px rgb(var(--shadow-color) / 0.12);
   transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .auth-photo-main {

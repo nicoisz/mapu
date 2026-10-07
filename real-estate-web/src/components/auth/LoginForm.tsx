@@ -47,7 +47,7 @@ export function LoginForm() {
         <p className="mt-4 text-base leading-relaxed text-on-surface-variant">
           {next === '/publicar'
             ? 'Tu borrador está guardado. Ingresa para continuar con la siguiente etapa.'
-            : 'Ingresa a tu cuenta para buscar, guardar y publicar en MapU.'}
+            : 'Ingresa a tu cuenta para buscar, guardar y publicar en LUKY.'}
         </p>
       </div>
 
