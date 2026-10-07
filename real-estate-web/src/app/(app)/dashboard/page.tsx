@@ -456,7 +456,7 @@ export default function DashboardPage() {
                         <button
                           onClick={() => handleRenew(property.id)}
                           disabled={busyId === property.id || (!isPremium && remaining === 0)}
-                          className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-tertiary transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                          className="flex items-center gap-1 text-xs text-accent border border-accent/60 rounded-lg px-2.5 py-1.5 hover:bg-accent hover:text-on-accent transition-colors disabled:opacity-50 disabled:pointer-events-none"
                         >
                           <RefreshCw
                             size={11}

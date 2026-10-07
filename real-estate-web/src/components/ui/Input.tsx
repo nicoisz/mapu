@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/60',
+              'w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant',
               'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
               'disabled:bg-surface-container disabled:text-on-surface-variant',
               error && 'border-error focus:ring-error',

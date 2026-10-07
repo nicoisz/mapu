@@ -214,7 +214,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                 <Icon size={18} className="shrink-0" />
                 {!collapsed && label}
                 {!collapsed && badgeFor(href) > 0 && (
-                  <span className="ml-auto text-xs rounded-full px-1.5 py-px bg-accent text-white">
+                  <span className="ml-auto text-xs rounded-full px-1.5 py-px bg-accent text-on-accent">
                     {badgeFor(href)}
                   </span>
                 )}

@@ -242,7 +242,7 @@ export function MessageInbox({ initialPropertyId }: { initialPropertyId?: string
                     {publicName(c.counterparty_name)}
                   </span>
                   {c.unread > 0 && (
-                    <span className="rounded-full bg-accent px-2 text-xs text-white">
+                    <span className="rounded-full bg-accent px-2 text-xs text-on-accent">
                       {c.unread}
                     </span>
                   )}

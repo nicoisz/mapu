@@ -451,7 +451,7 @@ export default function LandingPage() {
             </div>
 
             <form onSubmit={handleSearch} className="hero-reveal mt-6 w-full max-w-xl space-y-3">
-              <div className="flex flex-col rounded-xl bg-white p-1.5 sm:flex-row sm:items-center">
+              <div className="flex flex-col rounded-xl bg-surface-container-lowest p-1.5 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 flex-1 items-center gap-3 px-3">
                   <span className="material-symbols-outlined select-none text-on-surface-variant">
                     search
@@ -472,7 +472,7 @@ export default function LandingPage() {
                           ? 'Completa tu propiedad sin iniciar sesión'
                           : 'Ciudad, barrio o región...'
                     }
-                    className="w-full bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none"
+                    className="w-full bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant focus:outline-none"
                   />
                 </div>
                 {tab !== 'publish' && (

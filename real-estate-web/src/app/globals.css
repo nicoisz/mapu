@@ -43,6 +43,7 @@
 
   /* Acento de texto: verde bosque para contraste sobre salvia. */
   --accent: 51 94 74;
+  --on-accent: 254 254 254;
   --accent-light: 165 196 177;
   --accent-dark: 36 68 53;
 
@@ -106,6 +107,7 @@
   --on-tertiary-container: 190 240 232;
 
   --accent: 185 217 198;
+  --on-accent: 20 36 28;
   --accent-light: 209 232 218;
   --accent-dark: 137 180 156;
 
@@ -163,6 +165,17 @@
     transition-duration: 300ms;
     transition-timing-function: ease;
   }
+}
+
+/* Mantener el fondo del tema al autocompletar, sin ocultar el anillo de foco. */
+input:is(:autofill, :-webkit-autofill),
+input:is(:autofill, :-webkit-autofill):is(:hover, :focus) {
+  -webkit-text-fill-color: rgb(var(--on-surface));
+  caret-color: rgb(var(--on-surface));
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    0 0 0 1000px rgb(var(--surface-container-lowest)) inset;
 }
 
 @layer utilities {

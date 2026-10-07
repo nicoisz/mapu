@@ -109,7 +109,7 @@ export function Navbar() {
             >
               Para ti
               {matchCount !== null && matchCount > 0 && (
-                <span className="rounded-full bg-accent px-1.5 text-xs text-white">
+                <span className="rounded-full bg-accent px-1.5 text-xs text-on-accent">
                   {matchCount}
                 </span>
               )}
@@ -137,7 +137,7 @@ export function Navbar() {
                 {label === 'Favoritos' && favCount > 0 ? (
                   <span className="flex items-center gap-1">
                     {label}
-                    <span className="text-xs rounded-full bg-accent px-1.5 py-px text-white">
+                    <span className="text-xs rounded-full bg-accent px-1.5 py-px text-on-accent">
                       {favCount}
                     </span>
                   </span>
@@ -248,7 +248,7 @@ export function Navbar() {
                     className={href === '/buscar' ? 'search-light-icon' : undefined}
                   />
                   {href === '/favoritos' && favCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-accent text-on-accent text-xs rounded-full w-4 h-4 flex items-center justify-center">
                       {favCount}
                     </span>
                   )}

@@ -162,7 +162,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
                 placeholder="Mínimo"
                 value={local.priceRange?.min ?? ''}
                 onChange={(e) => setPriceMin(e.target.value)}
-                className="flex-1 border border-outline-variant/60 bg-surface-container-lowest text-on-surface rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant/60"
+                className="flex-1 border border-outline-variant/60 bg-surface-container-lowest text-on-surface rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant"
               />
               <span className="text-on-surface-variant">—</span>
               <input
@@ -170,7 +170,7 @@ export function FilterPanel({ filters, onApply, onClose }: FilterPanelProps) {
                 placeholder="Máximo"
                 value={local.priceRange?.max ?? ''}
                 onChange={(e) => setPriceMax(e.target.value)}
-                className="flex-1 border border-outline-variant/60 bg-surface-container-lowest text-on-surface rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant/60"
+                className="flex-1 border border-outline-variant/60 bg-surface-container-lowest text-on-surface rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant"
               />
             </div>
           </div>

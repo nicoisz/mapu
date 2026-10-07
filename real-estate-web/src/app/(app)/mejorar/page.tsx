@@ -97,7 +97,7 @@ function CardInput({
       <label className="mb-1 block text-sm font-medium text-on-surface-variant">{label}</label>
       <input
         {...props}
-        className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   )
