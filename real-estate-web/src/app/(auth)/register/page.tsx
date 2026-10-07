@@ -1,6 +1,6 @@
 import { RegisterForm } from '@/components/auth/RegisterForm'
 
-export const metadata = { title: 'Crear cuenta | MapU Real Estate' }
+export const metadata = { title: 'Crear cuenta | LUKY PROPIEDADES' }
 
 export default function RegisterPage() {
   return (

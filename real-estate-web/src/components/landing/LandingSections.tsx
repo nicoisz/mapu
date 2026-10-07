@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 import {
   ArrowRight,
   Camera,
@@ -343,8 +344,7 @@ export function FeatureHub() {
           style={{ '--x': '50%', '--y': '50%' } as React.CSSProperties}
         >
           <div className="hub-center solid-chrome mx-auto flex w-fit items-center gap-3 rounded-3xl border border-outline-variant/40 px-7 py-5 shadow-elevated">
-            <span className="material-symbols-outlined text-3xl text-primary">map</span>
-            <span className="font-headline text-2xl font-bold text-on-surface">MapU</span>
+            <BrandLogo />
           </div>
         </div>
 
@@ -591,7 +591,7 @@ export function StatsBand() {
   )
 }
 
-/* ─── Por qué MapU ─────────────────────────────────────────────── */
+/* ─── Por qué LUKY ─────────────────────────────────────────────── */
 
 const WHY = [
   {
@@ -621,7 +621,7 @@ export function WhyMapu() {
     <section className="why-trigger landing-section relative isolate mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <LandingAccents variant="route" className="accent-why" />
       <h2 className="section-title relative z-10 mx-auto max-w-3xl text-center font-display text-4xl leading-[1.08] text-on-surface sm:text-5xl">
-        <Words text="Por qué MapU" wordClass="section-word" />
+        <Words text="Por qué LUKY" wordClass="section-word" />
       </h2>
       <div className="relative z-10 mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {WHY.map((item) => {
@@ -741,7 +741,7 @@ export function Testimonials() {
     <section className="mx-auto max-w-[1440px] px-6 py-24 lg:px-20">
       <SectionIntro
         eyebrow="Historias reales"
-        title="Lo que dicen quienes ya usaron MapU"
+        title="Lo que dicen quienes ya usaron LUKY"
         sub="Experiencias de compradores, vendedores y corredoras en la plataforma."
       />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
@@ -755,9 +755,7 @@ export function Testimonials() {
                 <Star
                   key={i}
                   size={16}
-                  className={
-                    i < r.rating ? 'fill-secondary text-secondary' : 'text-outline-variant'
-                  }
+                  className={i < r.rating ? 'fill-accent text-accent' : 'text-outline-variant'}
                 />
               ))}
             </div>
@@ -765,13 +763,13 @@ export function Testimonials() {
               «{r.comment}»
             </blockquote>
             <figcaption className="flex items-center gap-3 border-t border-outline-variant/40 pt-5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-sm font-bold text-secondary">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-sm font-bold text-accent">
                 {(r.author_name ?? '?').charAt(0)}
               </span>
               <span className="text-sm">
-                <b className="block text-on-surface">{r.author_name ?? 'Usuario MapU'}</b>
+                <b className="block text-on-surface">{r.author_name ?? 'Usuario LUKY'}</b>
                 <span className="text-on-surface-variant">
-                  {r.property_title ? `Sobre «${r.property_title}»` : 'En MapU'}
+                  {r.property_title ? `Sobre «${r.property_title}»` : 'En LUKY'}
                 </span>
               </span>
             </figcaption>
@@ -799,7 +797,7 @@ const FAQS = [
   },
   {
     q: '¿Puedo publicar desde el celular?',
-    a: 'Sí. MapU funciona en el navegador del teléfono y también en la app, con la misma cuenta y tus favoritos sincronizados.',
+    a: 'Sí. LUKY funciona en el navegador del teléfono y también en la app, con la misma cuenta y tus favoritos sincronizados.',
   },
 ]
 

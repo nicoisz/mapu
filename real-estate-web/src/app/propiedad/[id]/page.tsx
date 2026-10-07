@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!property) return { title: 'Propiedad no encontrada' }
   const mainImage = property.media.images.find((img) => img.isMain) ?? property.media.images[0]
   return {
-    title: `${property.title} | MapU Real Estate`,
+    title: `${property.title} | LUKY PROPIEDADES`,
     description: property.description.slice(0, 160),
     openGraph: {
       title: property.title,

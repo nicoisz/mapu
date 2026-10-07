@@ -71,7 +71,7 @@ export function AuthVisual({ compact = false }: { compact?: boolean }) {
     <aside
       ref={root}
       className={cn('auth-visual', compact && 'auth-visual-compact')}
-      aria-label="Consejos de MapU"
+      aria-label="Consejos de LUKY"
     >
       <h2 className="auth-visual-heading font-display">
         {compact ? (

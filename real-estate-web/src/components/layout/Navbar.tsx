@@ -8,7 +8,7 @@ import { Heart, LayoutDashboard, LogIn, LogOut, Map, Shield, User, Plus } from '
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useInterestMatches } from '@/contexts/InterestMatchesContext'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
-import { APP_CONFIG } from '@/constants'
+import { BrandLogo } from './BrandLogo'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -41,8 +41,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
 
   // La barra se achica recién cuando el hero termina de pasar bajo el nav,
-  // no a los pocos px de scroll: mientras se ve el naranjo del hero, la barra
-  // tiene que seguir naranja y a todo el ancho.
+  // no a los pocos px de scroll: mientras se ve el hero, la barra
+  // mantiene la superficie salvia y todo el ancho.
   const heroThreshold = useRef(40)
   useEffect(() => {
     setScrolled(false)
@@ -63,7 +63,7 @@ export function Navbar() {
   }, [pathname])
 
   const isHome = pathname === '/'
-  // En el hero la barra es naranja a todo el ancho (mismo color que el hero);
+  // En el hero la barra es salvia a todo el ancho;
   // al salir del hero se achica a un pill blanco centrado. En el resto del
   // sitio la barra queda sólida de borde a borde.
   const floating = isHome && scrolled
@@ -88,8 +88,8 @@ export function Navbar() {
           floating
             ? 'solid-chrome h-14 max-w-2xl gap-5 rounded-full border border-outline-variant/30 pl-5 pr-2'
             : heroBar
-              ? 'h-16 max-w-full gap-4 rounded-none bg-secondary px-4 text-on-secondary'
-              : 'solid-chrome h-16 max-w-full gap-4 rounded-none border-b border-outline-variant/30 px-4'
+              ? 'h-16 max-w-full gap-2 rounded-none bg-secondary px-4 text-on-secondary sm:gap-4'
+              : 'solid-chrome h-16 max-w-full gap-2 rounded-none border-b border-outline-variant/30 px-4 sm:gap-4'
         )}
       >
         <span id="sidebar-trigger" className="empty:hidden md:hidden" />
@@ -98,9 +98,7 @@ export function Navbar() {
           className="flex items-center gap-2 font-headline font-bold text-lg shrink-0 hover:opacity-90"
           title="Inicio"
         >
-          <span className="material-symbols-outlined text-2xl text-primary">map</span>
-          <span className="hidden text-on-surface sm:inline">{APP_CONFIG.name}</span>
-          <span className="text-on-surface sm:hidden">MapU</span>
+          <BrandLogo />
         </Link>
         <div className={floating ? 'w-2' : 'flex-1'} />
         <div className="hidden md:flex items-center gap-1">
@@ -159,7 +157,7 @@ export function Navbar() {
             className="flex items-center gap-1 rounded-full p-2 text-on-surface-variant hover:bg-surface-container md:hidden"
           >
             <Map size={20} />
-            <span className="text-xs">Buscar</span>
+            <span className="hidden text-xs min-[360px]:inline">Buscar</span>
           </Link>
           {isAuthenticated && user ? (
             <DropdownMenu>
@@ -213,7 +211,7 @@ export function Navbar() {
             <Link
               href="/login"
               className={cn(
-                'flex items-center gap-1.5 px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-95',
+                'flex items-center gap-1.5 px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-95 sm:px-4',
                 'bg-primary text-on-primary',
                 floating ? 'rounded-full' : 'rounded-lg'
               )}

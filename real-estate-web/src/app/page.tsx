@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 import { HeroGallery } from '@/components/landing/HeroGallery'
 import { LandingAccents } from '@/components/landing/LandingAccents'
 import { useRouter } from 'next/navigation'
@@ -279,7 +280,7 @@ export default function LandingPage() {
           )
         })
 
-        // Por qué MapU: las tarjetas entran escalonadas.
+        // Por qué LUKY: las tarjetas entran escalonadas.
         gsap.from('.why-card', {
           scrollTrigger: { trigger: '.why-card', start: 'top 85%' },
           y: 36,
@@ -412,7 +413,7 @@ export default function LandingPage() {
       {/* ─── HERO ─────────────────────────────────────────── */}
       <section
         data-hero
-        className="relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
+        className="brand-gradient relative -mt-16 flex min-h-[94vh] items-center overflow-hidden bg-secondary px-6 pt-28 pb-16 text-on-secondary lg:pt-[138px] lg:pb-9"
       >
         <div className="relative z-10 mx-auto grid w-full max-w-[1440px] items-center gap-12 lg:grid-cols-2 lg:px-6">
           <div>
@@ -694,19 +695,14 @@ export default function LandingPage() {
       <footer className="border-t border-outline-variant/30 bg-surface-container-lowest pb-20 md:pb-0">
         <div className="mx-auto grid max-w-[1440px] gap-10 px-6 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-20">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-secondary">map</span>
-              <span className="font-headline text-lg font-bold text-on-surface">
-                MapU Real Estate
-              </span>
-            </div>
+            <BrandLogo />
             <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant">
               El mapa de propiedades de Chile. Busca, compara y publica sin comisiones.
             </p>
             <div className="flex gap-3">
               <a
                 href="#"
-                aria-label="Compartir MapU"
+                aria-label="Compartir LUKY"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-high text-on-surface transition-colors hover:bg-secondary hover:text-on-secondary"
               >
                 <span className="material-symbols-outlined text-[20px]">share</span>
@@ -762,7 +758,7 @@ export default function LandingPage() {
 
         <div className="border-t border-outline-variant/30">
           <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-6 py-6 text-sm text-on-surface-variant md:flex-row lg:px-20">
-            <p>© 2026 MapU Real Estate Chile — Todos los derechos reservados</p>
+            <p>© 2026 LUKY PROPIEDADES Chile — Todos los derechos reservados</p>
             <div className="flex gap-6">
               {['Privacidad', 'Términos', 'Mapa del Sitio'].map((link) => (
                 <a key={link} href="#" className="transition-colors hover:text-accent">

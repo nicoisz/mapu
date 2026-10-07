@@ -3,7 +3,7 @@ import { AuthVisual } from '@/components/auth/AuthVisual'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-export const metadata = { title: 'Iniciar sesión | MapU Real Estate' }
+export const metadata = { title: 'Iniciar sesión | LUKY PROPIEDADES' }
 
 export default function LoginPage() {
   return (

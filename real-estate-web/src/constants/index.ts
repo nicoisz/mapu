@@ -1,5 +1,5 @@
 export const APP_CONFIG = {
-  name: 'MapU Real Estate',
+  name: 'LUKY PROPIEDADES',
   version: '1.0.0',
   description: 'Encuentra tu propiedad ideal en Chile',
 }
@@ -71,7 +71,7 @@ export const STATUS_LABELS: Record<string, string> = {
 /** Color por operación — pines del mapa y chips de leyenda en /buscar leen
  *  de aquí. Vivía duplicado (literal en la página, constante en MapView) y
  *  las dos copias se desincronizaban. Es hex fijo a propósito: va sobre
- *  imagen satelital, no sobre una superficie del tema. Naranjo quemado para
- *  venta (marca Casavo, con contraste AA sobre crema), teal para arriendo. */
-export const SALE_COLOR = '#B45309'
+ *  imagen satelital, no sobre una superficie del tema. Verde bosque para
+ *  venta (marca LUKY), teal para arriendo. */
+export const SALE_COLOR = '#335E4A'
 export const RENT_COLOR = '#0F766E'

@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-/** Tinta & Latón — every color reads from a CSS variable (see globals.css),
+/** LUKY — every color reads from a CSS variable (see globals.css),
  *  so a single utility like `bg-primary` works in both light and dark themes
  *  and opacity modifiers (`bg-primary/10`) keep working. */
 const withAlpha = (v: string) => `rgb(var(${v}) / <alpha-value>)`
@@ -71,8 +71,16 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        headline: ['Archivo', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          'sans-serif',
+        ],
+        headline: ['Forum', 'Georgia', 'serif'],
+        body: ['"Instrument Serif"', 'Georgia', 'serif'],
       },
       spacing: {
         'section-gap': '64px',

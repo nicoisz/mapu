@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { BrandLogo } from './BrandLogo'
 import { usePathname } from 'next/navigation'
 import {
   Building,
@@ -167,7 +168,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           collapsed ? 'px-2' : 'px-3'
         )}
       >
-        {!collapsed && <span className="font-headline text-sm font-bold text-primary">MapU</span>}
+        {!collapsed && <BrandLogo compact />}
         <button
           onClick={toggleCollapsed}
           className={cn(
