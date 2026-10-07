@@ -141,19 +141,24 @@ export async function POST(req: NextRequest) {
     client_request_id: d.clientRequestId ?? null,
   }
 
-  const { data: inserted, error } = await admin.from('properties').insert(row).select('id').single()
+  const { data: inserted, error } = await admin
+    .from('properties')
+    .insert(row)
+    .select('id, code')
+    .single()
   if (error) {
     // Idempotencia (R-02): doble clic/retry con el mismo client_request_id → ya existe.
     if (d.clientRequestId && error.code === '23505') {
       const { data: existing } = await admin
         .from('properties')
-        .select('id')
+        .select('id, code')
         .eq('client_request_id', d.clientRequestId)
         .maybeSingle()
-      if (existing) return NextResponse.json({ id: existing.id }, { status: 200 })
+      if (existing)
+        return NextResponse.json({ id: existing.id, code: existing.code }, { status: 200 })
     }
     return failure('No se pudo guardar la propiedad', 500, error.code)
   }
 
-  return NextResponse.json({ id: inserted.id }, { status: 201 })
+  return NextResponse.json({ id: inserted.id, code: inserted.code }, { status: 201 })
 }

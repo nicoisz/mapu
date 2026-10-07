@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { landingSearchUrl, parseSearchOperation } from '@/lib/landingSearch'
+import { isPropertyCode, landingSearchUrl, parseSearchOperation } from '@/lib/landingSearch'
 import { searchService } from '@/services/searchService'
 import { PropertyOperation } from '@/types/enums'
 
@@ -21,5 +21,15 @@ describe('Landing search operation', () => {
   it('rejects unsupported URL operations', () => {
     expect(parseSearchOperation('invalid')).toBeUndefined()
     expect(parseSearchOperation(null)).toBeUndefined()
+  })
+
+  it('detects property codes but not plain words', () => {
+    expect(isPropertyCode('AF5')).toBe(true)
+    expect(isPropertyCode('0P8')).toBe(true)
+    expect(isPropertyCode(' 1000 ')).toBe(true)
+    expect(isPropertyCode('wea')).toBe(false)
+    expect(isPropertyCode('sur')).toBe(false)
+    expect(isPropertyCode('Ñuñoa')).toBe(false)
+    expect(isPropertyCode('abcdef')).toBe(false)
   })
 })

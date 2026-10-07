@@ -376,7 +376,7 @@ function SearchContent() {
                       dense={viewMode === 'list'}
                       onClick={() =>
                         viewMode === 'list'
-                          ? router.push(`/propiedad/${property.id}`)
+                          ? router.push(`/propiedad/${property.code}`)
                           : setSelected(property)
                       }
                     />

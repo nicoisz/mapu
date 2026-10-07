@@ -13,7 +13,7 @@ import { PropertyOperation } from '@/types/enums'
 import { Property } from '@/types/property'
 import { useFavoritesContext } from '@/contexts/FavoritesContext'
 import { cn } from '@/lib/utils'
-import { landingSearchUrl } from '@/lib/landingSearch'
+import { isPropertyCode, landingSearchUrl } from '@/lib/landingSearch'
 import {
   ActivityFeed,
   CtaCards,
@@ -137,6 +137,12 @@ export default function LandingPage() {
     e.preventDefault()
     if (tab === 'publish') {
       router.push('/publicar')
+      return
+    }
+    // El código de 3-4 caracteres lleva directo a la propiedad: es el flujo
+    // "vi el pendón en la calle y anoté AF5".
+    if (isPropertyCode(searchValue)) {
+      router.push(`/propiedad/${searchValue.trim().toUpperCase()}`)
       return
     }
     router.push(landingSearchUrl(tab, searchValue, propertyType))
@@ -467,10 +473,10 @@ export default function LandingPage() {
                     onChange={(e) => setSearchValue(e.target.value)}
                     placeholder={
                       tab === 'rent'
-                        ? '¿Dónde quieres arrendar?'
+                        ? '¿Dónde quieres arrendar? O escribe el código (AF5)'
                         : tab === 'publish'
                           ? 'Completa tu propiedad sin iniciar sesión'
-                          : 'Ciudad, barrio o región...'
+                          : 'Ciudad, barrio o código de propiedad (AF5)...'
                     }
                     className="w-full bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant focus:outline-none"
                   />
@@ -585,7 +591,7 @@ export default function LandingPage() {
             const isRent = property.operation === PropertyOperation.RENT
 
             return (
-              <Link key={property.id} href={`/propiedad/${property.id}`} className="group block">
+              <Link key={property.id} href={`/propiedad/${property.code}`} className="group block">
                 <div className="property-card card-motion spotlight accent-glow h-full overflow-hidden rounded-3xl border border-outline-variant/50 bg-surface-container-lowest">
                   <div className="relative h-60 overflow-hidden">
                     {mainImg && (

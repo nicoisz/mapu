@@ -7,6 +7,7 @@ import { rethrowUserError } from '@/lib/userMessages'
 import { deletePropertyImages } from '@/services/storageService'
 import { rowToProperty, propertyToRow, PropertyRow } from '@/lib/propertyMapper'
 import { captureError } from '@/lib/errorLogging'
+import { isUuid } from '@/lib/utils'
 
 const ROW_COLUMNS = '*'
 
@@ -42,13 +43,17 @@ export const propertyService = {
     return (data as PropertyRow[]).map(rowToProperty)
   },
 
-  async getById(id: string): Promise<Property | null> {
+  /** Acepta uuid o código público (3-4 caracteres). Así las URLs usan el
+   *  código pero los flujos internos (favoritos, edición, borrado) siguen
+   *  resolviendo por id sin ramificar. */
+  async getById(idOrCode: string): Promise<Property | null> {
+    const byId = isUuid(idOrCode)
     const { data, error } = await getSupabase()
       .from('properties')
       .select(ROW_COLUMNS)
-      .eq('id', id)
+      .eq(byId ? 'id' : 'code', byId ? idOrCode : idOrCode.toUpperCase())
       .maybeSingle()
-    // Invalid uuid or missing row → treat as not found.
+    // Invalid uuid/code or missing row → treat as not found.
     if (error || !data) return null
     return rowToProperty(data as PropertyRow)
   },
@@ -93,7 +98,7 @@ export const propertyService = {
       // Sanitize: commas/parens are PostgREST or() syntax.
       const term = query.query.trim().replace(/[,()]/g, ' ').replace(/\s+/g, ' ')
       q = q.or(
-        `title.ilike.%${term}%,description.ilike.%${term}%,address_commune.ilike.%${term}%,address_city.ilike.%${term}%`
+        `title.ilike.%${term}%,description.ilike.%${term}%,address_commune.ilike.%${term}%,address_city.ilike.%${term}%,code.ilike.%${term}%`
       )
     }
 
@@ -140,7 +145,7 @@ export const propertyService = {
     data: Partial<Property>,
     organizationId?: string,
     clientRequestId?: string
-  ): Promise<{ id: string }> {
+  ): Promise<{ id: string; code: string }> {
     const { data: sessionRes } = await getSupabase().auth.getSession()
     const token = sessionRes.session?.access_token
     if (!token) throw new Error('No autenticado')
@@ -154,9 +159,13 @@ export const propertyService = {
         clientRequestId: clientRequestId ?? null,
       }),
     })
-    const json = (await res.json().catch(() => ({}))) as { error?: string; id?: string }
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string
+      id?: string
+      code?: string
+    }
     if (!res.ok) throw new Error(json.error ?? 'No se pudo publicar la propiedad')
-    return { id: json.id ?? '' }
+    return { id: json.id ?? '', code: json.code ?? '' }
   },
 
   async updateProperty(id: string, updates: Partial<Property>): Promise<Property | null> {

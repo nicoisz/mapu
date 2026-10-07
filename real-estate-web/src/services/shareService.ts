@@ -6,8 +6,8 @@ export type SharePlatform = 'whatsapp' | 'facebook' | 'twitter' | 'email' | 'cli
 
 export const shareService = {
   buildShareUrl(property: Property): string {
-    if (typeof window !== 'undefined') return `${window.location.origin}/propiedad/${property.id}`
-    return `/propiedad/${property.id}`
+    if (typeof window !== 'undefined') return `${window.location.origin}/propiedad/${property.code}`
+    return `/propiedad/${property.code}`
   },
 
   async shareToClipboard(property: Property): Promise<ShareResult> {

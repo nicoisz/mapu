@@ -14,6 +14,7 @@ import {
  */
 export interface PropertyRow {
   id: string
+  code: string
   owner_id: string
   organization_id: string | null
   title: string
@@ -98,6 +99,7 @@ export function rowToProperty(row: PropertyRow): Property {
   const streetLine = [row.address_street, row.address_number].filter(Boolean).join(' ')
   return {
     id: row.id,
+    code: row.code,
     ownerId: row.owner_id,
     organizationId: row.organization_id ?? undefined,
     title: row.title,

@@ -366,7 +366,7 @@ export default function DashboardPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <Link
-                          href={`/propiedad/${property.id}`}
+                          href={`/propiedad/${property.code}`}
                           className="font-medium text-on-surface text-sm hover:text-primary transition-colors line-clamp-1"
                         >
                           {property.title}

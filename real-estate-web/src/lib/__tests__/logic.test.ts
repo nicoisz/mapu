@@ -18,6 +18,7 @@ import {
 function makeProperty(overrides: Partial<Property>): Property {
   return {
     id: 'p1',
+    code: 'P01',
     title: 'Test',
     description: 'x',
     type: PropertyType.HOUSE,

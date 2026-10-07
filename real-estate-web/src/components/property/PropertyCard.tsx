@@ -272,7 +272,7 @@ export function PropertyCard({
               </span>
             </div>
             <Link
-              href={`/propiedad/${property.id}`}
+              href={`/propiedad/${property.code}`}
               onClick={(e) => e.stopPropagation()}
               className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold py-2 px-3 hover:brightness-110 transition-all"
             >
@@ -303,7 +303,7 @@ export function PropertyCard({
               {formatArea(property.features.area)}
             </span>
             <Link
-              href={`/propiedad/${property.id}`}
+              href={`/propiedad/${property.code}`}
               onClick={(e) => e.stopPropagation()}
               // En dense el texto no cabe junto a los tres datos. Queda solo el
               // icono, pero sigue siendo un <a> real con nombre accesible: la

@@ -13,6 +13,7 @@ const img = (seed: number, w = 800, h = 600) => `https://picsum.photos/seed/${se
 export const mockProperties: Property[] = [
   {
     id: 'prop-001',
+    code: 'M01',
     title: 'Casa moderna en Las Condes',
     description:
       'Hermosa casa moderna de 3 pisos en sector residencial de Las Condes. Amplios espacios, luminosa, con jardín y piscina. Excelente ubicación a pasos del metro Manquehue.',
@@ -84,6 +85,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-002',
+    code: 'M02',
     title: 'Departamento en Providencia',
     description:
       'Moderno departamento en pleno corazón de Providencia. A pasos del metro Pedro de Valdivia. Terminaciones de primer nivel, cocina equipada, balcón con vista a la ciudad.',
@@ -156,6 +158,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-003',
+    code: 'M03',
     title: 'Casa familiar en Ñuñoa',
     description:
       'Espaciosa casa familiar en el corazón de Ñuñoa. Ideal para familias con niños. Gran patio, cocina amplia, 4 dormitorios con walk-in closet en dormitorio principal.',
@@ -228,6 +231,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-004',
+    code: 'M04',
     title: 'Penthouse en Vitacura con vista panorámica',
     description:
       'Exclusivo penthouse en edificio de lujo en Vitacura. Terraza de 80m² con vista a la cordillera. Terminaciones premium, cocina gourmet, sala de estar y comedor amplios.',
@@ -305,6 +309,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-005',
+    code: 'M05',
     title: 'Departamento estudio en Barrio Italia',
     description:
       'Moderno estudio en el trendiest barrio de Santiago. Diseño contemporáneo, espacios optimizados, cocina integrada al living. A pasos de cafés, restaurantes y vida cultural.',
@@ -375,6 +380,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-006',
+    code: 'M06',
     title: 'Terreno en Lo Barnechea',
     description:
       'Excelente terreno plano en sector residencial de Lo Barnechea. Ideal para construcción de casa o proyecto. Todos los servicios disponibles, acceso pavimentado.',
@@ -432,6 +438,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-007',
+    code: 'M07',
     title: 'Casa patrimonial en Cerro Alegre',
     description:
       'Encantadora casa patrimonial en el icónico Cerro Alegre de Valparaíso. Amplias habitaciones, techos altos, vista al mar. Restaurada con materiales originales.',
@@ -499,6 +506,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-008',
+    code: 'M08',
     title: 'Departamento frente al mar en Viña del Mar',
     description:
       'Espectacular departamento con vista directa al mar en Viña del Mar. Totalmente amoblado y equipado. Edificio con piscina, gym y conserje 24 horas.',
@@ -571,6 +579,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-009',
+    code: 'M09',
     title: 'Casa nueva en Concepción',
     description:
       'Casa nueva entregada en llave en mano en Concepción. Proyecto de primera categoría con materiales de calidad. 3 dormitorios, 2 baños, cocina americana y jardín privado.',
@@ -639,6 +648,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-010',
+    code: 'M10',
     title: 'Casa en La Serena cerca del mar',
     description:
       'Hermosa casa en La Serena a solo 500 metros de la playa. Ideal para vivir o como inversión turística. Amplios espacios, piscina, terraza y quincho.',
@@ -709,6 +719,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-011',
+    code: 'M11',
     title: 'Oficina en Santiago Centro',
     description:
       'Moderna oficina en el corazón de Santiago, piso 12 con vista panorámica. Espacios abiertos o divisibles, sala de reuniones, recepción compartida y estacionamientos.',
@@ -776,6 +787,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-012',
+    code: 'M12',
     title: 'Departamento en Miraflores con logia',
     description:
       'Cómodo departamento con logia en barrio Miraflores, Santiago. Luminoso, bien ubicado, a minutos del metro Baquedano. Perfecto para estudiantes o profesionales.',
@@ -844,6 +856,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-013',
+    code: 'M13',
     title: 'Local comercial en Providencia',
     description:
       'Excelente local comercial en Av. Providencia. Alta afluencia de público, vidriera amplia, bodega posterior. Ideal para restaurant, café, boutique o cualquier comercio.',
@@ -903,6 +916,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-014',
+    code: 'M14',
     title: 'Departamento en Antofagasta cerca del centro',
     description:
       'Cómodo departamento en Antofagasta, sector céntrico y seguro. Edificio con vigilancia, estacionamiento incluido. A pasos de servicios, supermercados y transporte.',
@@ -971,6 +985,7 @@ export const mockProperties: Property[] = [
   },
   {
     id: 'prop-015',
+    code: 'M15',
     title: 'Casa amplia en Lo Espejo',
     description:
       'Amplia casa en Lo Espejo, ideal para familia numerosa o como inversión de arriendo. Gran patio trasero, 5 dormitorios. Barrio tranquilo con acceso a metro.',
