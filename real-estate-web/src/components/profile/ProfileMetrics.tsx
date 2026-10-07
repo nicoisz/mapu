@@ -164,7 +164,7 @@ export function ProfileMetrics() {
                         {i + 1}
                       </span>
                       <Link
-                        href={`/propiedad/${p.id}`}
+                        href={`/propiedad/${p.code}`}
                         className="flex-1 min-w-0 hover:text-primary transition-colors"
                       >
                         <p className="text-sm font-medium text-on-surface truncate">{p.title}</p>

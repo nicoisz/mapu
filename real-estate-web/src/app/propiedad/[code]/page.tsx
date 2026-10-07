@@ -1,15 +1,16 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import { PropertyDetail } from '@/components/property/PropertyDetail'
 import { propertyService } from '@/services/propertyService'
+import { isUuid } from '@/lib/utils'
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ code: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
-  const property = await propertyService.getById(id)
+  const { code } = await params
+  const property = await propertyService.getById(code)
   if (!property) return { title: 'Propiedad no encontrada' }
   const mainImage = property.media.images.find((img) => img.isMain) ?? property.media.images[0]
   return {
@@ -24,9 +25,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PropertyPage({ params }: Props) {
-  const { id } = await params
-  const property = await propertyService.getById(id)
+  const { code } = await params
+  const property = await propertyService.getById(code)
   if (!property) notFound()
+
+  // La URL pública canónica usa el código. Cualquier enlace legacy por uuid
+  // (notificaciones, bookmarks) redirige al código para no exponerlo.
+  if (isUuid(code)) redirect(`/propiedad/${property.code}`)
 
   return (
     <div className="h-full overflow-y-auto bg-background">

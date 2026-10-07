@@ -7,6 +7,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Un uuid de la DB (las URLs públicas usan el código de propiedad, no el id). */
+export function isUuid(value: string): boolean {
+  return UUID_RE.test(value)
+}
+
 export function formatPrice(price: number, currency: Currency): string {
   if (currency === Currency.CLP) {
     return `$${price.toLocaleString('es-CL')} CLP`

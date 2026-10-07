@@ -547,11 +547,11 @@ export default function PublicarPage() {
           user.organizationId,
           clientRequestId
         )
-        if (!created.id)
+        if (!created.id || !created.code)
           throw new Error('No recibimos la confirmación de la publicación. Inténtalo nuevamente.')
         await clearPublishDraft().catch(() => {})
         clientRequestIdRef.current = null
-        setPublishedId(created.id)
+        setPublishedId(created.code)
       }
       void refreshUser()
       void refreshMatches()

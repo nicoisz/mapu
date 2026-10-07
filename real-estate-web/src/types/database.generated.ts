@@ -119,6 +119,21 @@ export type Database = {
           },
         ]
       }
+      forbidden_words: {
+        Row: {
+          created_at: string
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          word: string
+        }
+        Update: {
+          created_at?: string
+          word?: string
+        }
+        Relationships: []
+      }
       message_reads: {
         Row: {
           counterparty_id: string
@@ -592,6 +607,7 @@ export type Database = {
           bedrooms: number | null
           built_area: number | null
           client_request_id: string | null
+          code: string
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
@@ -658,6 +674,7 @@ export type Database = {
           bedrooms?: number | null
           built_area?: number | null
           client_request_id?: string | null
+          code: string
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -724,6 +741,7 @@ export type Database = {
           bedrooms?: number | null
           built_area?: number | null
           client_request_id?: string | null
+          code?: string
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -974,6 +992,7 @@ export type Database = {
         Args: { field: string; target_user_id: string; value: boolean }
         Returns: undefined
       }
+      base36: { Args: { p_min_len?: number; p_num: number }; Returns: string }
       can_user_publish: { Args: { p_user_id: string }; Returns: boolean }
       capture_error_log: {
         Args: {
@@ -985,6 +1004,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      contains_forbidden_word: { Args: { p_text: string }; Returns: boolean }
       conversation_messages: {
         Args: { before_message?: string; counterparty: string; property: string }
         Returns: Json
@@ -1002,6 +1022,7 @@ export type Database = {
           name: string
         }[]
       }
+      generate_property_code: { Args: Record<PropertyKey, never>; Returns: string }
       get_global_views: {
         Args: { days?: number }
         Returns: {

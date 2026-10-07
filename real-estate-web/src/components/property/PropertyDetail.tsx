@@ -34,6 +34,7 @@ import { Reviews } from '@/components/reviews/Reviews'
 import { contactService } from '@/services/contactService'
 import { ContactOwnerForm } from '@/components/property/ContactOwnerForm'
 import { shareService } from '@/services/shareService'
+import { PropertyShareQR } from '@/components/property/PropertyShareQR'
 import { cn, formatDate, getDisplayPrice } from '@/lib/utils'
 import { OPERATION_LABELS, PROPERTY_TYPE_LABELS } from '@/constants'
 import { PropertyOperation } from '@/types/enums'
@@ -115,6 +116,7 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
               className={fav ? 'animate-[heartPop_0.35s_cubic-bezier(0.34,1.56,0.64,1)]' : ''}
             />
           </button>
+          <PropertyShareQR property={property} />
           <button
             onClick={handleShare}
             aria-label="Compartir propiedad"
@@ -217,6 +219,12 @@ export function PropertyDetail({ property }: PropertyDetailProps) {
               <span>{property.location.displayAddress ?? property.location.address.city}</span>
             </div>
             <h1 className="text-2xl font-bold text-on-surface">{property.title}</h1>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Código{' '}
+              <span className="font-mono font-bold tracking-widest text-on-surface">
+                {property.code}
+              </span>
+            </p>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="font-headline text-4xl font-bold text-on-surface tracking-tight">
                 {amount}

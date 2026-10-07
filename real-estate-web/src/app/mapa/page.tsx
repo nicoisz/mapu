@@ -147,7 +147,7 @@ export default function MapaPage() {
                 property={selectedProperty}
                 isSelected
                 compact
-                onClick={() => router.push(`/propiedad/${selectedProperty.id}`)}
+                onClick={() => router.push(`/propiedad/${selectedProperty.code}`)}
               />
               <button
                 onClick={() => setSelectedProperty(null)}

@@ -129,6 +129,8 @@ export interface ContactInfo {
 
 export interface Property {
   id: string
+  /** Código público alfanumérico (3-4 caracteres) usado en las URLs. */
+  code: string
   title: string
   description: string
   type: PropertyType
