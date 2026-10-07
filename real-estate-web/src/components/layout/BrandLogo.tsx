@@ -13,9 +13,12 @@ export function BrandLogo({
       <Image
         src="/luky%20logo.svg"
         alt=""
-        width={42}
+        width={40}
         height={40}
-        className={cn('rounded-xl bg-white object-contain', compact ? 'h-8 w-8' : 'h-10 w-10')}
+        className={cn(
+          'object-contain object-center dark:brightness-[1.8]',
+          compact ? 'h-8 w-8' : 'h-10 w-10'
+        )}
       />
       <span className="flex flex-col text-on-surface">
         <span
