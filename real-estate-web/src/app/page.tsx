@@ -53,7 +53,7 @@ const COMUNAS = [
   'Temuco',
 ]
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 /** Datos estructurados para buscadores y motores de respuesta (GEO). */
 const STRUCTURED_DATA = {

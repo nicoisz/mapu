@@ -5,7 +5,7 @@ import { Providers } from './providers'
 import { Navbar } from '@/components/layout/Navbar'
 import { APP_CONFIG } from '@/constants'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

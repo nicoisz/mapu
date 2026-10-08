@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import { propertyService } from '@/services/propertyService'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = ['', '/buscar', '/mapa', '/login', '/register'].map(
